@@ -4,17 +4,33 @@ on:
   push:
     branches:
       - main
+      - 'auto/**'
+  pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 permissions:
   contents: read
   deployments: write
+  pull-requests: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Determine branch name
+        id: branch
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "branch=${{ github.head_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            BR="${GITHUB_REF#refs/heads/}"
+            echo "branch=$BR" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
@@ -22,4 +38,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4.80.0"
-          command: pages deploy . --project-name=blursor --branch=main --commit-dirty=true
+          command: pages deploy . --project-name=blursor --branch=${{ steps.branch.outputs.branch }} --commit-dirty=true
