@@ -1035,10 +1035,9 @@
       <div class="subscribe-block">
         <div class="subscribe-block__label">Weekly digest</div>
         <p class="subscribe-block__text">New papers, distilled, once a week.</p>
-        <form class="subscribe-block__form" action="#" method="POST">
-          <input type="email" name="email" placeholder="your@email.com"
-                 class="subscribe-block__input" required>
-          <button type="submit" class="subscribe-block__btn">Subscribe</button>
+        <form class="subscribe-block__form" action="#newsletter" method="POST" id="newsletter">
+          <input type="email" name="email" placeholder="your@email.com" class="subscribe-block__input" disabled>
+          <button type="submit" class="subscribe-block__btn" disabled style="opacity:0.5;cursor:not-allowed">Coming soon</button>
         </form>
       </div>
     </div>
@@ -1055,7 +1054,7 @@
     <div class="home-articles__inner">
 
       <!-- Featured card -->
-      <a href="/research/citation-failures-geo" class="featured-card fade-up">
+      <a href="/research/citation-failures-generative-engine-agentgeo" class="featured-card fade-up">
         <div class="featured-card__arc">
           <svg viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
             <circle cx="-60" cy="480" r="380"  fill="none" stroke="rgba(26,26,24,0.28)"  stroke-width="1"/>
@@ -1067,10 +1066,10 @@
         </div>
         <div class="featured-card__content">
           <div class="featured-card__label">Citation &middot; Geography</div>
-          <h2 class="featured-card__title">Diagnosing Citation Failures in GEO: What a New Paper From Virginia Tech Actually Shows</h2>
-          <p class="featured-card__summary">A new paper maps four distinct failure modes that prevent pages from being cited in AI-generated responses. 43% of relevant pages receive zero citations under baseline conditions.</p>
+          <h2 class="featured-card__title">Diagnosing Citation Failures in Generative Engine Optimization: What AgentGEO Actually Shows</h2>
+          <p class="featured-card__summary">A new paper from Virginia Tech maps four failure modes that prevent pages from being cited in AI-generated responses. 43% of relevant pages receive zero citations under baseline conditions.</p>
           <div class="featured-card__meta">
-            <span>Mar 13, 2026</span>
+            <span>May 22, 2026</span>
             <span class="sep">&middot;</span>
             <span>7 min read</span>
             <span class="sep">&middot;</span>
@@ -1080,56 +1079,6 @@
       </a>
 
       <!-- Grid cards -->
-      <div class="cards-grid">
-
-        <a href="/research/llm-citation-patterns-systematic-bias" class="grid-card fade-up delay-1">
-          <div class="grid-card__arc">
-            <svg viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-              <circle cx="1500" cy="480" r="380"  fill="none" stroke="rgba(26,26,24,0.28)"  stroke-width="1"/>
-              <circle cx="1500" cy="480" r="560"  fill="none" stroke="rgba(26,26,24,0.22)"  stroke-width="1"/>
-              <circle cx="1500" cy="480" r="740"  fill="none" stroke="rgba(26,26,24,0.16)"  stroke-width="1"/>
-              <circle cx="1500" cy="480" r="920"  fill="none" stroke="rgba(26,26,24,0.11)"  stroke-width="1"/>
-              <circle cx="1500" cy="480" r="1100" fill="none" stroke="rgba(26,26,24,0.07)"  stroke-width="1"/>
-            </svg>
-          </div>
-          <div class="grid-card__content">
-            <div class="grid-card__label">Citation &middot; Bias</div>
-            <h2 class="grid-card__title">LLM citation patterns show systematic bias toward high-authority domains</h2>
-            <div class="grid-card__meta">
-              <span>Mar 10, 2026</span>
-              <span class="sep">&middot;</span>
-              <span>7 min read</span>
-              <span class="sep">&middot;</span>
-              <span class="grid-card__arxiv">arXiv:2603.04821</span>
-            </div>
-          </div>
-        </a>
-
-        <a href="/research/retrieval-augmented-generation-ranking-signals" class="grid-card fade-up delay-2">
-          <div class="grid-card__arc">
-            <svg viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-              <line x1="-240" y1="760" x2="960"  y2="-240" stroke="rgba(26,26,24,0.26)"  stroke-width="1"/>
-              <line x1="0"    y1="760" x2="1200" y2="-240" stroke="rgba(26,26,24,0.20)"  stroke-width="1"/>
-              <line x1="240"  y1="760" x2="1440" y2="-240" stroke="rgba(26,26,24,0.15)"  stroke-width="1"/>
-              <line x1="480"  y1="760" x2="1680" y2="-240" stroke="rgba(26,26,24,0.10)"  stroke-width="1"/>
-              <line x1="720"  y1="760" x2="1920" y2="-240" stroke="rgba(26,26,24,0.06)"  stroke-width="1"/>
-            </svg>
-          </div>
-          <div class="grid-card__content">
-            <div class="grid-card__label">Retrieval &middot; RAG</div>
-            <h2 class="grid-card__title">RAG systems inherit ranking signals from their retriever &mdash; and amplify&nbsp;them</h2>
-            <div class="grid-card__meta">
-              <span>Mar 7, 2026</span>
-              <span class="sep">&middot;</span>
-              <span>11 min read</span>
-              <span class="sep">&middot;</span>
-              <span class="grid-card__arxiv">arXiv:2603.03195</span>
-            </div>
-          </div>
-        </a>
-
-      </div><!-- /cards-grid -->
-
       <div class="home-articles__footer">
         <a href="/research" class="home-articles__all">All articles &rarr;</a>
       </div>
@@ -1175,7 +1124,7 @@
         <div class="site-footer__col-heading">Research</div>
         <ul>
           <li><a href="/research">All articles</a></li>
-          <li><a href="/digest">Weekly Digest</a></li>
+          <li><a href="#newsletter">Weekly Digest</a></li>
         </ul>
       </div>
 
@@ -1183,7 +1132,7 @@
       <div class="site-footer__col">
         <div class="site-footer__col-heading">Connect</div>
         <ul>
-          <li><a href="/digest">Newsletter</a></li>
+          <li><a href="#newsletter">Newsletter</a></li>
           <li>
             <a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener" class="site-footer__x-link">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
