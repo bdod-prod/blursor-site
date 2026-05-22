@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLURSOR — AI Research for Practitioners</title>
+  <meta name="description" content="Research papers on AI visibility, citation behavior, and generative search — distilled for practitioners who need to act on them.">
+  <link rel="canonical" href="https://blursor.ai/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="BLURSOR — AI Research for Practitioners">
+  <meta property="og:description" content="Research papers on AI visibility, citation behavior, and generative search — distilled for practitioners.">
+  <meta property="og:url" content="https://blursor.ai/">
+  <meta property="og:site_name" content="BLURSOR">
+  <!-- TODO: create /assets/og-default.png (1200×630, warm bg + arc + BLURSOR wordmark) -->
+  <meta property="og:image" content="https://blursor.ai/assets/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="BLURSOR">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="BLURSOR — AI Research for Practitioners">
+  <meta name="twitter:description" content="Research papers on AI visibility, citation behavior, and generative search — distilled for practitioners.">
+  <meta name="twitter:image" content="https://blursor.ai/assets/og-default.png">
+  <!-- TODO: uncomment once @blursor_ai X account is live -->
+  <!-- <meta name="twitter:site" content="@blursor_ai"> -->
+
+  <!-- JSON-LD: Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": "https://blursor.ai/#organization",
+    "name": "BLURSOR",
+    "url": "https://blursor.ai",
+    "description": "AI research paper digest for non-academic audiences.",
+    "sameAs": [
+      "https://x.com/blursor_ai"
+    ],
+    "founder": {
+      "@type": "Person",
+      "@id": "https://blursor.ai/author/alex-rostovtsev#person",
+      "name": "Alex Rostovtsev"
+    }
+  }
+  </script>
+
+  <!-- JSON-LD: WebSite -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": "https://blursor.ai/#website",
+    "name": "BLURSOR",
+    "url": "https://blursor.ai",
+    "description": "AI research paper digest for non-academic audiences.",
+    "publisher": {
+      "@id": "https://blursor.ai/#organization"
+    }
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ——— Reset & base ——— */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --color-bg:             #f0ece4;
+      --color-bg-warm:        #e8e3d9;
+      --color-surface:        #f5f1ea;
+      --color-text:           #1a1a18;
+      --color-text-secondary: #7a776e;
+      --color-border:         #d4d0c8;
+      --color-border-light:   rgba(26,26,24,0.08);
+      --color-accent:         #c43b2a;
+      --color-footer-bg:      #1a1a18;
+      --color-footer-text:    #a09d95;
+      --color-footer-text-hover: #f0ece4;
+
+      --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-mono:  'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+      --space-xs:  0.5rem;
+      --space-sm:  1rem;
+      --space-md:  1.5rem;
+      --space-lg:  3rem;
+      --space-xl:  5rem;
+      --space-2xl: 7rem;
+
+      --max-width:  980px;
+      --text-width: 640px;
+    }
+
+    html {
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-serif);
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ——— Header ——— */
+
+    .site-header {
+      padding: var(--space-md) 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .site-header__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-header__logo {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      margin-top: -2px;
+      text-transform: uppercase;
+      color: var(--color-text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .site-header__nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .site-header__nav a {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.03em;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.15s ease;
+    }
+
+    .site-header__nav a:hover { color: var(--color-text); }
+
+    .site-header__nav-cta {
+      text-decoration: underline;
+      text-decoration-color: rgba(196,59,42,0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+      white-space: nowrap;
+    }
+
+    .site-header__nav-cta:hover {
+      text-decoration-color: rgba(196,59,42,0.7);
+    }
+
+    .site-header__left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .site-header__sep {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-border);
+    }
+
+    .site-header__tagline {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+
+    .site-header__tagline .why {
+      text-decoration: underline;
+      text-decoration-color: rgba(196,59,42,0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+
+    /* ——— Screen 1: Hero + Bridge ——— */
+
+    .home-s1 {
+      display: flex;
+      align-items: center;
+      padding: var(--space-xl) 0;
+      position: relative;
+    }
+
+    .home-s1::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle, rgba(196,59,42,0.55) 4px, transparent 4px),
+        radial-gradient(circle, rgba(196,59,42,0.55) 4px, transparent 4px),
+        radial-gradient(circle, rgba(26,26,24,0.25) 4px, transparent 4px);
+      background-size:
+        240px 240px,
+        240px 240px,
+        120px 120px;
+      background-position:
+        -60px -60px,
+         60px  60px,
+          0px   0px;
+      opacity: 0.5;
+      z-index: 0;
+    }
+
+    .home-s1 > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .home-s1__inner {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: var(--space-md) var(--space-lg);
+      background: var(--color-bg);
+    }
+
+    .home-s1__stats {
+      font-size: 1.0625rem;
+      line-height: 1.85;
+      color: var(--color-text);
+      margin-bottom: 2rem;
+    }
+
+    .home-s1__question {
+      font-size: clamp(2.25rem, 4vw, 2.75rem);
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.025em;
+      margin-bottom: 2rem;
+      text-decoration: underline;
+      text-decoration-color: rgba(196, 59, 42, 0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 4px;
+    }
+
+    .home-s1__bridge {
+      margin-bottom: 1.5rem;
+    }
+
+    .home-s1__bridge p {
+      font-size: 1.0625rem;
+      line-height: 1.85;
+      color: var(--color-text);
+    }
+
+    .home-s1__bridge p + p {
+      margin-top: 0;
+    }
+
+    .home-s1__thesis {
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--color-accent);
+      text-align: right;
+      text-decoration: underline;
+      text-decoration-color: rgba(196,59,42,0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    .home-s1__scroll-arrow {
+      text-align: right;
+      margin-top: 0.875rem;
+      color: var(--color-accent);
+      opacity: 0.5;
+      animation: scroll-bounce 2s ease-in-out infinite;
+      line-height: 1;
+    }
+
+    @keyframes scroll-bounce {
+      0%, 100% { transform: translateY(0); opacity: 0.5; }
+      50%       { transform: translateY(7px); opacity: 0.75; }
+    }
+
+    .home-s1__section-label {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1;
+      background: var(--color-bg);
+      padding-top: var(--space-sm);
+    }
+
+    .home-s1__section-label__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-md) var(--space-sm);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .home-s1__section-label span {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+
+    /* ——— How it works ——— */
+
+    .home-how {
+      background: var(--color-bg);
+      padding: var(--space-xl) 0 0 0;
+    }
+
+    .home-how__layout {
+      display: grid;
+      grid-template-columns: minmax(0, 48%) minmax(0, 52%);
+      column-gap: 5rem;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+      align-items: center;
+    }
+
+    .home-how__paper-wrap {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .home-how__paper {
+      border: 1px solid var(--color-border);
+      width: 100%;
+    }
+
+    .home-how__paper--left {
+      transform: perspective(1500px) rotateY(30deg) rotateX(15deg);
+      box-shadow: 6px 14px 40px rgba(26,26,24,0.18);
+      margin-top: -30px;
+      padding: 20px;
+    }
+
+    .home-how__paper img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+    }
+
+    .home-how__inner {
+      padding: 0;
+    }
+
+    .home-how__item {
+      display: grid;
+      grid-template-columns: 3.75rem minmax(0, 1fr);
+      column-gap: var(--space-md);
+      align-items: start;
+      margin-bottom: 1.125rem;
+    }
+
+    .home-how__ordinal {
+      font-family: var(--font-mono);
+      font-size: 3.25rem;
+      font-weight: 400;
+      line-height: 1;
+      color: var(--color-border);
+      user-select: none;
+    }
+
+    .home-how__line {
+      font-size: 1.0625rem;
+      line-height: 1.6;
+      color: var(--color-text);
+      margin: 0;
+    }
+
+    .home-how__line--final {
+      margin-top: 1.5rem;
+      padding-top: 1.375rem;
+      border-top: 1px solid var(--color-border-light);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-text-secondary);
+      text-align: right;
+    }
+
+    @media (max-width: 960px) {
+      .home-how__paper-wrap { display: none; }
+      .home-how__layout {
+        grid-template-columns: 1fr;
+      }
+      .home-how__inner {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 0 var(--space-md);
+      }
+    }
+
+    /* ——— Articles ——— */
+
+    .home-articles {
+      padding: 0 0 var(--space-lg);
+      flex: 1;
+    }
+
+    .home-articles__label {
+      margin-bottom: var(--space-xs);
+    }
+
+    .home-articles__label__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: var(--space-sm) var(--space-md);
+      text-align: right;
+    }
+
+    .home-articles__label span {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+
+    .home-articles__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+    }
+
+    /* Featured card */
+    .featured-card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      border: 1px solid var(--color-border);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+
+    .featured-card:hover { border-color: var(--color-text-secondary); }
+    .featured-card:hover .featured-card__title { color: var(--color-accent); }
+
+    .featured-card__arc {
+      position: relative;
+      height: 160px;
+      background: var(--color-bg);
+      overflow: hidden;
+    }
+
+    .featured-card__arc svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .featured-card__content {
+      padding: var(--space-md) var(--space-lg) var(--space-lg);
+      background: var(--color-surface);
+    }
+
+    .featured-card__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .featured-card__title {
+      font-size: 1.625rem;
+      font-weight: 600;
+      line-height: 1.22;
+      letter-spacing: -0.015em;
+      margin-bottom: 0.875rem;
+      transition: color 0.2s ease;
+    }
+
+    .featured-card__summary {
+      font-size: 0.9375rem;
+      line-height: 1.7;
+      color: var(--color-text-secondary);
+      max-width: 600px;
+      margin-bottom: 1.125rem;
+    }
+
+    .featured-card__meta {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.02em;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .featured-card__meta .sep { color: var(--color-border); }
+
+    .featured-card__arxiv {
+      color: var(--color-accent);
+      opacity: 0.65;
+      transition: opacity 0.2s ease;
+    }
+
+    .featured-card:hover .featured-card__arxiv { opacity: 1; }
+
+    /* Cards grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: var(--space-lg);
+    }
+
+    .grid-card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      border: 1px solid var(--color-border);
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+
+    .grid-card:hover { border-color: var(--color-text-secondary); }
+    .grid-card:hover .grid-card__title { color: var(--color-accent); }
+
+    .grid-card__arc {
+      position: relative;
+      height: 120px;
+      background: var(--color-bg);
+      overflow: hidden;
+    }
+
+    .grid-card__arc svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .grid-card__content {
+      padding: var(--space-md);
+      background: var(--color-surface);
+    }
+
+    .grid-card__label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-accent);
+      margin-bottom: 0.6rem;
+    }
+
+    .grid-card__title {
+      font-size: 1.0625rem;
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.75rem;
+      transition: color 0.2s ease;
+    }
+
+    .grid-card__meta {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.02em;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .grid-card__meta .sep { color: var(--color-border); }
+
+    .grid-card__arxiv {
+      color: var(--color-accent);
+      opacity: 0.65;
+      transition: opacity 0.2s ease;
+    }
+
+    .grid-card:hover .grid-card__arxiv { opacity: 1; }
+
+    /* All articles */
+    .home-articles__footer {
+      text-align: right;
+    }
+
+    .home-articles__all {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.03em;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .home-articles__all:hover { color: var(--color-accent); }
+
+    /* ——— Subscribe block ——— */
+    .home-subscribe {
+      padding: var(--space-xl) 0;
+    }
+
+    .home-subscribe__inner {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+    }
+
+    .subscribe-block {
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      padding: var(--space-md);
+    }
+
+    .subscribe-block__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-accent);
+    }
+
+    .subscribe-block__text {
+      font-family: var(--font-serif);
+      color: var(--color-text-secondary);
+      font-size: 0.9375rem;
+      margin: var(--space-xs) 0 var(--space-sm);
+    }
+
+    .subscribe-block__form {
+      display: flex;
+      gap: var(--space-xs);
+    }
+
+    .subscribe-block__input {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      padding: 0.5rem 0.75rem;
+      color: var(--color-text);
+      outline: none;
+    }
+
+    .subscribe-block__input:focus {
+      border-color: var(--color-text-secondary);
+    }
+
+    .subscribe-block__btn {
+      background: var(--color-accent);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.5rem 1rem;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .subscribe-block__btn:hover {
+      opacity: 0.88;
+    }
+
+    /* ——— Footer ——— */
+
+    .site-footer {
+      background: var(--color-footer-bg);
+      padding: var(--space-lg) 0 0;
+    }
+
+    .site-footer__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: var(--space-lg);
+      align-items: start;
+    }
+
+    /* Brand block */
+    .site-footer__brand {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .site-footer__logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--color-footer-text-hover);
+      text-decoration: none;
+    }
+
+    .site-footer__logo:hover { color: #fff; }
+
+    .site-footer__desc {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-footer-text);
+      letter-spacing: 0.02em;
+      line-height: 1.7;
+    }
+
+    .site-footer__tagline {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-footer-text);
+      opacity: 0.6;
+    }
+
+    /* Nav columns */
+    .site-footer__col {}
+
+    .site-footer__col-heading {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-footer-text-hover);
+      margin-bottom: 0.875rem;
+    }
+
+    .site-footer__col ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .site-footer__col ul a {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-footer-text);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: color 0.15s ease;
+    }
+
+    .site-footer__col ul a:hover { color: var(--color-footer-text-hover); }
+
+    .site-footer__col li { display: flex; align-items: center; gap: 0.4rem; }
+    .site-footer__x-link { display: flex; align-items: center; }
+    .site-footer__col-sep { color: rgba(255,255,255,0.2); font-family: var(--font-mono); font-size: 0.65rem; }
+
+    /* Footer bottom */
+    .site-footer__bottom {
+      max-width: var(--max-width);
+      margin: var(--space-lg) auto 0;
+      padding: var(--space-sm) var(--space-md);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .site-footer__copy {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--color-footer-text);
+      letter-spacing: 0.02em;
+      opacity: 0.7;
+    }
+
+    .site-footer__copy a {
+      color: var(--color-footer-text);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .site-footer__copy a:hover { color: var(--color-footer-text-hover); }
+
+    /* ——— Fade-up motion ——— */
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+
+    .fade-up.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .delay-1 { transition-delay: 0.05s; }
+    .delay-2 { transition-delay: 0.18s; }
+    .delay-3 { transition-delay: 0.31s; }
+    .delay-4 { transition-delay: 0.46s; }
+
+    /* ——— X Takeaways Section ——— */
+
+    .home-takeaways {
+      background: var(--color-bg-warm);
+      padding: var(--space-lg) 0;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .home-takeaways__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+    }
+
+    .home-takeaways__header {
+      margin-bottom: var(--space-sm);
+    }
+
+    .home-takeaways__label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text);
+      margin-bottom: var(--space-xs);
+      line-height: 1.6;
+    }
+
+    .home-takeaways__label .x-logo {
+      display: inline-flex;
+      align-items: center;
+      color: var(--color-text);
+      position: relative;
+      top: 2px;
+      margin-right: 2px;
+    }
+
+    .home-takeaways__desc {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.02em;
+    }
+
+    .home-takeaways__widget {
+      min-height: 200px;
+    }
+
+    /* ——— Responsive ——— */
+
+    @media (max-width: 900px) {
+      .cards-grid { grid-template-columns: 1fr; }
+    }
+
+    .mobile-only { display: none; }
+    .takeaways-line1, .takeaways-line2 { display: inline; }
+
+    @media (max-width: 640px) {
+      html { font-size: 16px; }
+
+      .home-s1 {
+        min-height: auto;
+        padding: var(--space-xl) 0 var(--space-lg);
+      }
+
+      .home-s1__stats { font-size: 1rem; }
+      .home-s1__bridge p { font-size: 1rem; }
+      .home-s1__thesis { font-size: 1rem; }
+      .home-s1__question { font-size: 2rem; margin-bottom: 2.25rem; }
+      .home-how__line { font-size: 0.75rem; }
+      .home-takeaways__label { font-size: 0.65rem; }
+      .home-takeaways__label .x-logo svg { width: 13px; height: 13px; }
+
+      .featured-card__content { padding: var(--space-md); }
+      .featured-card__title { font-size: 1.3rem; }
+
+      .site-header__nav { display: none; }
+      .site-header__sep { display: none; }
+      .site-header__tagline { display: none; }
+      .subscribe-block__form { flex-wrap: wrap; }
+      .subscribe-block__input { width: 100%; }
+      .subscribe-block__btn { width: 100%; }
+      .site-footer__inner { grid-template-columns: 1fr; gap: var(--space-md); }
+      .site-footer__desc { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="site-header__left">
+        <a href="/" class="site-header__logo">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="var(--color-accent)" style="margin-bottom: -2px;" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <span class="site-header__sep">|</span>
+        <span class="site-header__tagline">Science-backed data on <span class="why">why</span> AI says what it says</span>
+      </div>
+
+      <nav class="site-header__nav">
+        <a href="/research" class="site-header__nav-cta">Read the Research</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Screen 1: hero + bridge -->
+  <section class="home-s1">
+    <div class="home-s1__inner">
+
+      <p class="home-s1__stats">
+        In <span data-stat="month">March 2026</span>, researchers published over
+        <span data-stat="papers" data-count="2800">2,800</span> papers
+        on how AI decides which sources to trust.
+        That&rsquo;s <span data-stat="pages" data-count-suffix="+">70,000+</span> pages
+        in a single month.
+      </p>
+
+      <p class="home-s1__question">Are you reading this?</p>
+
+      <div class="home-s1__bridge">
+        <p>Neither are most practitioners.</p>
+        <p>Not because they don&rsquo;t care. Because the volume is impossible.</p>
+      </div>
+
+      <p class="home-s1__thesis">We are closing that gap.</p>
+
+      <div class="home-s1__scroll-arrow" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3.5 6.5l5.5 5.5 5.5-5.5"/>
+        </svg>
+      </div>
+
+    </div>
+
+    <div class="home-s1__section-label">
+      <div class="home-s1__section-label__inner">
+        <span>How Blursor Works</span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- How it works -->
+  <section class="home-how">
+    <div class="home-how__layout">
+
+      <div class="home-how__paper-wrap">
+        <div class="home-how__paper home-how__paper--left">
+          <img src="/images/sample-paper-0.png" alt="BLURSOR article — citation failure taxonomy">
+        </div>
+      </div>
+
+      <div class="home-how__inner">
+
+        <div class="home-how__item fade-up delay-1">
+          <span class="home-how__ordinal">01</span>
+          <p class="home-how__line">
+            We monitor research hubs for papers on AI visibility, LLM ranking
+            factors, and how generative engines decide what sources to cite.
+          </p>
+        </div>
+
+        <div class="home-how__item fade-up delay-2">
+          <span class="home-how__ordinal">02</span>
+          <p class="home-how__line">
+            We filter for what matters in practice. We extract the findings
+            that have real implications and distill them into readable,
+            actionable articles.
+          </p>
+        </div>
+
+        <div class="home-how__item fade-up delay-3">
+          <span class="home-how__ordinal">03</span>
+          <p class="home-how__line">
+            Then we publish &mdash; the insights, the supporting data,
+            and what it means for your work.
+          </p>
+        </div>
+
+        <p class="home-how__line home-how__line--final fade-up delay-4">
+          The original paper is always linked.
+        </p>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Article cards -->
+  <!-- Subscribe -->
+  <section class="home-subscribe">
+    <div class="home-subscribe__inner">
+      <!-- TODO: replace action="#" with real endpoint (ConvertKit / Buttondown) -->
+      <div class="subscribe-block">
+        <div class="subscribe-block__label">Weekly digest</div>
+        <p class="subscribe-block__text">New papers, distilled, once a week.</p>
+        <form class="subscribe-block__form" action="#" method="POST">
+          <input type="email" name="email" placeholder="your@email.com"
+                 class="subscribe-block__input" required>
+          <button type="submit" class="subscribe-block__btn">Subscribe</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-articles">
+
+    <div class="home-articles__label">
+      <div class="home-articles__label__inner">
+        <span>&#8595; This is what it looks like</span>
+      </div>
+    </div>
+
+    <div class="home-articles__inner">
+
+      <!-- Featured card -->
+      <a href="/research/citation-failures-geo" class="featured-card fade-up">
+        <div class="featured-card__arc">
+          <svg viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+            <circle cx="-60" cy="480" r="380"  fill="none" stroke="rgba(26,26,24,0.28)"  stroke-width="1"/>
+            <circle cx="-60" cy="480" r="560"  fill="none" stroke="rgba(26,26,24,0.22)"  stroke-width="1"/>
+            <circle cx="-60" cy="480" r="740"  fill="none" stroke="rgba(26,26,24,0.16)"  stroke-width="1"/>
+            <circle cx="-60" cy="480" r="920"  fill="none" stroke="rgba(26,26,24,0.11)"  stroke-width="1"/>
+            <circle cx="-60" cy="480" r="1100" fill="none" stroke="rgba(26,26,24,0.07)"  stroke-width="1"/>
+          </svg>
+        </div>
+        <div class="featured-card__content">
+          <div class="featured-card__label">Citation &middot; Geography</div>
+          <h2 class="featured-card__title">Diagnosing Citation Failures in GEO: What a New Paper From Virginia Tech Actually Shows</h2>
+          <p class="featured-card__summary">A new paper maps four distinct failure modes that prevent pages from being cited in AI-generated responses. 43% of relevant pages receive zero citations under baseline conditions.</p>
+          <div class="featured-card__meta">
+            <span>Mar 13, 2026</span>
+            <span class="sep">&middot;</span>
+            <span>7 min read</span>
+            <span class="sep">&middot;</span>
+            <span class="featured-card__arxiv">arXiv:2603.09296</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Grid cards -->
+      <div class="cards-grid">
+
+        <a href="/research/llm-citation-patterns-systematic-bias" class="grid-card fade-up delay-1">
+          <div class="grid-card__arc">
+            <svg viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+              <circle cx="1500" cy="480" r="380"  fill="none" stroke="rgba(26,26,24,0.28)"  stroke-width="1"/>
+              <circle cx="1500" cy="480" r="560"  fill="none" stroke="rgba(26,26,24,0.22)"  stroke-width="1"/>
+              <circle cx="1500" cy="480" r="740"  fill="none" stroke="rgba(26,26,24,0.16)"  stroke-width="1"/>
+              <circle cx="1500" cy="480" r="920"  fill="none" stroke="rgba(26,26,24,0.11)"  stroke-width="1"/>
+              <circle cx="1500" cy="480" r="1100" fill="none" stroke="rgba(26,26,24,0.07)"  stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="grid-card__content">
+            <div class="grid-card__label">Citation &middot; Bias</div>
+            <h2 class="grid-card__title">LLM citation patterns show systematic bias toward high-authority domains</h2>
+            <div class="grid-card__meta">
+              <span>Mar 10, 2026</span>
+              <span class="sep">&middot;</span>
+              <span>7 min read</span>
+              <span class="sep">&middot;</span>
+              <span class="grid-card__arxiv">arXiv:2603.04821</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="/research/retrieval-augmented-generation-ranking-signals" class="grid-card fade-up delay-2">
+          <div class="grid-card__arc">
+            <svg viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+              <line x1="-240" y1="760" x2="960"  y2="-240" stroke="rgba(26,26,24,0.26)"  stroke-width="1"/>
+              <line x1="0"    y1="760" x2="1200" y2="-240" stroke="rgba(26,26,24,0.20)"  stroke-width="1"/>
+              <line x1="240"  y1="760" x2="1440" y2="-240" stroke="rgba(26,26,24,0.15)"  stroke-width="1"/>
+              <line x1="480"  y1="760" x2="1680" y2="-240" stroke="rgba(26,26,24,0.10)"  stroke-width="1"/>
+              <line x1="720"  y1="760" x2="1920" y2="-240" stroke="rgba(26,26,24,0.06)"  stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="grid-card__content">
+            <div class="grid-card__label">Retrieval &middot; RAG</div>
+            <h2 class="grid-card__title">RAG systems inherit ranking signals from their retriever &mdash; and amplify&nbsp;them</h2>
+            <div class="grid-card__meta">
+              <span>Mar 7, 2026</span>
+              <span class="sep">&middot;</span>
+              <span>11 min read</span>
+              <span class="sep">&middot;</span>
+              <span class="grid-card__arxiv">arXiv:2603.03195</span>
+            </div>
+          </div>
+        </a>
+
+      </div><!-- /cards-grid -->
+
+      <div class="home-articles__footer">
+        <a href="/research" class="home-articles__all">All articles &rarr;</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- X Takeaways -->
+  <section class="home-takeaways">
+    <div class="home-takeaways__inner">
+      <div class="home-takeaways__header">
+        <div class="home-takeaways__label">KEY TAKEAWAYS FOR THE <span class="x-logo" aria-label="X"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg></span>CEPTIONALLY BUSY</div>
+        <p class="home-takeaways__desc">Every distilled paper includes a key takeaway. We post it on X the day it publishes.</p>
+      </div>
+      <div class="home-takeaways__widget">
+        <!-- Elfsight Twitter Feed | Katy Perry Test -->
+        <script src="https://elfsightcdn.com/platform.js" async></script>
+        <div class="elfsight-app-b43fd5ab-0c98-43cb-82a9-9def169f7bc1" data-elfsight-app-lazy></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+
+      <!-- Brand block -->
+      <div class="site-footer__brand">
+        <a href="/" class="site-footer__logo">
+          <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <p class="site-footer__desc">AI research paper digest for non-academic audiences.</p>
+        <span class="site-footer__tagline">Now you have no excuses not to act on it.</span>
+      </div>
+
+      <!-- Research column -->
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Research</div>
+        <ul>
+          <li><a href="/research">All articles</a></li>
+          <li><a href="/digest">Weekly Digest</a></li>
+        </ul>
+      </div>
+
+      <!-- Connect column -->
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Connect</div>
+        <ul>
+          <li><a href="/digest">Newsletter</a></li>
+          <li>
+            <a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener" class="site-footer__x-link">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+            </a>
+            <span class="site-footer__col-sep">|</span>
+            <a href="mailto:contact@blursor.ai">contact@blursor.ai</a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="site-footer__bottom">
+      <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
+      <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>
+    </div>
+
+  </footer>
+
+  <script>
+    // ——— STATS CONFIG — update these three values each month ———
+    var STATS = {
+      month:  'March 2026',
+      papers: '2,800',
+      pages:  '70,000+'
+    };
+
+    // Fill stat spans with configured values
+    document.querySelectorAll('[data-stat]').forEach(function(el) {
+      var key = el.dataset.stat;
+      if (STATS[key]) el.textContent = STATS[key];
+    });
+
+    // ——— Count-up animation ———
+    function formatNum(n) {
+      return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function countUp(el, endVal, suffix, duration) {
+      var startTime = null;
+      function step(ts) {
+        if (!startTime) startTime = ts;
+        var progress = Math.min((ts - startTime) / duration, 1);
+        var ease = 1 - Math.pow(1 - progress, 3);
+        var current = Math.round(endVal * ease);
+        el.textContent = formatNum(current) + (progress >= 1 ? suffix : '');
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // Run count-up on page load
+    window.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        var papersEl = document.querySelector('[data-stat="papers"]');
+        var pagesEl  = document.querySelector('[data-stat="pages"]');
+        if (papersEl) countUp(papersEl, 2800, '',  1500);
+        if (pagesEl)  countUp(pagesEl,  70000, '+', 1500);
+      }, 350);
+    });
+
+    // ——— Fade-up on scroll ———
+    var fadeEls = document.querySelectorAll('.fade-up');
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      fadeEls.forEach(function(el) { io.observe(el); });
+    } else {
+      fadeEls.forEach(function(el) { el.classList.add('is-visible'); });
+    }
+  </script>
+
+</body>
+</html>

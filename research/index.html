@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research — BLURSOR.ai</title>
+  <meta name="description" content="BLURSOR Research — arXiv papers on AI visibility and brand presence in LLMs, distilled for practitioners.">
+  <link rel="canonical" href="https://blursor.ai/research">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Research — BLURSOR.ai">
+  <meta property="og:description" content="arXiv papers on AI visibility and LLM citation behavior, distilled for practitioners.">
+  <meta property="og:url" content="https://blursor.ai/research">
+  <meta property="og:site_name" content="BLURSOR">
+  <meta property="og:image" content="https://blursor.ai/assets/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Research — BLURSOR.ai">
+  <meta name="twitter:description" content="arXiv papers on AI visibility and LLM citation behavior, distilled for practitioners.">
+  <meta name="twitter:image" content="https://blursor.ai/assets/og-default.png">
+
+  <!-- JSON-LD: CollectionPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": "https://blursor.ai/research#collection",
+    "name": "BLURSOR Research",
+    "description": "arXiv papers on AI visibility and LLM citation behavior, distilled for practitioners.",
+    "url": "https://blursor.ai/research",
+    "isPartOf": {
+      "@id": "https://blursor.ai/#website"
+    },
+    "publisher": {
+      "@id": "https://blursor.ai/#organization"
+    }
+  }
+  </script>
+
+  <!-- JSON-LD: BreadcrumbList -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://blursor.ai"},
+      {"@type": "ListItem", "position": 2, "name": "Research", "item": "https://blursor.ai/research"}
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-bg: #f0ece4;
+      --color-bg-warm: #e8e3d9;
+      --color-surface: #f5f1ea;
+      --color-text: #1a1a18;
+      --color-text-secondary: #7a776e;
+      --color-text-ghost: rgba(26, 26, 24, 0.07);
+      --color-border: #d4d0c8;
+      --color-border-light: rgba(26, 26, 24, 0.08);
+      --color-accent: #c43b2a;
+      --color-footer-bg: #1a1a18;
+      --color-footer-text: #a09d95;
+      --color-footer-text-hover: #f0ece4;
+
+      --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+      --max-width: 980px;
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 3rem;
+      --space-xl: 5rem;
+      --space-2xl: 7rem;
+    }
+
+    html {
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-serif);
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ——— Crosshair grid texture ——— */
+
+    .has-grid {
+      position: relative;
+    }
+
+    .has-grid::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cline x1='54' y1='60' x2='66' y2='60' stroke='rgba(196,59,42,0.55)' stroke-width='1'/%3E%3Cline x1='60' y1='54' x2='60' y2='66' stroke='rgba(196,59,42,0.55)' stroke-width='1'/%3E%3Cline x1='174' y1='60' x2='186' y2='60' stroke='rgba(26,26,24,0.25)' stroke-width='1'/%3E%3Cline x1='180' y1='54' x2='180' y2='66' stroke='rgba(26,26,24,0.25)' stroke-width='1'/%3E%3Cline x1='54' y1='180' x2='66' y2='180' stroke='rgba(26,26,24,0.25)' stroke-width='1'/%3E%3Cline x1='60' y1='174' x2='60' y2='186' stroke='rgba(26,26,24,0.25)' stroke-width='1'/%3E%3Cline x1='174' y1='180' x2='186' y2='180' stroke='rgba(196,59,42,0.55)' stroke-width='1'/%3E%3Cline x1='180' y1='174' x2='180' y2='186' stroke='rgba(196,59,42,0.55)' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 240px 240px;
+      background-position: 0px 0px;
+      background-repeat: repeat;
+      opacity: 0.5;
+      z-index: 0;
+    }
+
+    .has-grid > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ——— Header ——— */
+
+    .site-header {
+      padding: var(--space-md) 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .site-header__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-header__left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .site-header__logo {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: -2px;
+    }
+
+    .site-header__sep {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-border);
+    }
+
+    .site-header__tagline {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+
+    .site-header__tagline .why {
+      text-decoration: underline;
+      text-decoration-color: rgba(196,59,42,0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+
+    .site-header__nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .site-header__nav a {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.03em;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.15s ease;
+    }
+
+    .site-header__nav a:hover { color: var(--color-text); }
+
+    .site-header__nav-cta {
+      text-decoration: underline;
+      text-decoration-color: rgba(196,59,42,0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+      transition: text-decoration-color 0.15s ease;
+    }
+
+    .site-header__nav-cta:hover {
+      text-decoration-color: rgba(196,59,42,0.7);
+    }
+
+    /* ——— Hero ——— */
+
+    .hero {
+      padding: var(--space-2xl) 0 var(--space-xl);
+    }
+
+    .hero__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+    }
+
+    .hero__title {
+      font-family: var(--font-serif);
+      font-size: 2.8rem;
+      font-weight: 700;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      margin-bottom: var(--space-md);
+      max-width: 680px;
+    }
+
+    .hero__description {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--color-text-secondary);
+      max-width: 540px;
+    }
+
+    /* ——— Articles ——— */
+
+    .articles {
+      padding: var(--space-xl) 0 var(--space-2xl);
+    }
+
+    .articles__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+    }
+
+    .articles__header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: var(--space-lg);
+      padding-bottom: var(--space-sm);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .articles__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+
+    .articles__count {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.02em;
+    }
+
+    .articles__grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    /* ——— Article Card ——— */
+
+    .article-card {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 0 var(--space-md);
+      padding: var(--space-lg) 0;
+      border-bottom: 1px solid var(--color-border-light);
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s ease;
+    }
+
+    .article-card:first-child {
+      padding-top: 0;
+    }
+
+    .article-card:last-child {
+      border-bottom: none;
+    }
+
+    .article-card:hover {
+      border-color: var(--color-border);
+    }
+
+    .article-card:hover .article-card__title {
+      color: var(--color-accent);
+    }
+
+    .article-card:hover .article-card__rule {
+      background: var(--color-accent);
+      height: 100%;
+      opacity: 0.5;
+    }
+
+    /* Ghost ordinal number */
+    .article-card__ordinal {
+      font-family: var(--font-serif);
+      font-size: 2.6rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--color-text-ghost);
+      user-select: none;
+      text-align: right;
+      padding-right: var(--space-sm);
+      position: relative;
+      overflow: visible;
+      display: flex;
+      align-items: center;
+      align-self: stretch;
+    }
+
+    /* Vertical rule — structural marker */
+    .article-card__rule {
+      position: absolute;
+      right: calc(var(--space-md) * -0.5);
+      top: 0;
+      width: 2px;
+      height: 32px;
+      background: var(--color-border);
+      opacity: 0.5;
+      transition: height 0.3s ease, background 0.2s ease, opacity 0.2s ease;
+    }
+
+    .article-card__body {
+      min-width: 0;
+    }
+
+    .article-card__meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: 0.6rem;
+    }
+
+    .article-card__date {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.02em;
+      color: var(--color-text-secondary);
+    }
+
+    .article-card__dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--color-border);
+      flex-shrink: 0;
+    }
+
+    .article-card__reading-time {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.02em;
+      color: var(--color-text-secondary);
+    }
+
+    .article-card__title {
+      font-family: var(--font-serif);
+      font-size: 1.3rem;
+      font-weight: 600;
+      line-height: 1.35;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+      transition: color 0.2s ease;
+    }
+
+    .article-card__summary {
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: var(--color-text-secondary);
+      max-width: 620px;
+    }
+
+    .article-card__source {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.02em;
+      color: var(--color-accent);
+      margin-top: 0.65rem;
+      display: inline-block;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+
+    .article-card:hover .article-card__source {
+      opacity: 1;
+    }
+
+    /* ——— Footer ——— */
+
+    .site-footer { background: var(--color-footer-bg); padding: var(--space-lg) 0 0; }
+
+    .site-footer__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: var(--space-lg);
+      align-items: start;
+    }
+
+    .site-footer__brand { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .site-footer__logo {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500;
+      letter-spacing: 0.08em; color: var(--color-footer-text-hover); text-decoration: none;
+    }
+    .site-footer__logo:hover { color: #fff; }
+
+    .site-footer__desc { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); letter-spacing: 0.02em; line-height: 1.7; }
+    .site-footer__tagline { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); opacity: 0.6; }
+
+    .site-footer__col-heading { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-footer-text-hover); margin-bottom: 0.875rem; }
+    .site-footer__col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+    .site-footer__col ul a { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); text-decoration: none; letter-spacing: 0.02em; transition: color 0.15s ease; }
+    .site-footer__col ul a:hover { color: var(--color-footer-text-hover); }
+    .site-footer__col li { display: flex; align-items: center; gap: 0.4rem; }
+    .site-footer__x-link { display: flex; align-items: center; }
+    .site-footer__col-sep { color: rgba(255,255,255,0.2); font-family: var(--font-mono); font-size: 0.65rem; }
+
+    .site-footer__bottom { max-width: var(--max-width); margin: var(--space-lg) auto 0; padding: var(--space-sm) var(--space-md); border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; }
+    .site-footer__copy { font-family: var(--font-mono); font-size: 0.65rem; color: var(--color-footer-text); letter-spacing: 0.02em; opacity: 0.7; }
+    .site-footer__copy a { color: var(--color-footer-text); text-decoration: none; transition: color 0.15s ease; }
+    .site-footer__copy a:hover { color: var(--color-footer-text-hover); }
+
+    /* ——— Responsive ——— */
+
+    @media (max-width: 640px) {
+      html {
+        font-size: 16px;
+      }
+
+      .hero {
+        padding-top: var(--space-xl);
+        padding-bottom: var(--space-lg);
+      }
+
+      .hero__title {
+        font-size: 2rem;
+      }
+
+      .site-header__nav { display: none; }
+      .site-header__sep { display: none; }
+      .site-header__tagline { display: none; }
+
+      .article-card {
+        grid-template-columns: 1fr;
+      }
+
+      .article-card__ordinal {
+        display: none;
+      }
+
+      .site-footer__inner {
+        flex-direction: column;
+        gap: var(--space-sm);
+      }
+
+      .has-grid::before {
+        background-size: 160px 160px;
+      }
+
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="site-header__left">
+        <a href="/" class="site-header__logo">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="var(--color-accent)" style="margin-bottom: -2px;" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <span class="site-header__sep">|</span>
+        <span class="site-header__tagline">Science-backed data on <span class="why">why</span> AI says what it says</span>
+      </div>
+      <nav class="site-header__nav">
+        <a href="/research">Archive</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero has-grid">
+    <div class="hero__inner">
+      <h1 class="hero__title">How AI decides what&nbsp;to&nbsp;cite, rank, and&nbsp;surface</h1>
+      <p class="hero__description">We read the papers so you can ship the&nbsp;changes. Each article distills a recent arXiv paper on LLM retrieval, citation behavior, or AI-driven search into something you can act&nbsp;on.</p>
+    </div>
+  </section>
+
+  <!-- Articles -->
+  <section class="articles">
+    <div class="articles__inner">
+
+      <div class="articles__header">
+        <span class="articles__label">Recent Digests</span>
+        <span class="articles__count">6 articles</span>
+      </div>
+
+      <div class="articles__grid">
+
+        <a href="/research/llm-citation-patterns-systematic-bias" class="article-card">
+          <div class="article-card__ordinal">
+            01
+            <span class="article-card__rule"></span>
+          </div>
+          <div class="article-card__body">
+            <div class="article-card__meta">
+              <span class="article-card__date">Mar 10, 2026</span>
+              <span class="article-card__dot"></span>
+              <span class="article-card__reading-time">7 min read</span>
+            </div>
+            <h2 class="article-card__title">LLM citation patterns show systematic bias toward high-authority domains</h2>
+            <p class="article-card__summary">A controlled study finds GPT-4 and Claude disproportionately cite .edu and .gov sources even when commercial pages have stronger topical relevance.</p>
+            <span class="article-card__source">arXiv:2603.04821</span>
+          </div>
+        </a>
+
+        <a href="/research/retrieval-augmented-generation-ranking-signals" class="article-card">
+          <div class="article-card__ordinal">
+            02
+            <span class="article-card__rule"></span>
+          </div>
+          <div class="article-card__body">
+            <div class="article-card__meta">
+              <span class="article-card__date">Mar 7, 2026</span>
+              <span class="article-card__dot"></span>
+              <span class="article-card__reading-time">11 min read</span>
+            </div>
+            <h2 class="article-card__title">RAG systems inherit ranking signals from their retriever — and amplify&nbsp;them</h2>
+            <p class="article-card__summary">New evidence that retrieval-augmented generation doesn't neutralize the biases of its search layer. It makes them worse.</p>
+            <span class="article-card__source">arXiv:2603.03195</span>
+          </div>
+        </a>
+
+        <a href="/research/brand-mention-frequency-llm-training" class="article-card">
+          <div class="article-card__ordinal">
+            03
+            <span class="article-card__rule"></span>
+          </div>
+          <div class="article-card__body">
+            <div class="article-card__meta">
+              <span class="article-card__date">Mar 3, 2026</span>
+              <span class="article-card__dot"></span>
+              <span class="article-card__reading-time">6 min read</span>
+            </div>
+            <h2 class="article-card__title">Brand mention frequency in training data predicts LLM recommendation&nbsp;behavior</h2>
+            <p class="article-card__summary">Researchers measure the correlation between how often a brand appears in Common Crawl and how likely three major LLMs are to recommend it unprompted.</p>
+            <span class="article-card__source">arXiv:2602.18440</span>
+          </div>
+        </a>
+
+        <a href="/research/structured-data-llm-answer-grounding" class="article-card">
+          <div class="article-card__ordinal">
+            04
+            <span class="article-card__rule"></span>
+          </div>
+          <div class="article-card__body">
+            <div class="article-card__meta">
+              <span class="article-card__date">Feb 26, 2026</span>
+              <span class="article-card__dot"></span>
+              <span class="article-card__reading-time">9 min read</span>
+            </div>
+            <h2 class="article-card__title">Structured data improves LLM answer grounding more than page&nbsp;authority</h2>
+            <p class="article-card__summary">Pages with schema markup and clearly structured content are grounded more accurately by LLMs than high-PageRank pages without it.</p>
+            <span class="article-card__source">arXiv:2602.15003</span>
+          </div>
+        </a>
+
+        <a href="/research/ai-overview-click-redistribution" class="article-card">
+          <div class="article-card__ordinal">
+            05
+            <span class="article-card__rule"></span>
+          </div>
+          <div class="article-card__body">
+            <div class="article-card__meta">
+              <span class="article-card__date">Feb 20, 2026</span>
+              <span class="article-card__dot"></span>
+              <span class="article-card__reading-time">8 min read</span>
+            </div>
+            <h2 class="article-card__title">AI Overviews redistribute clicks, but not evenly — position&nbsp;effects&nbsp;persist</h2>
+            <p class="article-card__summary">A large-scale clickstream analysis shows Google's AI Overviews shift traffic from positions 1–3 to cited sources, but the first citation captures most of it.</p>
+            <span class="article-card__source">arXiv:2602.11887</span>
+          </div>
+        </a>
+
+        <a href="/research/llm-entity-recall-long-tail" class="article-card">
+          <div class="article-card__ordinal">
+            06
+            <span class="article-card__rule"></span>
+          </div>
+          <div class="article-card__body">
+            <div class="article-card__meta">
+              <span class="article-card__date">Feb 14, 2026</span>
+              <span class="article-card__dot"></span>
+              <span class="article-card__reading-time">5 min read</span>
+            </div>
+            <h2 class="article-card__title">Long-tail entities are functionally invisible to&nbsp;LLMs</h2>
+            <p class="article-card__summary">Below a threshold of training data exposure, entities aren't just less known to LLMs — they're treated as if they don't exist. The drop-off is sharp.</p>
+            <span class="article-card__source">arXiv:2602.08214</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <a href="/" class="site-footer__logo">
+          <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <p class="site-footer__desc">AI research paper digest for non-academic audiences.</p>
+        <span class="site-footer__tagline">Now you have no excuses not to act on it.</span>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Research</div>
+        <ul>
+          <li><a href="/research">All articles</a></li>
+          <li><a href="/digest">Weekly Digest</a></li>
+        </ul>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Connect</div>
+        <ul>
+          <li><a href="/digest">Newsletter</a></li>
+          <li>
+            <a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener" class="site-footer__x-link">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+            </a>
+            <span class="site-footer__col-sep">|</span>
+            <a href="mailto:contact@blursor.ai">contact@blursor.ai</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="site-footer__bottom">
+      <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
+      <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>
+    </div>
+  </footer>
+
+
+</body>
+</html>

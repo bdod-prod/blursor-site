@@ -1,0 +1,13 @@
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor noise
+.vscode/
+.idea/
+
+# Local secrets (none expected in site repo, but defense in depth)
+.env
+.env.*
+!.env.example

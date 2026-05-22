@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero Background Variants — BLURSOR Reference</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f0ece4;
+      --bg-warm: #e8e3d9;
+      --text: #1a1a18;
+      --text-sec: #7a776e;
+      --accent: #c43b2a;
+      --border: #d4d0c8;
+      --border-light: rgba(26,26,24,0.08);
+      --mono: 'IBM Plex Mono', monospace;
+      --serif: 'Source Serif 4', Georgia, serif;
+    }
+
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+    body { background: #1a1a18; color: var(--text); font-family: var(--mono); padding: 3rem 2rem; }
+
+    h1 {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #7a776e;
+      margin-bottom: 2.5rem;
+    }
+
+    .variants {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .variant { display: flex; flex-direction: column; gap: 0.875rem; }
+
+    /* The preview strip */
+    .preview {
+      background: var(--bg);
+      position: relative;
+      overflow: hidden;
+      height: 160px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .preview svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Fake title text to show arcs behind content */
+    .preview__text {
+      position: absolute;
+      bottom: 1.25rem;
+      left: 1.5rem;
+      right: 1.5rem;
+    }
+
+    .preview__label-tag {
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 0.375rem;
+    }
+
+    .preview__title {
+      font-family: var(--serif);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    /* Variant label + code block */
+    .variant__name {
+      font-size: 0.6875rem;
+      color: #a09d95;
+      letter-spacing: 0.06em;
+    }
+
+    .variant__name strong {
+      color: #f0ece4;
+      font-weight: 500;
+    }
+
+    .code-block {
+      background: #111110;
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 0.875rem 1rem;
+      font-size: 0.5625rem;
+      line-height: 1.7;
+      color: #7a776e;
+      white-space: pre;
+      overflow-x: auto;
+      border-radius: 2px;
+    }
+
+    .code-block .attr-name { color: #a09d95; }
+    .code-block .attr-val  { color: #c4b99a; }
+    .code-block .tag       { color: #c43b2a; }
+
+    /* Usage note */
+    .usage {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.6875rem;
+      color: #7a776e;
+      line-height: 1.8;
+      max-width: 640px;
+    }
+
+    .usage strong { color: #a09d95; }
+  </style>
+</head>
+<body>
+
+  <h1>BLURSOR · Article hero background variants</h1>
+
+  <div class="variants">
+
+    <!-- VARIANT A: Arcs from bottom-left (default) -->
+    <div class="variant">
+      <div class="preview">
+        <svg viewBox="0 0 480 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <circle cx="-20" cy="195" r="127" fill="none" stroke="rgba(26,26,24,0.07)" stroke-width="1"/>
+          <circle cx="-20" cy="195" r="187" fill="none" stroke="rgba(26,26,24,0.055)" stroke-width="1"/>
+          <circle cx="-20" cy="195" r="247" fill="none" stroke="rgba(26,26,24,0.04)" stroke-width="1"/>
+          <circle cx="-20" cy="195" r="307" fill="none" stroke="rgba(26,26,24,0.03)" stroke-width="1"/>
+          <circle cx="-20" cy="195" r="367" fill="none" stroke="rgba(26,26,24,0.02)" stroke-width="1"/>
+        </svg>
+        <div class="preview__text">
+          <div class="preview__label-tag">GEO · Citation</div>
+          <div class="preview__title">Diagnosing Citation Failures in Generative Engine Optimization</div>
+        </div>
+      </div>
+      <div class="variant__name"><strong>A — Arcs, bottom-left</strong> (default)</div>
+      <div class="code-block"><span class="tag">&lt;svg</span> <span class="attr-name">class</span>=<span class="attr-val">"article-header__bg"</span>
+     <span class="attr-name">viewBox</span>=<span class="attr-val">"0 0 1440 380"</span>
+     <span class="attr-name">preserveAspectRatio</span>=<span class="attr-val">"xMidYMid slice"</span>
+     <span class="attr-name">aria-hidden</span>=<span class="attr-val">"true"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"-60"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"380"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.07)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"-60"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"560"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.055)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"-60"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"740"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.04)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"-60"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"920"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.03)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"-60"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"1100"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.02)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;/svg&gt;</span></div>
+    </div>
+
+    <!-- VARIANT B: Arcs from bottom-right -->
+    <div class="variant">
+      <div class="preview">
+        <svg viewBox="0 0 480 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <circle cx="500" cy="195" r="127" fill="none" stroke="rgba(26,26,24,0.07)" stroke-width="1"/>
+          <circle cx="500" cy="195" r="187" fill="none" stroke="rgba(26,26,24,0.055)" stroke-width="1"/>
+          <circle cx="500" cy="195" r="247" fill="none" stroke="rgba(26,26,24,0.04)" stroke-width="1"/>
+          <circle cx="500" cy="195" r="307" fill="none" stroke="rgba(26,26,24,0.03)" stroke-width="1"/>
+          <circle cx="500" cy="195" r="367" fill="none" stroke="rgba(26,26,24,0.02)" stroke-width="1"/>
+        </svg>
+        <div class="preview__text">
+          <div class="preview__label-tag">GEO · Citation</div>
+          <div class="preview__title">Diagnosing Citation Failures in Generative Engine Optimization</div>
+        </div>
+      </div>
+      <div class="variant__name"><strong>B — Arcs, bottom-right</strong></div>
+      <div class="code-block"><span class="tag">&lt;svg</span> <span class="attr-name">class</span>=<span class="attr-val">"article-header__bg"</span>
+     <span class="attr-name">viewBox</span>=<span class="attr-val">"0 0 1440 380"</span>
+     <span class="attr-name">preserveAspectRatio</span>=<span class="attr-val">"xMidYMid slice"</span>
+     <span class="attr-name">aria-hidden</span>=<span class="attr-val">"true"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"380"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.07)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"560"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.055)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"740"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.04)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"920"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.03)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"1100"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.02)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;/svg&gt;</span></div>
+    </div>
+
+    <!-- VARIANT C: Arcs from top-right -->
+    <div class="variant">
+      <div class="preview">
+        <svg viewBox="0 0 480 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <circle cx="500" cy="-35" r="127" fill="none" stroke="rgba(26,26,24,0.07)" stroke-width="1"/>
+          <circle cx="500" cy="-35" r="187" fill="none" stroke="rgba(26,26,24,0.055)" stroke-width="1"/>
+          <circle cx="500" cy="-35" r="247" fill="none" stroke="rgba(26,26,24,0.04)" stroke-width="1"/>
+          <circle cx="500" cy="-35" r="307" fill="none" stroke="rgba(26,26,24,0.03)" stroke-width="1"/>
+          <circle cx="500" cy="-35" r="367" fill="none" stroke="rgba(26,26,24,0.02)" stroke-width="1"/>
+        </svg>
+        <div class="preview__text">
+          <div class="preview__label-tag">GEO · Citation</div>
+          <div class="preview__title">Diagnosing Citation Failures in Generative Engine Optimization</div>
+        </div>
+      </div>
+      <div class="variant__name"><strong>C — Arcs, top-right</strong></div>
+      <div class="code-block"><span class="tag">&lt;svg</span> <span class="attr-name">class</span>=<span class="attr-val">"article-header__bg"</span>
+     <span class="attr-name">viewBox</span>=<span class="attr-val">"0 0 1440 380"</span>
+     <span class="attr-name">preserveAspectRatio</span>=<span class="attr-val">"xMidYMid slice"</span>
+     <span class="attr-name">aria-hidden</span>=<span class="attr-val">"true"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"-100"</span> <span class="attr-name">r</span>=<span class="attr-val">"380"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.07)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"-100"</span> <span class="attr-name">r</span>=<span class="attr-val">"560"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.055)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"-100"</span> <span class="attr-name">r</span>=<span class="attr-val">"740"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.04)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"-100"</span> <span class="attr-name">r</span>=<span class="attr-val">"920"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.03)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"-100"</span> <span class="attr-name">r</span>=<span class="attr-val">"1100"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.02)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;/svg&gt;</span></div>
+    </div>
+
+    <!-- VARIANT D: Diagonal parallel lines -->
+    <div class="variant">
+      <div class="preview">
+        <svg viewBox="0 0 480 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <line x1="-80" y1="240" x2="320" y2="-80" stroke="rgba(26,26,24,0.065)" stroke-width="1"/>
+          <line x1="0"   y1="240" x2="400" y2="-80" stroke="rgba(26,26,24,0.05)"  stroke-width="1"/>
+          <line x1="80"  y1="240" x2="480" y2="-80" stroke="rgba(26,26,24,0.04)"  stroke-width="1"/>
+          <line x1="160" y1="240" x2="560" y2="-80" stroke="rgba(26,26,24,0.03)"  stroke-width="1"/>
+          <line x1="240" y1="240" x2="640" y2="-80" stroke="rgba(26,26,24,0.02)"  stroke-width="1"/>
+        </svg>
+        <div class="preview__text">
+          <div class="preview__label-tag">GEO · Citation</div>
+          <div class="preview__title">Diagnosing Citation Failures in Generative Engine Optimization</div>
+        </div>
+      </div>
+      <div class="variant__name"><strong>D — Diagonal lines</strong></div>
+      <div class="code-block"><span class="tag">&lt;svg</span> <span class="attr-name">class</span>=<span class="attr-val">"article-header__bg"</span>
+     <span class="attr-name">viewBox</span>=<span class="attr-val">"0 0 1440 380"</span>
+     <span class="attr-name">preserveAspectRatio</span>=<span class="attr-val">"xMidYMid slice"</span>
+     <span class="attr-name">aria-hidden</span>=<span class="attr-val">"true"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;line</span> <span class="attr-name">x1</span>=<span class="attr-val">"-240"</span> <span class="attr-name">y1</span>=<span class="attr-val">"760"</span> <span class="attr-name">x2</span>=<span class="attr-val">"960"</span>  <span class="attr-name">y2</span>=<span class="attr-val">"-240"</span>
+    <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.065)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;line</span> <span class="attr-name">x1</span>=<span class="attr-val">"0"</span>    <span class="attr-name">y1</span>=<span class="attr-val">"760"</span> <span class="attr-name">x2</span>=<span class="attr-val">"1200"</span> <span class="attr-name">y2</span>=<span class="attr-val">"-240"</span>
+    <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.05)"</span>  <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;line</span> <span class="attr-name">x1</span>=<span class="attr-val">"240"</span>  <span class="attr-name">y1</span>=<span class="attr-val">"760"</span> <span class="attr-name">x2</span>=<span class="attr-val">"1440"</span> <span class="attr-name">y2</span>=<span class="attr-val">"-240"</span>
+    <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.04)"</span>  <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;line</span> <span class="attr-name">x1</span>=<span class="attr-val">"480"</span>  <span class="attr-name">y1</span>=<span class="attr-val">"760"</span> <span class="attr-name">x2</span>=<span class="attr-val">"1680"</span> <span class="attr-name">y2</span>=<span class="attr-val">"-240"</span>
+    <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.03)"</span>  <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;line</span> <span class="attr-name">x1</span>=<span class="attr-val">"720"</span>  <span class="attr-name">y1</span>=<span class="attr-val">"760"</span> <span class="attr-name">x2</span>=<span class="attr-val">"1920"</span> <span class="attr-name">y2</span>=<span class="attr-val">"-240"</span>
+    <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.02)"</span>  <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;/svg&gt;</span></div>
+    </div>
+
+    <!-- VARIANT E: Horizon arcs (center below, curves upward) -->
+    <div class="variant">
+      <div class="preview">
+        <svg viewBox="0 0 480 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <circle cx="240" cy="200" r="60"  fill="none" stroke="rgba(26,26,24,0.07)"  stroke-width="1"/>
+          <circle cx="240" cy="200" r="110" fill="none" stroke="rgba(26,26,24,0.055)" stroke-width="1"/>
+          <circle cx="240" cy="200" r="160" fill="none" stroke="rgba(26,26,24,0.04)"  stroke-width="1"/>
+          <circle cx="240" cy="200" r="210" fill="none" stroke="rgba(26,26,24,0.028)" stroke-width="1"/>
+          <circle cx="240" cy="200" r="260" fill="none" stroke="rgba(26,26,24,0.018)" stroke-width="1"/>
+        </svg>
+        <div class="preview__text">
+          <div class="preview__label-tag">GEO · Citation</div>
+          <div class="preview__title">Diagnosing Citation Failures in Generative Engine Optimization</div>
+        </div>
+      </div>
+      <div class="variant__name"><strong>E — Horizon arcs</strong> (center below, curves upward)</div>
+      <div class="code-block"><span class="tag">&lt;svg</span> <span class="attr-name">class</span>=<span class="attr-val">"article-header__bg"</span>
+     <span class="attr-name">viewBox</span>=<span class="attr-val">"0 0 1440 380"</span>
+     <span class="attr-name">preserveAspectRatio</span>=<span class="attr-val">"xMidYMid slice"</span>
+     <span class="attr-name">aria-hidden</span>=<span class="attr-val">"true"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"720"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"180"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.07)"</span>  <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"720"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"330"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.055)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"720"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"480"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.04)"</span>  <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"720"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"630"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.028)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"720"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"780"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.018)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;/svg&gt;</span></div>
+    </div>
+
+    <!-- VARIANT F: Two-point tension -->
+    <div class="variant">
+      <div class="preview">
+        <svg viewBox="0 0 480 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <!-- arcs from bottom-left -->
+          <circle cx="-20" cy="195" r="187" fill="none" stroke="rgba(26,26,24,0.055)" stroke-width="1"/>
+          <circle cx="-20" cy="195" r="307" fill="none" stroke="rgba(26,26,24,0.035)" stroke-width="1"/>
+          <circle cx="-20" cy="195" r="427" fill="none" stroke="rgba(26,26,24,0.02)"  stroke-width="1"/>
+          <!-- arcs from bottom-right -->
+          <circle cx="500" cy="195" r="187" fill="none" stroke="rgba(26,26,24,0.055)" stroke-width="1"/>
+          <circle cx="500" cy="195" r="307" fill="none" stroke="rgba(26,26,24,0.035)" stroke-width="1"/>
+          <circle cx="500" cy="195" r="427" fill="none" stroke="rgba(26,26,24,0.02)"  stroke-width="1"/>
+        </svg>
+        <div class="preview__text">
+          <div class="preview__label-tag">GEO · Citation</div>
+          <div class="preview__title">Diagnosing Citation Failures in Generative Engine Optimization</div>
+        </div>
+      </div>
+      <div class="variant__name"><strong>F — Two-point tension</strong> (both corners)</div>
+      <div class="code-block"><span class="tag">&lt;svg</span> <span class="attr-name">class</span>=<span class="attr-val">"article-header__bg"</span>
+     <span class="attr-name">viewBox</span>=<span class="attr-val">"0 0 1440 380"</span>
+     <span class="attr-name">preserveAspectRatio</span>=<span class="attr-val">"xMidYMid slice"</span>
+     <span class="attr-name">aria-hidden</span>=<span class="attr-val">"true"</span><span class="tag">&gt;</span>
+  <span class="attr-name">&lt;!-- arcs from bottom-left --&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"-60"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"560"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.055)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"-60"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"800"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.035)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"-60"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"1040"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.02)"</span>  <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="attr-name">&lt;!-- arcs from bottom-right --&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"560"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.055)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"800"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.035)"</span> <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;circle</span> <span class="attr-name">cx</span>=<span class="attr-val">"1500"</span> <span class="attr-name">cy</span>=<span class="attr-val">"480"</span> <span class="attr-name">r</span>=<span class="attr-val">"1040"</span>
+    <span class="attr-name">fill</span>=<span class="attr-val">"none"</span> <span class="attr-name">stroke</span>=<span class="attr-val">"rgba(26,26,24,0.02)"</span>  <span class="attr-name">stroke-width</span>=<span class="attr-val">"1"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;/svg&gt;</span></div>
+    </div>
+
+  </div><!-- /variants -->
+
+  <div class="usage">
+    <strong>How to use:</strong> copy the SVG block for your chosen variant and paste it as the first child of <code>&lt;div class="article-header"&gt;</code>, before <code>&lt;div class="layout-grid"&gt;</code>.<br><br>
+    The <code>.article-header</code> already has <code>position: relative; overflow: hidden</code> and <code>.article-header__bg</code> has <code>position: absolute; inset: 0; pointer-events: none</code> — the SVG inherits these.<br><br>
+    <strong>Tip:</strong> assign variants to articles based on topic feel — arcs from left for analytical/diagnostic pieces, diagonal lines for trend/pattern pieces, horizon arcs for broad survey papers, two-point tension for comparative research.
+  </div>
+
+</body>
+</html>
