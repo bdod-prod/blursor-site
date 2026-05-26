@@ -61,3 +61,4 @@ But that's the point. Those interventions aren't currently standard. Most agenti
 The practical implication is specific: any production agent that routes queries through a search layer — whether web search, internal knowledge bases, or hybrid retrieval — needs explicit mechanisms for corroboration before accepting top-ranked results. What those mechanisms look like in practice (prompting, tool-use constraints, confidence thresholds, multi-source verification steps) is still an open engineering question. But the question is no longer hypothetical.
 
 *Shah, S., & Ozgur, L. (2026). The Synthetic Web: Adversarially-Curated Mini-Internets for Diagnosing Epistemic Weaknesses of Language Agents. arXiv:2603.00801*
+<!-- backfill test edit -->
