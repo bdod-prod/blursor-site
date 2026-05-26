@@ -1,0 +1,34 @@
+name: Re-render HTML when markdown changes
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'site/content_md/*.md'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  rerender:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger n8n re-render for each changed markdown file
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WEBHOOK: ${{ secrets.N8N_W7_RERENDER_WEBHOOK }}
+          BRANCH: ${{ github.head_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          files=$(gh pr view "$PR_NUMBER" --json files --jq '.files[].path' | grep '^site/content_md/.*\.md$' || true)
+          if [ -z "$files" ]; then
+            echo "No markdown files in PR diff — nothing to re-render."
+            exit 0
+          fi
+          echo "$files" | while IFS= read -r file; do
+            slug=$(basename "$file" .md)
+            echo "Triggering re-render for slug=$slug branch=$BRANCH"
+            curl -sS -X GET "${WEBHOOK}?slug=${slug}&branch=${BRANCH}" || exit 1
+          done
