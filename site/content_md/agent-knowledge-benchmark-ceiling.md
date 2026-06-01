@@ -1,4 +1,4 @@
-# Frontier Support Agents Hit a 25% Reliability Ceiling
+# The Best AI Support Agents Still Fail 3 Out of 4 Real Tasks
 
 Most agent benchmarks measure capability under favorable conditions — clean queries, well-scoped tasks, retrieval that works. τ-Knowledge, a new benchmark from researchers at τ-Knowledge, takes a different approach: it measures what happens when agents face the kind of knowledge complexity that characterizes real enterprise support deployments. The benchmark places agents inside a fintech customer support simulation with 698 interconnected documents, 51 discoverable tools, and tasks that require multi-step policy reasoning across an evolving database state. The conditions are not adversarial. They are just realistic.
 
