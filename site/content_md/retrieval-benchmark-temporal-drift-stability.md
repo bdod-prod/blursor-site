@@ -1,4 +1,4 @@
-# Retrieval Benchmarks Stay Stable Even as Their Corpus Churns
+# The Web Churns Constantly. Search Rankings Barely Notice.
 
 Most retrieval benchmarks are built once and used indefinitely. The assumption embedded in that practice is that the underlying corpus is stable enough that rankings measured today will still mean something next year. For benchmarks built on technical documentation — repositories that deprecate features, reorganize entire codebases, and migrate functionality to competing frameworks — that assumption has never been tested directly.
 
