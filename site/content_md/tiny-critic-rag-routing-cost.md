@@ -1,4 +1,4 @@
-# A 1.7B Model Routes RAG Fallbacks in 42 ms. Here's What the Trade-Off Actually Looks Like.
+# A 1.7B Model Routes RAG Fallbacks at 1/50th the Cost of GPT-4o-mini
 
 Retrieval-augmented generation pipelines have a noise problem. Retrieved documents aren't always relevant — sometimes they're actively misleading, containing high-similarity passages that contradict the correct answer. The standard engineering response is to add a retrieval critic: a model that inspects retrieved context before generation and decides whether to use it or fall back to a search call. The problem is that the obvious critic — a capable frontier model like GPT-4o-mini — introduces 785 ms of routing overhead and $3.00 per 10,000 queries in API costs. For pipelines running at scale, that's not a rounding error.
 
