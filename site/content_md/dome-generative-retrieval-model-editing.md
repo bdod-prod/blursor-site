@@ -1,4 +1,4 @@
-# DOME Adds New Documents to Generative Retrieval in 2 Seconds Each
+# Teaching a Search Model a New Document in Two Seconds Flat
 
 Generative retrieval (GR) models learn to map queries directly to document identifiers — no inverted index, no separate retrieval step. The appeal is architectural simplicity. The problem is that the mapping is baked into model weights at training time. Add a new document to the corpus and the model has no mechanism to retrieve it without retraining. For static corpora, that's manageable. For anything that changes — news, product catalogs, scientific literature — it's a practical ceiling.
 
