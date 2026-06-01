@@ -1,4 +1,4 @@
-# Beyond Relevance: What a Johns Hopkins Study Actually Shows About Retrieval as a RAG Proxy
+# Retrieval Metrics Predict RAG Coverage — Until You Add an Agent
 
 Most RAG evaluation pipelines treat retrieval quality and generation quality as a single problem. Improve the retriever, improve the response — that's the working assumption. A paper from Johns Hopkins University, published in March on arXiv, tests that assumption systematically across 15 retrieval stacks, four generation pipelines, and three benchmarks. The result is more conditional than the assumption allows.
 
