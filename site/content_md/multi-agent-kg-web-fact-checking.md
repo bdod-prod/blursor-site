@@ -1,4 +1,4 @@
-# Knowledge-Graph Fact-Checking Beats GPT-4o Without Fine-Tuning
+# A Smarter Fact-Checking Setup Beat GPT-4o — No Training Needed
 
 Fact-checking research has split into two camps. One builds specialized systems trained on labeled datasets, optimizing for a single benchmark. The other prompts frontier LLMs directly, relying on parametric knowledge without retrieval. Both approaches have obvious failure modes — the first doesn't generalize, the second doesn't verify. A paper from the University of Melbourne, published on arXiv in February 2026, takes a third path: an agentic system that combines structured knowledge graph traversal with open-web retrieval, trained on no task-specific labels, and evaluated across seven datasets spanning Wikipedia claims, web-sourced claims, and article summaries.
 
