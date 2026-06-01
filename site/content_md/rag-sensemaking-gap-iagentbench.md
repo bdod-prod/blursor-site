@@ -1,4 +1,4 @@
-# The Sensemaking Gap: What a New Benchmark From the University of Washington Actually Shows About RAG and Agentic Reasoning
+# Retrieval Solves Factoid QA but Not Sensemaking
 
 Most RAG evaluations are running on the wrong test. The benchmarks that dominate leaderboards — SimpleQA, HotpotQA — were designed to measure whether models can locate and extract facts. That is a useful capability. It is not the same as synthesizing evidence across thematically distinct sources, and conflating the two has produced a systematic blind spot in how retrieval pipelines get assessed.
 
