@@ -1,4 +1,4 @@
-# Legal RAG Bench: What a New Benchmark From Isaacus Actually Shows About Legal RAG
+# In Legal RAG, the Embedding Model Matters More Than the LLM
 
 Most legal AI benchmarks test the wrong thing. LegalBench and LegalBench-RAG — the two most cited evaluation frameworks in the field — are, in the authors' assessment, "dominated by trivial yes/no classification tasks" that require little more than text classification or sentiment analysis. A system that aces those benchmarks may still fail completely when asked to retrieve the correct passage from a 4,876-chunk legal corpus and synthesize a citation-grounded answer to a complex procedural question. That gap is what Legal RAG Bench is designed to close.
 
