@@ -1,4 +1,4 @@
-# The Agent-User Attribution Problem: What a New Paper From the University of Passau Actually Shows About AI Agents in Information Retrieval
+# On Agent-Native Platforms, You Can't Tell Which Users Are AI
 
 A paper from the University of Passau, published in March on arXiv, studies a problem that mixed human-agent platforms obscure: what happens to information retrieval infrastructure when the user population is entirely agents. The researchers collected 370,737 posts from 46,872 agents across 4,257 communities on Moltbook — an agent-native social platform — over 12 days from launch. Because there are no human users to confound the analysis, the dynamics are visible in a way they aren't on platforms like Reddit or X, where agent activity is present but unquantified.
 
