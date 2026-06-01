@@ -1,4 +1,4 @@
-# You Can Forecast a Reranker's Accuracy Before You Train It
+# You Can Predict How Good a Search Reranker Will Be Before Building It
 
 Scaling laws have become standard infrastructure for large language model development — fit a power law on small runs, forecast where a large run lands, avoid training the expensive model to find out it underperforms. The same logic hasn't been applied systematically to information retrieval rerankers. Most reranker development still involves training at target scale and measuring. A new paper from UMass Amherst asks whether that's necessary.
 
