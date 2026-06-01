@@ -841,7 +841,6 @@
   </style>
 </head>
 <body>
-  <!-- BLURSOR-META: {"slug":"query-specific-expiry-search-freshness","title":"Query-Specific Expiry: Why 'Recent' Isn't the Same as 'Fresh'","subtitle":"Baidu's Aurora-Expiry replaces static time-window filters with LLM-inferred, query-specific expiration thresholds — cutting median document age 12.81% for time-sensitive queries in live production traffic.","summary_for_card":"Baidu's Aurora-Expiry replaces static time-window filters with LLM-inferred, query-specific expiration thresholds — cutting median document age 12.81% for time-sensitive queries in live production traffic.","published_date":"2026-06-01","reading_time_min":6,"category_label":"Search · Freshness","hero_variant":"A","arxiv_id":"2605.13052"} -->
   <header class="site-header">
     <div class="site-header__inner">
       <div class="site-header__left">
@@ -1127,20 +1126,5 @@
       });
     });
   </script>
-
-<script>
-  (function(){
-    var pageUrl = encodeURIComponent(window.location.href);
-    var pageTitle = encodeURIComponent(document.title.replace(/ — BLURSOR Research$/, ''));
-    document.querySelectorAll('.share-btn[href]').forEach(function(a){
-      var h = a.getAttribute('href');
-      if (h.indexOf('twitter.com/intent/tweet') !== -1) {
-        a.href = 'https://twitter.com/intent/tweet?url=' + pageUrl + '&text=' + pageTitle;
-      } else if (h.indexOf('linkedin.com/sharing') !== -1) {
-        a.href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + pageUrl;
-      }
-    });
-  })();
-</script>
 </body>
 </html>
