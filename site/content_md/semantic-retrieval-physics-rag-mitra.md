@@ -1,4 +1,4 @@
-# When Physicists Can't Remember the Exact Words: What a New Paper From UW-Madison Actually Shows About Domain-Specific RAG
+# When Physicists Paraphrase, Keyword Search Drops From 0.75 to 0.13
 
 Physics collaborations produce enormous volumes of internal documentation — analysis notes, technical memos, detector studies — that members need to query regularly. The problem is that those members rarely remember the exact phrasing those documents use. They remember concepts, experimental approaches, decay channels. They paraphrase. Standard keyword search was built for the other case: users who know what they're looking for and can reproduce the words that describe it.
 
