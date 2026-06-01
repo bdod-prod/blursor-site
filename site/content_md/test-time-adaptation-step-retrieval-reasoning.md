@@ -1,4 +1,4 @@
-# TARSE Adapts Mid-Reasoning by Retrieving Past Solution Steps
+# An AI That Learns From Its Own Past Reasoning, Mid-Answer
 
 Most retrieval-augmented generation systems retrieve evidence once, at the question level, then hand the result to a reasoning chain. That design works when the task is fact lookup. It works less well when the task requires executing a sequence of conditional checks — where an error at step three is not fixed by better evidence about the question as a whole. The failure is local to a step, but the retrieval is global to the query.
 
