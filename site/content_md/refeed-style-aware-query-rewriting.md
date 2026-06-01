@@ -1,4 +1,4 @@
-# Rewrite Only the Queries That Fail — Then Verify the Rewrites
+# Don't Rewrite Every Search Query — Just the Ones That Fail
 
 Query rewriting for retrieval-augmented generation has a quiet assumption baked in: that the problem is semantic. A query is ambiguous, or it omits context from a prior turn, or it uses a pronoun where a noun would help. Fix those things and retrieval improves. That assumption drives most of the benchmark work — CANARD, QReCC, and the LLM-based rewriting methods that followed them all optimize for meaning preservation.
 
