@@ -1,4 +1,4 @@
-# Retrieval Solves Factoid QA but Not Sensemaking
+# AI Can Look Things Up. It Still Can't Connect the Dots.
 
 Most RAG evaluations are running on the wrong test. The benchmarks that dominate leaderboards — SimpleQA, HotpotQA — were designed to measure whether models can locate and extract facts. That is a useful capability. It is not the same as synthesizing evidence across thematically distinct sources, and conflating the two has produced a systematic blind spot in how retrieval pipelines get assessed.
 
