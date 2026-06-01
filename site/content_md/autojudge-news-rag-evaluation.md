@@ -1,4 +1,4 @@
-# An LLM Judge Tracks Human RAG Rankings at 0.87 Correlation
+# Can AI Grade AI's Homework? On News Trust, Surprisingly Well.
 
 Most RAG evaluation benchmarks treat retrieval and generation as ends in themselves. A paper from the University of Waterloo, published on arXiv in February, takes a narrower and more applied target: systems that help readers assess whether a news article is trustworthy. The task requires generating investigative questions a reader should ask, then producing a short attributed report grounded in a fixed retrieval corpus. Both outputs are evaluated against rubrics built by TREC assessors doing the kind of lateral reading a journalist would do — not keyword matching, not surface fluency scoring.
 
