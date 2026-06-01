@@ -1,4 +1,4 @@
-# Agentic RAG's Compounding Failure Modes: What a New SoK Survey Actually Shows
+# Agentic RAG's Failure Modes Compound — and Benchmarks Miss Them
 
 Standard RAG pipelines have a simple control flow: retrieve once, then generate. The determinism is a feature — it makes the system auditable and the failure modes legible. When the initial retrieval is bad, the output is bad, and the error is terminal. That's a tractable problem.
 
