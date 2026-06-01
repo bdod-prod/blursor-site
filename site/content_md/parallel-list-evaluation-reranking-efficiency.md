@@ -1,4 +1,4 @@
-# Scoring Recommendation Lists in Parallel Cuts Latency 44%
+# One Scheduling Trick Cut a Recommender's Lag Almost in Half
 
 List-wise reranking is now standard in large-scale recommender systems. A generator produces candidate sequences; an evaluator scores them; the top sequence gets served. The problem is structural: every candidate sequence triggers its own Transformer forward pass. Add one more candidate list and you pay the full encoding cost again. At Kuaishou's scale — 50 candidate sequences evaluated over a 60-video reranking pool, serving hundreds of millions of users — that linear cost becomes a hard production constraint.
 
