@@ -1,4 +1,4 @@
-# A 54M-Parameter Model Matches LLM Query Fan-Out at 1/20th the Latency
+# A Small Model Matched a Big One's Search Smarts, 20x Faster
 
 Query fan-out — expanding a single user query into multiple sub-queries to broaden retrieval coverage — has become a standard technique in recommendation and search pipelines. The problem is cost. Running fan-out through a large autoregressive language model at inference time is slow, and running it multiple times (Best-of-N) to improve quality multiplies that cost. Most deployed systems either skip fan-out entirely or accept the latency penalty without a principled way to control what properties the generated sub-queries actually have.
 
