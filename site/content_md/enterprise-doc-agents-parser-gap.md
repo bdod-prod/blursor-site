@@ -1,4 +1,4 @@
-# The Parser Gap: What a New Databricks Benchmark Actually Shows About Enterprise Document Agents
+# For Document Agents, the Parser Matters More Than the Model
 
 Most RAG benchmarks test retrieval. This one tests whether agents can actually answer hard questions from dense, domain-specific documents — and then measures every variable in the pipeline that determines whether they can. The paper, from Databricks, introduces OfficeQA Pro: 133 questions drawn from 89,000 pages of U.S. Treasury Bulletins spanning nearly 100 years, containing over 26 million numerical values. The corpus is the kind of material enterprises actually deal with — not Wikipedia summaries or clean web text, but decades of dense tabular financial data that no model has memorized and no web search reliably surfaces.
 
