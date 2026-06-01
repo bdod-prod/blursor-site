@@ -10,6 +10,16 @@ const path = require('path');
 const DEPLOY_ROOT = path.resolve(__dirname, '..');
 const RESEARCH_DIR = path.join(DEPLOY_ROOT, 'research');
 const INDEX_PATH = path.join(RESEARCH_DIR, 'index.html');
+const SITEMAP_PATH = path.join(DEPLOY_ROOT, 'sitemap.xml');
+
+const BASE_URL = 'https://blursor.ai';
+// Static routes that exist regardless of article set. Each maps a URL path to
+// its on-disk source so lastmod reflects the file's real mtime.
+const STATIC_ROUTES = [
+  { path: '/', file: path.join(DEPLOY_ROOT, 'index.html') },
+  { path: '/research', file: INDEX_PATH },
+  { path: '/author/alex-rostovtsev', file: path.join(DEPLOY_ROOT, 'author', 'alex-rostovtsev.html') },
+];
 
 const META_RE = /<!--\s*BLURSOR-META:\s*({[\s\S]*?})\s*-->/;
 
@@ -54,6 +64,48 @@ function renderCard(meta, ordinal) {
             <span class="article-card__source">arXiv:${escapeHtml(meta.arxiv_id || '')}</span>
           </div>
         </a>`;
+}
+
+function isoDate(d) {
+  // YYYY-MM-DD (sitemap lastmod accepts W3C date; date-only is valid)
+  const dt = (d instanceof Date) ? d : new Date(d);
+  if (isNaN(dt)) return null;
+  return dt.toISOString().slice(0, 10);
+}
+
+function fileLastmod(filePath) {
+  try {
+    return isoDate(fs.statSync(filePath).mtime);
+  } catch (e) {
+    return null;
+  }
+}
+
+function buildSitemap(articles) {
+  const urls = [];
+
+  for (const r of STATIC_ROUTES) {
+    urls.push({ loc: BASE_URL + r.path, lastmod: fileLastmod(r.file) });
+  }
+
+  for (const a of articles) {
+    urls.push({
+      loc: `${BASE_URL}/research/${a.slug}`,
+      lastmod: isoDate(a.published_date),
+    });
+  }
+
+  const body = urls.map(u => {
+    const lm = u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : '';
+    return `  <url>\n    <loc>${escapeHtml(u.loc)}</loc>${lm}\n  </url>`;
+  }).join('\n');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    `${body}\n</urlset>\n`;
+
+  fs.writeFileSync(SITEMAP_PATH, xml, 'utf-8');
+  console.log(`  wrote ${path.relative(DEPLOY_ROOT, SITEMAP_PATH)} with ${urls.length} URL(s)`);
 }
 
 function main() {
@@ -135,6 +187,9 @@ function main() {
 
   fs.writeFileSync(INDEX_PATH, updatedHtml, 'utf-8');
   console.log(`  wrote ${path.relative(DEPLOY_ROOT, INDEX_PATH)} with ${total} card(s)`);
+
+  // Regenerate sitemap.xml from the same article set + static routes.
+  buildSitemap(articles);
 }
 
 main();
