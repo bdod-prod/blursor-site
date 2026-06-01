@@ -1,4 +1,4 @@
-# Tool-Augmented Memory Retrieval for Long-Term Conversational QA: What a New Paper Actually Shows
+# Letting an LLM Pick Its Own Memory Tools Cuts Tokens 5x
 
 Most memory systems for LLMs treat retrieval as a single operation: embed the query, find the top-k nearest vectors, hand the results to the model. That works reasonably well when questions are simple and self-contained. It works poorly when questions ask about sequences of events, require chaining across multiple memory fragments, or need broad semantic coverage across a long conversation history. The problem isn't the embedding model — it's that a single retrieval mode can't adapt to structurally different question types.
 
