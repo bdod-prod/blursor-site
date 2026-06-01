@@ -841,7 +841,6 @@
   </style>
 </head>
 <body>
-  <!-- BLURSOR-META: {"slug":"ai-overviews-reddit-engagement-reversal","title":"AI Overviews Sent Users to Reddit. AI Mode Is Taking Them Back.","subtitle":"AI Search Giveth, AI Mode Taketh Away","summary_for_card":"AI Search Giveth, AI Mode Taketh Away","published_date":"2026-06-01","reading_time_min":6,"category_label":"AI SEARCH · PLATFORM EFFECTS","hero_variant":"F","arxiv_id":"2605.16428"} -->
   <header class="site-header">
     <div class="site-header__inner">
       <div class="site-header__left">
@@ -1123,20 +1122,5 @@
       });
     });
   </script>
-
-<script>
-  (function(){
-    var pageUrl = encodeURIComponent(window.location.href);
-    var pageTitle = encodeURIComponent(document.title.replace(/ — BLURSOR Research$/, ''));
-    document.querySelectorAll('.share-btn[href]').forEach(function(a){
-      var h = a.getAttribute('href');
-      if (h.indexOf('twitter.com/intent/tweet') !== -1) {
-        a.href = 'https://twitter.com/intent/tweet?url=' + pageUrl + '&text=' + pageTitle;
-      } else if (h.indexOf('linkedin.com/sharing') !== -1) {
-        a.href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + pageUrl;
-      }
-    });
-  })();
-</script>
 </body>
 </html>
