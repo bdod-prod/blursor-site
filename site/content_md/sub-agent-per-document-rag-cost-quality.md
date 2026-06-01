@@ -1,4 +1,4 @@
-# One Agent Per Document: What a New Multi-Agent RAG Paper From TOBB University Actually Shows
+# One Agent Per Document: 85% of the Quality at 38% of the Cost
 
 Retrieval-augmented generation has a coverage problem. Standard top-k retrieval pulls the most semantically similar chunks from a corpus and hands them to a single model. When the answer requires synthesizing evidence scattered across a dozen documents — each running tens of thousands of tokens — that approach misses facts not because retrieval is broken but because the architecture was never designed for that regime. The standard fix, agentic RAG, adds iterative retrieval loops: the model searches, reads, decides whether it has enough, searches again. In principle, this should improve coverage. In practice, as this paper shows, it mostly burns tokens.
 
