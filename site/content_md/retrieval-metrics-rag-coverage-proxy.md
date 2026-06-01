@@ -1,4 +1,4 @@
-# Retrieval Metrics Predict RAG Coverage — Until You Add an Agent
+# A Simple Score Predicts If AI Will Answer Well — Until It Gets Clever
 
 Most RAG evaluation pipelines treat retrieval quality and generation quality as a single problem. Improve the retriever, improve the response — that's the working assumption. A paper from Johns Hopkins University, published in March on arXiv, tests that assumption systematically across 15 retrieval stacks, four generation pipelines, and three benchmarks. The result is more conditional than the assumption allows.
 
