@@ -1,4 +1,4 @@
-# No LLM Verifies Even Half the Citations It Generates
+# AI Cites Sources It Never Checked — and Half Don't Hold Up
 
 A paper from New York University, published in March on arXiv, examines what happens to LLM citation quality when real-world deployment constraints are applied — date windows, non-disclosure rules, survey-style formatting, and combinations thereof. Prior work on citation hallucination has largely tested models in unconstrained settings, which is not how they get deployed. Retrieval-augmented systems, enterprise assistants, and research tools routinely impose temporal filters, confidentiality restrictions, or output format requirements. This study treats those constraints as experimental variables rather than background conditions.
 
