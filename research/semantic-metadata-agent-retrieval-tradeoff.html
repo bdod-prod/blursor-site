@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semantic Metadata Makes Agents More Reliable, Not Smarter — BLURSOR Research</title>
+  <meta name="description" content="Schema.org markup gives retrieval agents 65.7% higher FAIR-compliant precision — but cuts query coverage by 29% where publishers haven't adopted it.">
+  <link rel="canonical" href="https://blursor.ai/research/semantic-metadata-agent-retrieval-tradeoff">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Semantic Metadata Makes Agents More Reliable, Not Smarter — BLURSOR Research">
+  <meta property="og:description" content="The Precision-Coverage Tradeoff in Agentic Data Retrieval">
+  <meta property="og:url" content="https://blursor.ai/research/semantic-metadata-agent-retrieval-tradeoff">
+  <meta property="og:site_name" content="BLURSOR Research">
+  <meta property="article:published_time" content="2026-05-31">
+  <meta property="article:author" content="https://blursor.ai/author/alex-rostovtsev">
+  <meta property="og:image" content="https://blursor.ai/assets/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="BLURSOR Research">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Semantic Metadata Makes Agents More Reliable, Not Smarter — BLURSOR Research">
+  <meta name="twitter:description" content="The Precision-Coverage Tradeoff in Agentic Data Retrieval">
+  <meta name="twitter:image" content="https://blursor.ai/assets/og-default.png">
+
+  <script type="application/ld+json">
+  {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "@id": "https://blursor.ai/research/semantic-metadata-agent-retrieval-tradeoff#article",
+  "headline": "Semantic Metadata Makes Agents More Reliable, Not Smarter",
+  "description": "Schema.org markup gives retrieval agents 65.7% higher FAIR-compliant precision — but cuts query coverage by 29% where publishers haven't adopted it.",
+  "datePublished": "2026-05-31",
+  "dateModified": "2026-05-31",
+  "author": {
+    "@type": "Person",
+    "@id": "https://blursor.ai/author/alex-rostovtsev#person",
+    "name": "Alex Rostovtsev",
+    "url": "https://blursor.ai/author/alex-rostovtsev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://blursor.ai/#organization",
+    "name": "BLURSOR",
+    "url": "https://blursor.ai"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://blursor.ai/research/semantic-metadata-agent-retrieval-tradeoff"
+  },
+  "about": {
+    "@type": "ScholarlyArticle",
+    "name": "Do Agents Need Semantic Metadata? A Comparative Study in Agentic Data Retrieval",
+    "sameAs": "https://arxiv.org/abs/2605.28787"
+  }
+}
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ——— Reset & base ——— */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-bg: #f0ece4;
+      --color-bg-warm: #e8e3d9;
+      --color-surface: #f5f1ea;
+      --color-text: #1a1a18;
+      --color-text-secondary: #7a776e;
+      --color-text-ghost: rgba(26, 26, 24, 0.07);
+      --color-border: #d4d0c8;
+      --color-border-light: rgba(26, 26, 24, 0.08);
+      --color-accent: #c43b2a;
+      --color-footer-bg: #1a1a18;
+      --color-footer-text: #a09d95;
+      --color-footer-text-hover: #f0ece4;
+
+      --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 3rem;
+      --space-xl: 5rem;
+
+      /* Layout */
+      --sidebar-w: 160px;
+      --article-w: 640px;
+      --col-gap: 2.5rem;
+      --layout-max: 1080px;
+      --layout-pad: var(--space-md);
+    }
+
+    html {
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-serif);
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    main { flex: 1; }
+
+    /* ——— Shared layout grid ——— */
+    .layout-grid {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) minmax(0, var(--article-w)) var(--sidebar-w);
+      column-gap: var(--col-gap);
+      max-width: var(--layout-max);
+      margin: 0 auto;
+      padding: 0 var(--layout-pad);
+      align-items: start;
+    }
+
+    /* ——— Site header ——— */
+    .site-header {
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .site-header__inner {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-header__left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .site-header__logo {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--color-text);
+      text-decoration: none;
+      margin-top: -2px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .site-header__sep {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-border);
+    }
+
+    .site-header__tagline {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+
+    .site-header__tagline .why {
+      text-decoration: underline;
+      text-decoration-color: rgba(196,59,42,0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+
+    .site-header__nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .site-header__nav a {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.03em;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.15s ease;
+    }
+
+    .site-header__nav a:hover {
+      color: var(--color-text);
+    }
+
+    /* ——— Article header ——— */
+    .article-header {
+      position: relative;
+      overflow: hidden;
+      padding: var(--space-xl) 0 var(--space-lg);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .article-header__bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .article-header__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-accent);
+      margin-bottom: 0.875rem;
+    }
+
+    .article-header__title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.625rem, 2.8vw, 2.375rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--color-text);
+      margin-bottom: var(--space-md);
+    }
+
+    .article-header__meta {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .article-header__meta .sep {
+      color: var(--color-border);
+    }
+
+    .article-header__meta .arxiv-link {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .article-header__meta .arxiv-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ——— Article layout ——— */
+    .article-main {
+      padding: var(--space-md) 0 var(--space-xl);
+    }
+
+    /* ——— Sidebars ——— */
+    .article-sidebar {
+      position: sticky;
+      top: 2.5rem;
+    }
+
+    .sidebar-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+      opacity: 0.7;
+    }
+
+    /* Left sidebar: paper info */
+    .paper-info__section {
+      margin-bottom: var(--space-md);
+    }
+
+    .paper-info__title {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      font-style: italic;
+      line-height: 1.55;
+      color: var(--color-text);
+    }
+
+    .paper-info__value {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      line-height: 1.55;
+      color: var(--color-text-secondary);
+    }
+
+    .paper-info__arxiv {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .paper-info__arxiv:hover {
+      text-decoration: underline;
+    }
+
+    /* Right sidebar: TOC */
+    .toc__list {
+      list-style: none;
+    }
+
+    .toc__link {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      line-height: 1.4;
+      display: block;
+      padding: 0.4rem 0 0.4rem 0.75rem;
+      border-left: 2px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .toc__link:hover {
+      color: var(--color-text);
+      border-left-color: var(--color-accent);
+    }
+
+    /* ——— Article body ——— */
+    .article-body p {
+      font-size: 1.0625rem;
+      line-height: 1.85;
+      color: var(--color-text);
+      margin-bottom: 1.75rem;
+    }
+
+    .article-body p.lead {
+      font-size: 1.125rem;
+      line-height: 1.8;
+      color: var(--color-text-secondary);
+      margin-bottom: 1.75rem;
+    }
+
+    .article-body h2 {
+      font-family: var(--font-serif);
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--color-text);
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+      margin: 3.5rem 0 1.25rem;
+    }
+
+    .article-body strong {
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .article-body a {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .article-body a:hover {
+      text-decoration: underline;
+    }
+
+    .article-body hr {
+      border: none;
+      border-top: 1px solid var(--color-border-light);
+      margin: var(--space-lg) 0;
+    }
+
+    /* ——— Stat callout (the 43%) ——— */
+    .stat-callout {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin: var(--space-lg) 0;
+      padding: var(--space-md) var(--space-md);
+      border-left: 3px solid var(--color-accent);
+      background: var(--color-surface);
+    }
+
+    .stat-callout__number {
+      font-family: var(--font-mono);
+      font-size: 3.25rem;
+      font-weight: 500;
+      color: var(--color-accent);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .stat-callout__text {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ——— Failure map ——— */
+    .failure-map {
+      margin: var(--space-md) 0 var(--space-lg);
+      border: 1px solid var(--color-border-light);
+    }
+
+    .failure-map__row {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-sm);
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .failure-map__row:last-child {
+      border-bottom: none;
+    }
+
+    .failure-map__pct {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      min-width: 2.75rem;
+    }
+
+    .failure-map__label {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--color-text);
+    }
+
+    .failure-map__row--primary .failure-map__pct {
+      color: var(--color-accent);
+      font-size: 1rem;
+    }
+
+    .failure-map__row--primary .failure-map__label {
+      font-weight: 600;
+    }
+
+    /* ——— Performance callout ——— */
+    .performance-callout {
+      display: flex;
+      align-items: center;
+      gap: var(--space-lg);
+      margin: var(--space-lg) 0;
+      padding: var(--space-md) var(--space-md);
+      background: var(--color-bg-warm);
+      border-left: 3px solid var(--color-border);
+    }
+
+    .performance-callout__item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .performance-callout__figure {
+      font-family: var(--font-mono);
+      font-size: 2.25rem;
+      font-weight: 500;
+      color: var(--color-text);
+      line-height: 1;
+    }
+
+    .performance-callout__desc {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      line-height: 1.4;
+      max-width: 13rem;
+    }
+
+    .performance-callout__divider {
+      width: 1px;
+      height: 2.5rem;
+      background: var(--color-border);
+      flex-shrink: 0;
+    }
+
+    /* ——— Key takeaway ——— */
+    .key-takeaway {
+      margin: 0 0 var(--space-md);
+      padding: var(--space-md) var(--space-md);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+    }
+
+    .key-takeaway__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-accent);
+      margin-bottom: 0.875rem;
+    }
+
+    .key-takeaway p {
+      font-size: 0.9375rem !important;
+      color: var(--color-text-secondary) !important;
+      line-height: 1.75 !important;
+      margin-bottom: 0.75rem !important;
+    }
+
+    .key-takeaway p:last-child {
+      margin-bottom: 0 !important;
+      color: var(--color-text) !important;
+      font-style: italic;
+    }
+
+    .org-name {
+      text-decoration: underline;
+      text-decoration-color: rgba(196, 59, 42, 0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    /* ——— Source citation ——— */
+    .source-citation {
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--color-border-light);
+    }
+
+    .source-citation__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-secondary);
+      opacity: 0.7;
+      margin-bottom: 0.5rem;
+    }
+
+    .source-citation p {
+      font-family: var(--font-mono) !important;
+      font-size: 0.75rem !important;
+      color: var(--color-text-secondary) !important;
+      line-height: 1.6 !important;
+      margin-bottom: 0 !important;
+    }
+
+    .source-citation a {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .source-citation a:hover {
+      text-decoration: underline;
+    }
+
+    /* ——— More articles ——— */
+    .more-articles {
+      background: var(--color-bg-warm);
+      border-top: 1px solid var(--color-border-light);
+      padding: var(--space-xl) 0;
+    }
+
+    .more-articles__inner {
+      max-width: var(--layout-max);
+      margin: 0 auto;
+      padding: 0 var(--layout-pad);
+    }
+
+    .more-articles__header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding-bottom: var(--space-md);
+      margin-bottom: var(--space-lg);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .more-articles__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-secondary);
+    }
+
+    .more-articles__all {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+    }
+
+    .more-articles__all:hover {
+      text-decoration: underline;
+    }
+
+    .more-articles__grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-lg);
+    }
+
+    .more-card {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      padding-bottom: var(--space-md);
+      border-bottom: 2px solid var(--color-border-light);
+      transition: border-color 0.2s ease;
+    }
+
+    .more-card:hover {
+      border-bottom-color: var(--color-accent);
+    }
+
+    .more-card__meta {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .more-card__title {
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--color-text);
+      line-height: 1.4;
+      margin-bottom: 0.65rem;
+      transition: color 0.15s ease;
+    }
+
+    .more-card:hover .more-card__title {
+      color: var(--color-accent);
+    }
+
+    .more-card__source {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+    }
+
+    /* ——— Byline ——— */
+    .article-byline {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+
+    .article-byline__link {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .article-byline__link:hover {
+      color: var(--color-accent);
+    }
+
+    /* ——— Subscribe block ——— */
+    .subscribe-block {
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      padding: var(--space-md);
+      margin: var(--space-lg) 0;
+    }
+
+    .subscribe-block__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-accent);
+    }
+
+    .subscribe-block__text {
+      font-family: var(--font-serif);
+      color: var(--color-text-secondary);
+      font-size: 0.9375rem;
+      margin: var(--space-xs) 0 var(--space-sm);
+    }
+
+    .subscribe-block__form {
+      display: flex;
+      gap: var(--space-xs);
+    }
+
+    .subscribe-block__input {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      padding: 0.5rem 0.75rem;
+      color: var(--color-text);
+      outline: none;
+    }
+
+    .subscribe-block__input:focus {
+      border-color: var(--color-text-secondary);
+    }
+
+    .subscribe-block__btn {
+      background: var(--color-accent);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.5rem 1rem;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .subscribe-block__btn:hover {
+      opacity: 0.88;
+    }
+
+    /* ——— Share buttons ——— */
+    .share-block {
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--color-border-light);
+    }
+
+    .share-buttons {
+      display: flex;
+      gap: 0.375rem;
+      margin-top: 0.75rem;
+    }
+
+    .share-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--color-border);
+      background: transparent;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.15s ease, border-color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .share-btn:hover,
+    .share-btn.copied {
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+    }
+
+    /* ——— Footer ——— */
+    .site-footer { background: var(--color-footer-bg); padding: var(--space-lg) 0 0; }
+    .site-footer__inner { max-width: 980px; margin: 0 auto; padding: 0 var(--space-md); display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--space-lg); align-items: start; }
+    .site-footer__brand { display: flex; flex-direction: column; gap: 0.75rem; }
+    .site-footer__logo { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; letter-spacing: 0.08em; color: var(--color-footer-text-hover); text-decoration: none; }
+    .site-footer__logo:hover { color: #fff; }
+    .site-footer__desc { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); letter-spacing: 0.02em; line-height: 1.7; }
+    .site-footer__tagline { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); opacity: 0.6; }
+    .site-footer__col-heading { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-footer-text-hover); margin-bottom: 0.875rem; }
+    .site-footer__col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+    .site-footer__col ul a { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); text-decoration: none; letter-spacing: 0.02em; transition: color 0.15s ease; }
+    .site-footer__col ul a:hover { color: var(--color-footer-text-hover); }
+    .site-footer__col li { display: flex; align-items: center; gap: 0.4rem; }
+    .site-footer__x-link { display: flex; align-items: center; }
+    .site-footer__col-sep { color: rgba(255,255,255,0.2); font-family: var(--font-mono); font-size: 0.65rem; }
+    .site-footer__bottom { max-width: 980px; margin: var(--space-lg) auto 0; padding: var(--space-sm) var(--space-md); border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; }
+    .site-footer__copy { font-family: var(--font-mono); font-size: 0.65rem; color: var(--color-footer-text); letter-spacing: 0.02em; opacity: 0.7; }
+    .site-footer__copy a { color: var(--color-footer-text); text-decoration: none; transition: color 0.15s ease; }
+    .site-footer__copy a:hover { color: var(--color-footer-text-hover); }
+
+    /* ——— Responsive ——— */
+    @media (max-width: 900px) {
+      .layout-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .article-sidebar--left {
+        display: none;
+      }
+
+      .article-sidebar--right {
+        display: none;
+      }
+
+      .performance-callout {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+      }
+
+      .performance-callout__divider {
+        width: 2.5rem;
+        height: 1px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      :root {
+        --space-xl: 3rem;
+        --space-lg: 2rem;
+      }
+
+      .article-header__title {
+        font-size: 1.5rem;
+      }
+
+      .stat-callout {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .stat-callout__number {
+        font-size: 2.5rem;
+      }
+
+      .more-articles__grid {
+        grid-template-columns: 1fr;
+      }
+
+      .site-header__nav { display: none; }
+      .site-header__sep { display: none; }
+      .site-header__tagline { display: none; }
+      .article-body p { font-size: 1rem; }
+      .article-body p.lead { font-size: 1.0625rem; }
+      .subscribe-block__form { flex-wrap: wrap; }
+      .subscribe-block__input { width: 100%; }
+      .subscribe-block__btn { width: 100%; }
+      .site-footer__inner { grid-template-columns: 1fr; gap: var(--space-md); }
+    }
+  </style>
+</head>
+<body>
+  <!-- BLURSOR-META: {"slug":"semantic-metadata-agent-retrieval-tradeoff","title":"Semantic Metadata Makes Agents More Reliable, Not Smarter","subtitle":"The Precision-Coverage Tradeoff in Agentic Data Retrieval","summary_for_card":"The Precision-Coverage Tradeoff in Agentic Data Retrieval","published_date":"2026-05-31","reading_time_min":6,"category_label":"Retrieval · Agents","hero_variant":"F","arxiv_id":"2605.28787"} -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="site-header__left">
+        <a href="/" class="site-header__logo">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="var(--color-accent)" style="margin-bottom: -2px;" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <span class="site-header__sep">|</span>
+        <span class="site-header__tagline">Science-backed data on <span class="why">why</span> AI says what it says</span>
+      </div>
+      <nav class="site-header__nav">
+        <a href="/research">Archive</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="article-header">
+    <svg class="article-header__bg" viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <circle cx="-60" cy="480" r="380"  fill="none" stroke="rgba(26,26,24,0.20)" stroke-width="1"/>
+      <circle cx="-60" cy="480" r="740"  fill="none" stroke="rgba(26,26,24,0.12)" stroke-width="1"/>
+      <circle cx="1500" cy="-100" r="380" fill="none" stroke="rgba(26,26,24,0.20)" stroke-width="1"/>
+      <circle cx="1500" cy="-100" r="740" fill="none" stroke="rgba(26,26,24,0.12)" stroke-width="1"/>
+    </svg>
+    <div class="layout-grid">
+      <div></div>
+      <div class="article-header__content">
+        <div class="article-header__label">RETRIEVAL · AGENTS</div>
+        <h1 class="article-header__title">Semantic Metadata Makes Agents More Reliable, Not Smarter</h1>
+        <div class="article-header__meta">
+          <span>May 31, 2026</span>
+          <span class="sep">·</span>
+          <span>6 min read</span>
+          <span class="sep">·</span>
+          <a href="https://arxiv.org/abs/2605.28787" target="_blank" rel="noopener" class="arxiv-link">arXiv:2605.28787</a>
+        </div>
+      </div>
+      <div></div>
+    </div>
+  </div>
+
+  <main class="article-main">
+    <div class="layout-grid">
+
+      <aside class="article-sidebar article-sidebar--left">
+        <div class="paper-info__section">
+          <div class="sidebar-label">Referenced Paper</div>
+          <div class="paper-info__title">Do Agents Need Semantic Metadata? A Comparative Study in Agentic Data Retrieval</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Authors</div>
+          <div class="paper-info__value">Chen, S. · Alrashed, T. · Halevy, A. · Noy, N.</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Institution</div>
+          <div class="paper-info__value">Google, Mountain View, CA, USA</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Published</div>
+          <div class="paper-info__value">May 27, 2026</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Source</div>
+          <a href="https://arxiv.org/abs/2605.28787" target="_blank" rel="noopener" class="paper-info__arxiv">arXiv:2605.28787 ↗</a>
+        </div>
+      </aside>
+
+      <div class="article-body">
+        <hr>
+
+<h2 id="the-precision-coverage-tradeoff-in-agentic-data-retrieval">The Precision-Coverage Tradeoff in Agentic Data Retrieval</h2>
+
+<p>When an AI agent goes looking for a dataset, finding the right topic is only half the job. The other half is landing on a page where the data can actually be used — not a blog post describing the data, not a portal that links to it somewhere, but a structured registry entry with a machine-readable download. That last-mile problem turns out to be where semantic metadata earns its keep.</p>
+
+<p>A new study from Google pits two retrieval agents against each other across 58 benchmark queries: one searching the open web via Google Search, the other restricted to Google Dataset Search — a 90-million-record corpus filtered to pages with valid schema.org annotations. Both agents run on the same LLM backbone (Gemini 2.5 Pro), so what's being tested is the index, not the model. The result is a clean measurement of what structured metadata actually does for an agent trying to find usable data.</p>
+
+<p>The anchoring number: the Semantic Agent achieves 46.4% FAIR-compliant precision versus 28.0% for the Baseline Agent — a 65.7% relative improvement. But it answers 40 of 58 queries to the Baseline Agent's 56, because schema.org markup simply isn't there for much of the web.</p>
+
+<hr>
+
+<h2 id="what-the-two-agents-actually-do-differently">What the Two Agents Actually Do Differently</h2>
+
+<p>The Baseline Agent queries the open web and returns whatever Google Search surfaces. The Semantic Agent queries Google Dataset Search, which applies a classification model to filter out pages with invalid or misused schema.org markup — roughly 80% of the raw corpus gets cut, leaving a heavily curated slice of the web. Both agents return up to three datasets per query.</p>
+
+<p>The evaluation scores each returned URL on three dimensions aligned with FAIR principles: topical relevance (is this the right subject?), data accessibility (is there a machine-readable download?), and page type (is this an actual dataset registry entry, or something adjacent to one?). A URL has to pass all three to count as FAIR-compliant.</p>
+
+<p>The design isolates something specific: not whether one agent is smarter at understanding queries, but whether the underlying index changes what kinds of pages agents end up on. The answer is yes, sharply, on the last two dimensions.</p>
+
+<hr>
+
+<h2 id="semantic-metadata-eliminates-last-mile-utility-failures">Semantic Metadata Eliminates Last-Mile Utility Failures</h2>
+
+<p>Both agents retrieve highly relevant datasets at nearly identical rates — 60.4% for the Baseline Agent, 60.7% for the Semantic Agent. Semantic metadata doesn't help agents find more topically correct data. What it does is change where they land once they've found it.</p>
+
+<div class="failure-map">
+  <div class="failure-map__row failure-map__row--primary">
+    <span class="failure-map__pct">20.1%</span>
+    <span class="failure-map__label">DATA_NARRATIVE — prose descriptions, no downloadable data</span>
+  </div>
+  <div class="failure-map__row">
+    <span class="failure-map__pct">8.5%</span>
+    <span class="failure-map__label">DISCOVERY_PORTAL — landing pages, not dataset pages</span>
+  </div>
+  <div class="failure-map__row">
+    <span class="failure-map__pct">61.0%</span>
+    <span class="failure-map__label">DATA_REGISTRY — actual dataset records (Baseline Agent)</span>
+  </div>
+</div>
+
+<p>The Baseline Agent returns DATA_NARRATIVE pages — prose descriptions of datasets with no downloadable content — in 20.1% of retrievals. Another 8.5% are DISCOVERY_PORTAL pages: landing pages that point toward data rather than hosting it. These are pages a human researcher would recognize immediately as the wrong destination, but a general web index has no way to exclude them.</p>
+
+<p>The Semantic Agent reduces DATA_NARRATIVE retrievals by 86.6%, DATA_EXPLORER pages by 55.7%, and eliminates DISCOVERY_PORTAL pages entirely. Its results land on DATA_REGISTRY entries — actual structured dataset records — in 88.4% of retrievals, compared to 61.0% for the Baseline Agent. On machine-readable accessibility, the gap is 71.4% versus 48.7%.</p>
+
+<p>These aren't failures of relevance judgment. They're failures of page-type routing — the agent found the right neighborhood but got dropped at the wrong address. Schema.org markup, when present and valid, functions as a signal that a page is actually a dataset page rather than a page about a dataset.</p>
+
+<hr>
+
+<h2 id="fair-compliant-precision-vs-query-coverage">FAIR-Compliant Precision vs. Query Coverage</h2>
+
+<p>The precision improvement is real and substantial. The Semantic Agent delivers 52 FAIR-compliant URLs across 40 answered queries — a density of 1.30 per query, utilizing 43.3% of its three-result capacity. The Baseline Agent delivers 46 FAIR-compliant URLs across 56 queries, a density of 0.82 and 27.4% utilization. The per-query density difference doesn't reach statistical significance at this sample size, but the dataset-level precision gap — 46.4% versus 28.0% — is the cleaner measure and it's large.</p>
+
+<div class="performance-callout">
+  <div class="performance-callout__item">
+    <div class="performance-callout__figure">46.4%</div>
+    <div class="performance-callout__desc">Semantic Agent FAIR-compliant precision (vs. 28.0% Baseline)</div>
+  </div>
+  <div class="performance-callout__divider"></div>
+  <div class="performance-callout__item">
+    <div class="performance-callout__figure">40 / 58</div>
+    <div class="performance-callout__desc">Queries answered by Semantic Agent — 29% fewer than Baseline due to sparse markup</div>
+  </div>
+</div>
+
+<p>The coverage cost is harder to dismiss. The Baseline Agent answers 56 of 58 queries; the Semantic Agent answers only 40. That's not a small gap. It reflects a structural reality: schema.org adoption is uneven, and it's thinnest in exactly the places where reliable data discovery matters most — research repositories, domain-specific archives, the long tail of scientific data.</p>
+
+<p>For any given query the Semantic Agent does answer, the results are meaningfully more usable. For the 18 queries it can't answer at all, it returns nothing.</p>
+
+<hr>
+
+<h2 id="where-the-semantic-agent-s-advantage-disappears">Where the Semantic Agent's Advantage Disappears</h2>
+
+<p>The relevance finding is worth sitting with. Both agents score ~60% on highly relevant retrievals. Schema.org metadata carries no signal about whether a dataset is topically appropriate for a query — it only signals that a page is structured as a dataset. An agent searching a semantically annotated corpus isn't better at understanding what the user needs; it's better at avoiding pages that describe data rather than serving it.</p>
+
+<p>Coverage collapses in research domains where schema.org adoption is low. The NTCIR-16 benchmark queries used here are keyword-based IR queries, and the study notes they may not capture the full difficulty of multi-faceted natural language requests. The 58-query sample also limits how far the results generalize. And because both Google Search and Google Dataset Search are proprietary systems, the study measures end-to-end utility — it can't isolate how much of the effect comes from metadata versus Google's internal ranking.</p>
+
+<p>The ~80% filtering rate on the raw schema.org corpus is its own signal. Most pages that attempt semantic markup don't do it well enough to be useful. The Semantic Agent's advantage depends on a curated minority of publishers who got it right.</p>
+
+<hr>
+
+<h2 id="what-this-means-for-data-publishers-and-agent-designers">What This Means for Data Publishers and Agent Designers</h2>
+
+<p>If you publish research data and want AI agents to find and use it, schema.org markup on your dataset pages is the most direct lever available. The precision improvement here isn't marginal — it's the difference between an agent landing on your actual data versus landing on a page that mentions your data. The barrier isn't the markup itself; it's that most publishers either skip it or implement it incorrectly, which is why 80% of pages get filtered out before the Semantic Agent ever sees them.</p>
+
+<p>For teams building retrieval agents, the tradeoff is explicit: a semantically filtered index improves the quality of what you return but shrinks what you can answer. Whether that's acceptable depends on the use case. An agent helping a data scientist find a usable dataset for analysis probably benefits from the precision — a page that looks relevant but can't be downloaded is worse than no result. An agent doing broad discovery across unfamiliar domains may need the coverage more than the precision.</p>
+
+<p>The deeper implication is that the web's data infrastructure is bifurcated. A well-annotated slice delivers reliable, machine-usable results. The rest delivers topically relevant but often practically unusable ones. Agents operating across both surfaces will need to handle that gap explicitly, not assume it away.</p>
+
+<div class="key-takeaway">
+  <div class="key-takeaway__label">Key Takeaway</div>
+  <p>Both agents find topically relevant data at the same rate, but the Baseline Agent frequently stops at the wrong page — a narrative, a portal, or a non-downloadable explorer view.</p>
+  <p>Semantic metadata does not make agents smarter about what data is relevant; it makes them more reliable at landing on pages where data can actually be used — but only where publishers have adopted schema.org markup.</p>
+</div>
+
+<div class="source-citation">
+  <div class="source-citation__label">Source</div>
+  <p>Chen, Shiyu, Alrashed, Tarfah, Halevy, Alon, Noy, Natasha (2026). <em>Do Agents Need Semantic Metadata? A Comparative Study in Agentic Data Retrieval.</em> arXiv:<a href="https://arxiv.org/abs/2605.28787">2605.28787</a></p>
+</div>
+
+
+      </div>
+
+      <aside class="article-sidebar article-sidebar--right">
+        <div class="sidebar-label">In this article</div>
+        <nav>
+          <ul class="toc__list">
+      <li><a href="#the-precision-coverage-tradeoff-in-agentic-data-retrieval" class="toc__link">The Precision-Coverage Tradeoff in Agentic Data Retrieval</a></li>
+      <li><a href="#what-the-two-agents-actually-do-differently" class="toc__link">What the Two Agents Actually Do Differently</a></li>
+      <li><a href="#semantic-metadata-eliminates-last-mile-utility-failures" class="toc__link">Semantic Metadata Eliminates Last-Mile Utility Failures</a></li>
+      <li><a href="#fair-compliant-precision-vs-query-coverage" class="toc__link">FAIR-Compliant Precision vs. Query Coverage</a></li>
+      <li><a href="#where-the-semantic-agent-s-advantage-disappears" class="toc__link">Where the Semantic Agent's Advantage Disappears</a></li>
+      <li><a href="#what-this-means-for-data-publishers-and-agent-designers" class="toc__link">What This Means for Data Publishers and Agent Designers</a></li>
+          </ul>
+        </nav>
+        <div class="share-block">
+          <div class="sidebar-label">Share</div>
+          <div class="share-buttons">
+            <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fblursor.ai%2Fresearch%2Fcitation-failures-geo&text=Diagnosing+Citation+Failures+in+GEO%3A+What+a+New+Paper+From+Virginia+Tech+Actually+Shows"
+               target="_blank" rel="noopener" class="share-btn" title="Share on X" aria-label="Share on X">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+              </svg>
+            </a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fblursor.ai%2Fresearch%2Fcitation-failures-geo"
+               target="_blank" rel="noopener" class="share-btn" title="Share on LinkedIn" aria-label="Share on LinkedIn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+            </a>
+            <button class="share-btn" id="copy-url-btn" title="Copy link" aria-label="Copy link">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <section class="more-articles">
+    <div class="more-articles__inner">
+      <div class="more-articles__header">
+        <span class="more-articles__label">More from Research</span>
+        <a href="/research" class="more-articles__all">All articles &rarr;</a>
+      </div>
+      <div class="more-articles__grid">
+        <a href="/research/rag-ranking-signal-amplification" class="more-card">
+          <div class="more-card__meta">Mar 7, 2026 &middot; 11 min read</div>
+          <h3 class="more-card__title">RAG systems inherit ranking signals from their retriever&thinsp;—&thinsp;and amplify them</h3>
+          <div class="more-card__source">arXiv:2603.03195</div>
+        </a>
+        <a href="/research/brand-mention-llm-recommendation" class="more-card">
+          <div class="more-card__meta">Mar 3, 2026 &middot; 6 min read</div>
+          <h3 class="more-card__title">Brand mention frequency in training data predicts LLM recommendation behavior</h3>
+          <div class="more-card__source">arXiv:2602.18440</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <a href="/" class="site-footer__logo">
+          <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <p class="site-footer__desc">AI research paper digest for non-academic audiences.</p>
+        <span class="site-footer__tagline">Now you have no excuses not to act on it.</span>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Research</div>
+        <ul>
+          <li><a href="/research">All articles</a></li>
+          <li><a href="/digest">Weekly Digest</a></li>
+        </ul>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Connect</div>
+        <ul>
+          <li><a href="/digest">Newsletter</a></li>
+          <li>
+            <a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener" class="site-footer__x-link">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+            </a>
+            <span class="site-footer__col-sep">|</span>
+            <a href="mailto:contact@blursor.ai">contact@blursor.ai</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="site-footer__bottom">
+      <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
+      <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>
+    </div>
+  </footer>
+
+  <script>
+    // Copy URL button
+    document.getElementById('copy-url-btn').addEventListener('click', function() {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        this.classList.add('copied');
+        this.setAttribute('title', 'Copied!');
+        setTimeout(() => {
+          this.classList.remove('copied');
+          this.setAttribute('title', 'Copy link');
+        }, 2000);
+      });
+    });
+  </script>
+
+<script>
+  (function(){
+    var pageUrl = encodeURIComponent(window.location.href);
+    var pageTitle = encodeURIComponent(document.title.replace(/ — BLURSOR Research$/, ''));
+    document.querySelectorAll('.share-btn[href]').forEach(function(a){
+      var h = a.getAttribute('href');
+      if (h.indexOf('twitter.com/intent/tweet') !== -1) {
+        a.href = 'https://twitter.com/intent/tweet?url=' + pageUrl + '&text=' + pageTitle;
+      } else if (h.indexOf('linkedin.com/sharing') !== -1) {
+        a.href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + pageUrl;
+      }
+    });
+  })();
+</script>
+</body>
+</html>
