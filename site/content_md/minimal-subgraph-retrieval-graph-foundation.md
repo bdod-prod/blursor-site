@@ -1,4 +1,4 @@
-# A Graph Foundation Model Retrieves Just Enough for Multi-Hop QA
+# An AI That Pulls Only the Facts It Needs to Reason
 
 Most GraphRAG systems fail in one of two directions. They flood the language model with loosely connected context — every node within two hops of the query entities — or they miss critical reasoning hops entirely because their retriever was trained on a single domain's knowledge graph and can't generalize when the query shifts. Both failure modes degrade multi-hop question answering, and both are common in production deployments.
 
