@@ -1152,20 +1152,5 @@
       });
     });
   </script>
-
-<script>
-  (function(){
-    var pageUrl = encodeURIComponent(window.location.href);
-    var pageTitle = encodeURIComponent(document.title.replace(/ — BLURSOR Research$/, ''));
-    document.querySelectorAll('.share-btn[href]').forEach(function(a){
-      var h = a.getAttribute('href');
-      if (h.indexOf('twitter.com/intent/tweet') !== -1) {
-        a.href = 'https://twitter.com/intent/tweet?url=' + pageUrl + '&text=' + pageTitle;
-      } else if (h.indexOf('linkedin.com/sharing') !== -1) {
-        a.href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + pageUrl;
-      }
-    });
-  })();
-</script>
 </body>
 </html>
