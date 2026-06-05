@@ -242,33 +242,42 @@ async function renderViaCloudflare(url, env) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), RENDER_TIMEOUT_MS);
   try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${env.CF_BROWSER_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        url,
-        gotoOptions: { waitUntil: "networkidle0", timeout: 15000 },
-        // Inject the agent probe, then let late JS register WebMCP tools / layout
-        // settle before the HTML is captured.
-        addScriptTag: [{ content: AGENT_PROBE_JS }],
-        waitForTimeout: 1000,
-      }),
-      signal: ctrl.signal,
-    });
-    if (res.status === 429) return { html: null, agentic: null, status: "quota-exceeded" };
-    if (!res.ok) return { html: null, agentic: null, status: `error-${res.status}` };
-    const data = await res.json().catch(() => null);
-    const html = data && data.success && typeof data.result === "string" ? data.result : null;
-    if (!html) return { html: null, agentic: null, status: "empty" };
+    // Try WITH the agent probe injected. If that specific request fails (but the
+    // budget isn't exhausted), retry a plain render — so the readability half can
+    // never regress just because the probe params were unhappy.
+    let out = await postContent(endpoint, env, url, true, ctrl);
+    if (!out.html && out.status !== "quota-exceeded") out = await postContent(endpoint, env, url, false, ctrl);
+    if (!out.html) return { html: null, agentic: null, status: out.status };
     if (cache && cacheKey) {
-      try { await cache.put(cacheKey, new Response(html, { headers: { "Cache-Control": `public, max-age=${RENDER_CACHE_TTL}` } })); } catch {}
+      try { await cache.put(cacheKey, new Response(out.html, { headers: { "Cache-Control": `public, max-age=${RENDER_CACHE_TTL}` } })); } catch {}
     }
-    return { html, agentic: extractInjected(html), status: "rendered" };
+    return { html: out.html, agentic: extractInjected(out.html), status: out.status };
   } catch (e) {
     return { html: null, agentic: null, status: e.name === "AbortError" ? "timeout" : "error" };
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function postContent(endpoint, env, url, withProbe, ctrl) {
+  const body = { url, gotoOptions: { waitUntil: "networkidle0", timeout: 15000 } };
+  if (withProbe) {
+    // Inject the agent probe, then let late JS register WebMCP tools / layout
+    // settle before the HTML is captured.
+    body.addScriptTag = [{ content: AGENT_PROBE_JS }];
+    body.waitForTimeout = 1000;
+  }
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.CF_BROWSER_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: ctrl.signal,
+  });
+  if (res.status === 429) return { html: null, status: "quota-exceeded" };
+  if (!res.ok) return { html: null, status: `error-${res.status}` };
+  const data = await res.json().catch(() => null);
+  const html = data && data.success && typeof data.result === "string" ? data.result : null;
+  return { html, status: html ? (withProbe ? "rendered" : "rendered-noprobe") : "empty" };
 }
 
 // Read the agent-probe results the injected script wrote into the page. The JSON
