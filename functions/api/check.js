@@ -316,12 +316,10 @@ function extractOutline(html) {
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    // Drop nav/footer chrome so the outline focuses on main content (and so a
-    // big mega-menu doesn't eat the block budget). <header> is kept — it often
-    // holds the page title.
-    .replace(/<nav[\s\S]*?<\/nav>/gi, " ")
-    .replace(/<footer[\s\S]*?<\/footer>/gi, " ");
+    .replace(/<!--[\s\S]*?-->/g, " ");
+  // NB: we deliberately do NOT strip nav/footer — the point of this view is to
+  // show everything the crawler actually receives, chrome included. The UI has
+  // a search box for navigating long output.
   const blocks = [];
   const re = /<(h[1-6]|p|li|blockquote)\b[^>]*>([\s\S]*?)<\/\1>/gi;
   let m, total = 0;
@@ -332,7 +330,7 @@ function extractOutline(html) {
     if (text.length > 300) text = text.slice(0, 299) + "…";
     blocks.push({ tag, text });
     total += text.length;
-    if (blocks.length >= 60 || total > 6000) { blocks.push({ tag: "more", text: "…(truncated — showing the first part)" }); break; }
+    if (blocks.length >= 150 || total > 15000) { blocks.push({ tag: "more", text: "…(truncated — showing the first part)" }); break; }
   }
   return blocks;
 }

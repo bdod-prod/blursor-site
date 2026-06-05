@@ -156,7 +156,10 @@
 
     /* Bot's-eye view */
     .botview__intro { font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: var(--space-sm); line-height: 1.6; }
-    .botview__toggle { display: flex; margin-bottom: var(--space-sm); }
+    .botview__controls { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; margin-bottom: var(--space-sm); }
+    .botview__toggle { display: flex; }
+    .botview__search { flex: 1; min-width: 180px; font-family: var(--font-mono); font-size: 0.72rem; border: 1px solid var(--color-border); background: var(--color-bg); padding: 0.45rem 0.7rem; color: var(--color-text); outline: none; }
+    .botview__search:focus { border-color: var(--color-accent); }
     .botview__toggle button { font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; border: 1px solid var(--color-border); background: transparent; color: var(--color-text-secondary); padding: 0.4rem 0.85rem; cursor: pointer; }
     .botview__toggle button + button { border-left: none; }
     .botview__toggle button.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
@@ -468,15 +471,46 @@
         var bv = el('div', 'botview');
         var hasRendered = data.rendered && data.rendered.outline && data.rendered.outline.length;
         bv.appendChild(el('p', 'botview__intro', hasRendered
-          ? 'The actual content extracted from your page — toggle between what a rendering bot gets (Gemini, Applebot) and what a non-JS crawler gets (GPTBot, ClaudeBot, and most others).'
-          : 'The actual content a non-JS crawler (GPTBot, ClaudeBot, PerplexityBot, CCBot) extracts from your raw HTML — this is all they get.'));
+          ? 'Everything a bot actually receives as text — nav and footer included. Toggle between a rendering bot (Gemini, Applebot) and a non-JS crawler (GPTBot, ClaudeBot, and most others), and search for any word.'
+          : 'Everything a non-JS crawler (GPTBot, ClaudeBot, PerplexityBot, CCBot) actually receives as text from your raw HTML — nav and footer included.'));
         var rawChars = (data.content && data.content.visibleTextChars) || 0;
-        var emptyRaw = 'No main content in the raw HTML. A non-JS crawler receives only ~' + rawChars + ' characters — navigation, footer, and boilerplate — not the actual page content, which is loaded by JavaScript.' + (hasRendered ? ' Switch to "Rendering bot" to see what it misses.' : '');
-        var emptyRen = 'Nothing could be extracted from the rendered page.';
+
+        var controls = el('div', 'botview__controls');
+        var bRen, bRaw;
+        if (hasRendered) {
+          var tg = el('div', 'botview__toggle');
+          bRen = el('button', 'active', 'Rendering bot');
+          bRaw = el('button', null, 'Crawler (raw)');
+          tg.appendChild(bRen); tg.appendChild(bRaw);
+          controls.appendChild(tg);
+        }
+        var search = el('input', 'botview__search');
+        search.type = 'search';
+        search.placeholder = 'Search the extracted text…';
+        controls.appendChild(search);
+        bv.appendChild(controls);
+
         var box = el('div', 'botview__box');
-        function paint(blocks, emptyMsg) {
+        bv.appendChild(box);
+        reportEl.appendChild(bv);
+
+        var current = hasRendered ? data.rendered.outline : data.content.outline;
+
+        function paint() {
+          var q = search.value.trim().toLowerCase();
+          var blocks = (current || []).filter(function (b) {
+            if (b.tag === 'more') return !q;
+            return !q || b.text.toLowerCase().indexOf(q) !== -1;
+          });
           box.innerHTML = '';
-          if (!blocks || !blocks.length) { box.appendChild(el('div', 'botview__empty', emptyMsg)); return; }
+          if (!blocks.length) {
+            var msg;
+            if (q) msg = 'No extracted text matches “' + search.value.trim() + '”.';
+            else if (current === data.content.outline) msg = 'No headings, paragraphs, or list items in the raw HTML (~' + rawChars + ' chars of text total) — the content isn’t in standard tags, so most AI crawlers can’t parse it cleanly.';
+            else msg = 'Nothing could be extracted from the rendered page.';
+            box.appendChild(el('div', 'botview__empty', msg));
+            return;
+          }
           blocks.forEach(function (b) {
             var cls = b.tag === 'h1' ? 'bv-h1' : b.tag === 'h2' ? 'bv-h2'
               : (b.tag === 'h3' || b.tag === 'h4' || b.tag === 'h5' || b.tag === 'h6') ? 'bv-h3'
@@ -485,22 +519,13 @@
             box.appendChild(el('div', cls, b.text));
           });
         }
+
         if (hasRendered) {
-          var tg = el('div', 'botview__toggle');
-          var bRen = el('button', 'active', 'Rendering bot');
-          var bRaw = el('button', null, 'Crawler (raw)');
-          bRen.addEventListener('click', function () { bRen.className = 'active'; bRaw.className = ''; paint(data.rendered.outline, emptyRen); });
-          bRaw.addEventListener('click', function () { bRaw.className = 'active'; bRen.className = ''; paint(data.content.outline, emptyRaw); });
-          tg.appendChild(bRen); tg.appendChild(bRaw);
-          bv.appendChild(tg);
-          bv.appendChild(box);
-          reportEl.appendChild(bv);
-          paint(data.rendered.outline, emptyRen);
-        } else {
-          bv.appendChild(box);
-          reportEl.appendChild(bv);
-          paint(data.content.outline, emptyRaw);
+          bRen.addEventListener('click', function () { bRen.className = 'active'; bRaw.className = ''; current = data.rendered.outline; paint(); });
+          bRaw.addEventListener('click', function () { bRaw.className = 'active'; bRen.className = ''; current = data.content.outline; paint(); });
         }
+        search.addEventListener('input', paint);
+        paint();
       }
 
       function pill(text, bad) {
