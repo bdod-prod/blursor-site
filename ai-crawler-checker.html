@@ -144,6 +144,30 @@
 
     .report__section-label { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-secondary); margin: var(--space-lg) 0 var(--space-sm); }
 
+    /* Verdict (plain-language headline) */
+    .verdict { display: flex; gap: var(--space-md); align-items: flex-start; padding: var(--space-md); border: 1px solid var(--color-border); border-left-width: 4px; background: var(--color-surface); margin-top: var(--space-lg); }
+    .verdict--good { border-left-color: var(--color-text-secondary); }
+    .verdict--warn, .verdict--bad { border-left-color: var(--color-accent); background: var(--color-accent-soft); }
+    .verdict__icon { font-family: var(--font-mono); font-size: 1.5rem; line-height: 1.1; flex: none; }
+    .verdict--good .verdict__icon { color: var(--color-text-secondary); }
+    .verdict--warn .verdict__icon, .verdict--bad .verdict__icon { color: var(--color-accent); }
+    .verdict__title { font-size: 1.5rem; font-weight: 600; line-height: 1.2; letter-spacing: -0.015em; margin-bottom: 0.4rem; }
+    .verdict__why { font-size: 1.0625rem; color: var(--color-text-secondary); line-height: 1.6; }
+
+    /* What to fix */
+    .issue { border: 1px solid var(--color-border); border-left-width: 3px; background: var(--color-surface); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-xs); }
+    .issue--fail { border-left-color: var(--color-accent); }
+    .issue--warn { border-left-color: var(--color-accent); background: var(--color-accent-soft); }
+    .issue__title { font-weight: 600; font-size: 1.0625rem; margin-bottom: 0.3rem; }
+    .issue__fix { font-size: 0.9375rem; color: var(--color-text-secondary); line-height: 1.65; }
+    .report__allgood { font-size: 1.0625rem; color: var(--color-text-secondary); padding: var(--space-sm) 0; line-height: 1.6; }
+
+    /* Technical details (collapsible — the expert layer) */
+    .report__details { margin: var(--space-lg) 0 0; border-top: 1px solid var(--color-border); padding-top: var(--space-xs); }
+    .report__details-summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-secondary); cursor: pointer; padding: var(--space-xs) 0; }
+    .report__details-summary:hover { color: var(--color-text); }
+    .report__mode { font-family: var(--font-mono); font-size: 0.66rem; color: var(--color-text-secondary); margin-top: var(--space-sm); }
+
     /* Bot access table */
     .bot-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
     .bot-table th { text-align: left; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--color-border); }
@@ -269,7 +293,7 @@
     <section class="tool-hero">
       <div class="tool-hero__label">Free Tool · No Signup</div>
       <h1 class="tool-hero__title">What AI Sees</h1>
-      <p class="tool-hero__sub">Paste a URL. See exactly what AI crawlers — GPTBot, ClaudeBot, PerplexityBot and others — actually receive when they hit your page, and whether you're set up to be cited.</p>
+      <p class="tool-hero__sub">More and more people ask AI assistants like ChatGPT for recommendations instead of searching Google. Paste your link to see whether AI can actually read your site — and exactly what it's missing.</p>
     </section>
 
     <form class="tool-form" id="check-form">
@@ -277,7 +301,7 @@
         <input type="text" inputmode="url" id="url-input" class="tool-form__input" placeholder="example.com  or  https://example.com/page" autocomplete="off" spellcheck="false" required>
         <button type="submit" class="tool-form__btn" id="check-btn">Check</button>
       </div>
-      <p class="tool-form__hint">Checks robots.txt per bot, the raw-HTML content gap, llms.txt, and citeability basics. <a href="#how" id="example-link">Or try an example →</a></p>
+      <p class="tool-form__hint">Free, no signup. Takes about 10 seconds on any public page. <a href="#how" id="example-link">Or try an example →</a></p>
     </form>
 
     <div class="report-wrap">
@@ -285,20 +309,14 @@
       <div id="report" class="report" hidden></div>
     </div>
 
-    <!-- What we check (transparency moat — real content in raw HTML) -->
+    <!-- Why it matters — plain language -->
     <section class="tool-explain" id="how">
       <div class="tool-explain__inner">
-        <div class="tool-explain__label">How this works</div>
-        <h2>What we check, and why it matters</h2>
-        <p>Most AI crawlers don't run JavaScript. A <a href="https://vercel.com/blog/the-rise-of-the-ai-crawler" target="_blank" rel="noopener">study of real crawler logs</a> found GPTBot, ClaudeBot, PerplexityBot and CCBot all take the <strong>raw HTML</strong> — they never execute your scripts. Only Gemini (Google-Extended) and Applebot render. So if your content loads client-side, most AI simply doesn't see it.</p>
-        <p>This tool fetches your page the way those bots do and shows you the gap. Every check is something we can point to research for:</p>
-        <ul>
-          <li><strong>Server &amp; robots.txt access</strong> — does your server or robots.txt turn specific AI bots away (403, disallow)? If so, nothing else matters.</li>
-          <li><strong>The raw-vs-rendered gap</strong> — how much of your content exists in the HTML before JavaScript runs. This is what non-JS crawlers get.</li>
-          <li><strong>Citeability basics</strong> — title, meta description, a clean H1→H2→H3 hierarchy, and structured data. <a href="https://arxiv.org/abs/2311.09735" target="_blank" rel="noopener">Peer-reviewed GEO research</a> ties clear structure, quotes and citations to 30–40% more visibility in AI answers.</li>
-          <li><strong>llms.txt</strong> — we check for it, but we'll tell you the truth: a <a href="https://seranking.com/blog/llms-txt/" target="_blank" rel="noopener">300,000-domain study</a> found it has no measurable effect on AI citations. It's hygiene, not a lever.</li>
-        </ul>
-        <p class="tool-bridge">This checks whether AI <em>can</em> read your page. To track whether AI actually <em>cites</em> you across ChatGPT, Gemini and Perplexity, see <a href="https://beamtrace.com" target="_blank" rel="noopener">Beamtrace</a>.</p>
+        <div class="tool-explain__label">Why this matters</div>
+        <h2>AI reads your site differently than people do</h2>
+        <p>When someone asks ChatGPT, Google's AI, or Perplexity for a recommendation, those tools read websites to decide what to suggest. But most of them read your site like a plain text document — they don't run the code that makes a page look finished in a browser.</p>
+        <p>So if your content only appears after the page "loads," AI can be left staring at a near-empty page. And a page AI can't read is a page it won't recommend. This tool fetches your site the same way AI does and shows you, in plain sight, exactly what it gets — so you know where you stand.</p>
+        <p class="tool-bridge">This shows whether AI <em>can</em> read your site. To track whether AI actually <em>recommends</em> you across ChatGPT, Gemini and Perplexity, see <a href="https://beamtrace.com" target="_blank" rel="noopener">Beamtrace</a>.</p>
       </div>
     </section>
 
@@ -390,27 +408,77 @@
         reportEl.hidden = false;
         reportEl.innerHTML = '';
 
-        // Head: URL + summary
-        var head = el('div', 'report__head');
-        var u = el('div', 'report__url');
-        u.appendChild(el('span', null, 'Checked: '));
-        u.appendChild(document.createTextNode(data.url));
-        head.appendChild(u);
+        var PLAIN = {
+          'server-block': { title: 'Your site turns AI bots away at the door.', fix: 'It returns an error to the AI crawlers, so they never even see the page. Ask your host or developer to allow them — or check your firewall / bot-protection settings.' },
+          'robots': { title: 'Your site’s rules file tells AI bots to stay out.', fix: 'Your robots.txt blocks the AI crawlers. If you want to show up in AI answers, ask your developer to allow them.' },
+          'cloaking': { title: 'AI bots are shown a different page than people see.', fix: 'Serve everyone the same content — showing bots a thinner page is risky and can misrepresent you.' },
+          'content': { title: 'Most of your page only loads with JavaScript.', fix: 'Most AI can’t run JavaScript, so they see almost nothing. Ask whoever built your site about “server-side rendering” or a static version of your pages.' },
+          'title': { title: 'Your page has no title.', fix: 'AI (and Google) use the title to label your page. Add a clear page title.' },
+          'meta': { title: 'No short summary for AI to quote.', fix: 'Add a meta description — a one-sentence summary of the page. Your site builder or SEO plugin can do this.' },
+          'headings': { title: 'Your headings aren’t structured cleanly.', fix: 'Use one main heading and clear subheadings. It helps AI (and readers) follow the page.' },
+          'schema': { title: 'Nothing tells AI what the page is about.', fix: 'Add structured data (schema). Most SEO plugins add it automatically, and it helps AI trust and understand your page.' }
+        };
 
+        var host = data.url;
+        try { host = new URL(data.url).hostname.replace(/^www\./, ''); } catch (e) {}
+        var byId = {};
+        (data.findings || []).forEach(function (f) { byId[f.id] = f; });
         var s = data.summary || {};
-        var sum = el('div', 'report__summary');
-        var pass = el('span', null); pass.append(el('b', null, String(s.pass || 0)), document.createTextNode(' pass'));
-        var warn = el('span', null); warn.append(el('b', null, String(s.warn || 0)), document.createTextNode(' warn'));
-        var fail = el('span', (s.fail ? 'has-fail' : '')); var fb = el('b', null, String(s.fail || 0)); if (s.fail) fb.style.color = 'var(--color-accent)'; fail.append(fb, document.createTextNode(' fail'));
-        sum.append(pass, warn, fail);
-        head.appendChild(sum);
-        var mode = el('div', null, data.renderMode === 'rendered' ? '✓ render-verified — we rendered the page and compared raw vs rendered' : 'heuristic estimate — live render not enabled yet');
-        mode.style.cssText = 'flex-basis:100%;font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.04em;color:var(--color-text-secondary);margin-top:0.4rem';
-        head.appendChild(mode);
-        reportEl.appendChild(head);
 
-        // Findings
-        reportEl.appendChild(el('div', 'report__section-label', 'Findings'));
+        // ---- Verdict (the one human answer) ----
+        var blocked = (byId['server-block'] && byId['server-block'].status === 'fail') || (byId['robots'] && byId['robots'].status === 'fail');
+        var contentStatus = byId['content'] ? byId['content'].status : 'pass';
+        var tone, title, why;
+        if (blocked) {
+          tone = 'bad';
+          title = 'AI assistants are being turned away from ' + host;
+          why = 'Your site blocks the bots AI tools use, so they can’t read your pages at all.';
+        } else if (contentStatus === 'fail') {
+          tone = 'bad';
+          title = 'AI assistants can barely read ' + host;
+          why = 'Most of your content only loads with JavaScript, which most AI can’t run — so they see almost nothing.';
+        } else if (contentStatus === 'warn' || (s.fail || 0) > 0) {
+          tone = 'warn';
+          title = 'A few things are getting in AI’s way on ' + host;
+          why = 'AI can read your site, but parts of it are harder to reach than they should be. The fixes below are quick.';
+        } else {
+          tone = 'good';
+          title = 'Good news — AI assistants can read ' + host;
+          why = 'When someone asks AI about your topic, your page is readable and ready to be recommended.';
+        }
+        var v = el('div', 'verdict verdict--' + tone);
+        v.appendChild(el('div', 'verdict__icon', tone === 'good' ? '✓' : '!'));
+        var vtext = el('div', 'verdict__text');
+        vtext.appendChild(el('h2', 'verdict__title', title));
+        vtext.appendChild(el('p', 'verdict__why', why));
+        v.appendChild(vtext);
+        reportEl.appendChild(v);
+
+        // ---- What to fix (plain language + next step) ----
+        var issues = [];
+        (data.findings || []).forEach(function (f) {
+          if ((f.status === 'fail' || f.status === 'warn') && PLAIN[f.id]) issues.push({ status: f.status, info: PLAIN[f.id] });
+        });
+        if (issues.length) {
+          reportEl.appendChild(el('div', 'report__section-label', 'What to fix'));
+          issues.forEach(function (it) {
+            var card = el('div', 'issue issue--' + it.status);
+            card.appendChild(el('div', 'issue__title', it.info.title));
+            card.appendChild(el('div', 'issue__fix', it.info.fix));
+            reportEl.appendChild(card);
+          });
+        } else {
+          reportEl.appendChild(el('p', 'report__allgood', 'Nothing to fix — your page is readable to AI as it is. Have a look at exactly what they get below.'));
+        }
+
+        // ---- Bot's-eye view (the proof) ----
+        renderBotView(data);
+
+        // ---- Technical details (collapsible expert layer) ----
+        var details = el('details', 'report__details');
+        details.appendChild(el('summary', 'report__details-summary', 'Technical details'));
+
+        details.appendChild(el('div', 'report__section-label', 'All checks — ' + (s.pass || 0) + ' pass · ' + (s.warn || 0) + ' warn · ' + (s.fail || 0) + ' fail'));
         (data.findings || []).forEach(function (f) {
           var card = el('div', 'finding finding--' + f.status);
           var h = el('div', 'finding__head');
@@ -426,19 +494,15 @@
             srcWrap.appendChild(a);
             card.appendChild(srcWrap);
           }
-          reportEl.appendChild(card);
+          details.appendChild(card);
         });
 
-        // Bot's-eye view — the actual extracted content
-        renderBotView(data);
-
-        // Per-bot access table
-        reportEl.appendChild(el('div', 'report__section-label', 'Per-bot access'));
+        details.appendChild(el('div', 'report__section-label', 'Per-bot access'));
         var table = el('table', 'bot-table');
         var thead = el('thead');
         var hr = el('tr');
         ['Crawler', 'Runs JS?', 'robots.txt', 'Server'].forEach(function (t, i) {
-          var th = el('th', i === 3 ? 'col-status' : null, t); hr.appendChild(th);
+          hr.appendChild(el('th', i === 3 ? 'col-status' : null, t));
         });
         thead.appendChild(hr); table.appendChild(thead);
         var tbody = el('tbody');
@@ -452,9 +516,15 @@
           tbody.appendChild(tr);
         });
         table.appendChild(tbody);
-        reportEl.appendChild(table);
+        details.appendChild(table);
 
-        // Share
+        details.appendChild(el('p', 'report__mode', data.renderMode === 'rendered'
+          ? 'Render-verified: we loaded the page in a real browser and compared it to the raw version.'
+          : 'Heuristic estimate — a full browser render wasn’t available for this check.'));
+
+        reportEl.appendChild(details);
+
+        // ---- Share ----
         var share = el('div', 'report__share');
         var copy = el('button', 'share-btn', 'Copy report link');
         copy.addEventListener('click', function () {
@@ -473,8 +543,8 @@
         var bv = el('div', 'botview');
         var hasRendered = data.rendered && data.rendered.outline && data.rendered.outline.length;
         bv.appendChild(el('p', 'botview__intro', hasRendered
-          ? 'Everything a bot actually receives as text — nav and footer included. Toggle between a non-JS crawler (GPTBot, ClaudeBot, and most others) and a rendering bot (Gemini, Applebot), and search to jump to any word.'
-          : 'Everything a non-JS crawler (GPTBot, ClaudeBot, PerplexityBot, CCBot) actually receives as text from your raw HTML — nav and footer included.'));
+          ? 'This is the exact text an AI assistant pulls from your page. Most AI reads the “Crawler” version (no JavaScript); a few — Google’s and Apple’s — read the “Rendering bot” version. Flip between them, and search for any word to check it’s there.'
+          : 'This is the exact text an AI assistant pulls from your page — everything it can read, nav and footer included. Search for any word to check it’s there.'));
         var rawChars = (data.content && data.content.visibleTextChars) || 0;
 
         var controls = el('div', 'botview__controls');
