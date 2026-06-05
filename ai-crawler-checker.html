@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What AI Sees — Free AI Crawler Readability Checker | BLURSOR</title>
+  <meta name="description" content="See exactly what AI crawlers like GPTBot, ClaudeBot and PerplexityBot receive when they hit your page — and whether you're set up to be cited. Free, no signup.">
+  <link rel="canonical" href="https://blursor.ai/ai-crawler-checker">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="What AI Sees — AI Crawler Readability Checker">
+  <meta property="og:description" content="Paste a URL. See what GPTBot, ClaudeBot and PerplexityBot actually receive — and whether your page can be cited by AI.">
+  <meta property="og:url" content="https://blursor.ai/ai-crawler-checker">
+  <meta property="og:site_name" content="BLURSOR">
+  <meta property="og:image" content="https://blursor.ai/assets/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="BLURSOR">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="What AI Sees — AI Crawler Readability Checker">
+  <meta name="twitter:description" content="See what AI crawlers actually receive when they hit your page — free, no signup.">
+  <meta name="twitter:image" content="https://blursor.ai/assets/og-default.png">
+
+  <!-- JSON-LD: WebApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "What AI Sees — AI Crawler Readability Checker",
+    "url": "https://blursor.ai/ai-crawler-checker",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Any (web)",
+    "description": "Checks what AI crawlers (GPTBot, ClaudeBot, PerplexityBot, CCBot and others) actually receive from a web page, and whether the page is set up to be cited by AI.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "publisher": { "@id": "https://blursor.ai/#organization" }
+  }
+  </script>
+
+  <!-- JSON-LD: BreadcrumbList -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "BLURSOR", "item": "https://blursor.ai/" },
+      { "@type": "ListItem", "position": 2, "name": "What AI Sees", "item": "https://blursor.ai/ai-crawler-checker" }
+    ]
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --color-bg:             #f0ece4;
+      --color-bg-warm:        #e8e3d9;
+      --color-surface:        #f5f1ea;
+      --color-text:           #1a1a18;
+      --color-text-secondary: #7a776e;
+      --color-border:         #d4d0c8;
+      --color-border-light:   rgba(26,26,24,0.08);
+      --color-accent:         #c43b2a;
+      --color-accent-soft:    rgba(196,59,42,0.10);
+      --color-footer-bg:      #1a1a18;
+      --color-footer-text:    #a09d95;
+      --color-footer-text-hover: #f0ece4;
+
+      --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-mono:  'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+      --space-xs:  0.5rem;
+      --space-sm:  1rem;
+      --space-md:  1.5rem;
+      --space-lg:  3rem;
+      --space-xl:  5rem;
+
+      --max-width:  980px;
+      --tool-width: 720px;
+    }
+
+    html { font-size: 17px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+    body {
+      font-family: var(--font-serif);
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ——— Header (matches site) ——— */
+    .site-header { padding: var(--space-md) 0; border-bottom: 1px solid var(--color-border); }
+    .site-header__inner { max-width: var(--max-width); margin: 0 auto; padding: 0 var(--space-md); display: flex; align-items: center; justify-content: space-between; }
+    .site-header__left { display: flex; align-items: center; gap: 0.75rem; }
+    .site-header__logo { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; letter-spacing: 0.08em; margin-top: -2px; text-transform: uppercase; color: var(--color-text); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; }
+    .site-header__sep { font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-border); }
+    .site-header__tagline { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-secondary); }
+    .site-header__nav { display: flex; align-items: center; gap: var(--space-md); }
+    .site-header__nav a { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.03em; color: var(--color-text-secondary); text-decoration: none; text-transform: uppercase; transition: color 0.15s ease; }
+    .site-header__nav a:hover { color: var(--color-text); }
+    .site-header__nav a.is-active { color: var(--color-text); }
+
+    /* ——— Tool intro ——— */
+    .tool-main { flex: 1; }
+    .tool-hero { max-width: var(--tool-width); margin: 0 auto; padding: var(--space-xl) var(--space-md) var(--space-lg); }
+    .tool-hero__label { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-accent); margin-bottom: var(--space-sm); }
+    .tool-hero__title { font-size: clamp(2.25rem, 4vw, 3rem); font-weight: 600; line-height: 1.08; letter-spacing: -0.025em; margin-bottom: var(--space-md); }
+    .tool-hero__sub { font-size: 1.0625rem; line-height: 1.7; color: var(--color-text-secondary); max-width: 600px; }
+
+    /* ——— Form ——— */
+    .tool-form { max-width: var(--tool-width); margin: 0 auto; padding: 0 var(--space-md); }
+    .tool-form__row { display: flex; gap: var(--space-xs); }
+    .tool-form__input { flex: 1; font-family: var(--font-mono); font-size: 0.95rem; border: 1px solid var(--color-border); background: var(--color-surface); padding: 0.85rem 1rem; color: var(--color-text); outline: none; }
+    .tool-form__input:focus { border-color: var(--color-accent); }
+    .tool-form__btn { background: var(--color-accent); color: #fff; font-family: var(--font-mono); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 0 1.5rem; border: none; cursor: pointer; transition: opacity 0.15s ease; white-space: nowrap; }
+    .tool-form__btn:hover { opacity: 0.88; }
+    .tool-form__btn:disabled { opacity: 0.5; cursor: wait; }
+    .tool-form__hint { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-text-secondary); margin-top: var(--space-xs); }
+    .tool-form__hint a { color: var(--color-accent); text-decoration: none; }
+    .tool-form__hint a:hover { text-decoration: underline; }
+
+    /* ——— Status / results ——— */
+    .report-wrap { max-width: var(--tool-width); margin: 0 auto; padding: 0 var(--space-md); }
+    .tool-status { padding: var(--space-lg) 0; font-family: var(--font-mono); font-size: 0.85rem; color: var(--color-text-secondary); text-align: center; }
+    .tool-status--error { color: var(--color-accent); }
+
+    .report { padding: var(--space-lg) 0 0; }
+    .report__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-sm); padding-bottom: var(--space-sm); border-bottom: 1px solid var(--color-border); }
+    .report__url { font-family: var(--font-mono); font-size: 0.85rem; color: var(--color-text); word-break: break-all; }
+    .report__url span { color: var(--color-text-secondary); }
+    .report__summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-secondary); display: flex; gap: var(--space-sm); }
+    .report__summary b { color: var(--color-text); font-weight: 500; }
+    .report__summary .has-fail { color: var(--color-accent); }
+
+    .report__section-label { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-secondary); margin: var(--space-lg) 0 var(--space-sm); }
+
+    /* Bot access table */
+    .bot-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .bot-table th { text-align: left; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--color-border); }
+    .bot-table td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--color-border-light); vertical-align: top; }
+    .bot-table td.bot-name { font-family: var(--font-mono); font-size: 0.78rem; }
+    .bot-table td .owner { display: block; color: var(--color-text-secondary); font-size: 0.66rem; }
+    .pill { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.02em; }
+    .pill--bad { color: var(--color-accent); font-weight: 500; }
+    .pill--ok { color: var(--color-text-secondary); }
+
+    /* Findings */
+    .finding { border: 1px solid var(--color-border); border-left-width: 3px; background: var(--color-surface); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-xs); }
+    .finding--fail { border-left-color: var(--color-accent); }
+    .finding--warn { border-left-color: var(--color-accent); background: var(--color-accent-soft); }
+    .finding--pass { border-left-color: var(--color-border); }
+    .finding--info { border-left-color: var(--color-text-secondary); background: var(--color-bg-warm); }
+    .finding__head { display: flex; align-items: baseline; gap: 0.5rem; }
+    .finding__glyph { font-family: var(--font-mono); font-size: 0.8rem; flex: none; width: 1rem; }
+    .finding--fail .finding__glyph, .finding--warn .finding__glyph { color: var(--color-accent); }
+    .finding--pass .finding__glyph, .finding--info .finding__glyph { color: var(--color-text-secondary); }
+    .finding__label { font-weight: 600; font-size: 1rem; }
+    .finding__detail { font-size: 0.9375rem; color: var(--color-text); margin: 0.35rem 0 0 1.5rem; }
+    .finding__why { font-size: 0.85rem; color: var(--color-text-secondary); margin: 0.4rem 0 0 1.5rem; line-height: 1.6; }
+    .finding__src { display: inline-block; font-family: var(--font-mono); font-size: 0.66rem; margin: 0.5rem 0 0 1.5rem; }
+    .finding__src a { color: var(--color-accent); text-decoration: none; opacity: 0.8; }
+    .finding__src a:hover { opacity: 1; text-decoration: underline; }
+
+    /* Share */
+    .report__share { display: flex; align-items: center; gap: var(--space-sm); margin: var(--space-lg) 0; padding-top: var(--space-md); border-top: 1px solid var(--color-border-light); }
+    .share-btn { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid var(--color-border); background: transparent; color: var(--color-text-secondary); padding: 0.5rem 0.85rem; cursor: pointer; text-decoration: none; transition: all 0.15s ease; }
+    .share-btn:hover, .share-btn.copied { border-color: var(--color-accent); color: var(--color-accent); }
+
+    /* ——— What we check (transparency) ——— */
+    .tool-explain { background: var(--color-bg-warm); border-top: 1px solid var(--color-border); margin-top: var(--space-xl); padding: var(--space-xl) 0; }
+    .tool-explain__inner { max-width: var(--tool-width); margin: 0 auto; padding: 0 var(--space-md); }
+    .tool-explain__label { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); margin-bottom: var(--space-md); }
+    .tool-explain h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.015em; margin-bottom: var(--space-md); }
+    .tool-explain p { font-size: 0.9375rem; line-height: 1.75; color: var(--color-text-secondary); margin-bottom: var(--space-sm); }
+    .tool-explain ul { list-style: none; margin: var(--space-sm) 0 var(--space-md); }
+    .tool-explain li { font-size: 0.9375rem; line-height: 1.7; color: var(--color-text); padding-left: 1.25rem; position: relative; margin-bottom: 0.6rem; }
+    .tool-explain li::before { content: '—'; position: absolute; left: 0; color: var(--color-accent); }
+    .tool-explain strong { font-weight: 600; }
+    .tool-explain a { color: var(--color-accent); text-decoration: none; }
+    .tool-explain a:hover { text-decoration: underline; }
+    .tool-bridge { font-family: var(--font-serif); font-style: italic; font-size: 1.0625rem; color: var(--color-text); margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border-light); }
+    .tool-bridge a { font-style: normal; color: var(--color-accent); text-decoration: underline; text-decoration-color: rgba(196,59,42,0.4); text-underline-offset: 3px; }
+
+    /* ——— Footer (matches site) ——— */
+    .site-footer { background: var(--color-footer-bg); padding: var(--space-lg) 0 0; }
+    .site-footer__inner { max-width: var(--max-width); margin: 0 auto; padding: 0 var(--space-md); display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--space-lg); align-items: start; }
+    .site-footer__brand { display: flex; flex-direction: column; gap: 0.75rem; }
+    .site-footer__logo { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; letter-spacing: 0.08em; color: var(--color-footer-text-hover); text-decoration: none; }
+    .site-footer__desc { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); letter-spacing: 0.02em; line-height: 1.7; }
+    .site-footer__col-heading { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-footer-text-hover); margin-bottom: 0.875rem; }
+    .site-footer__col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+    .site-footer__col ul a { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); text-decoration: none; letter-spacing: 0.02em; transition: color 0.15s ease; }
+    .site-footer__col ul a:hover { color: var(--color-footer-text-hover); }
+    .site-footer__bottom { max-width: var(--max-width); margin: var(--space-lg) auto 0; padding: var(--space-sm) var(--space-md); border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; }
+    .site-footer__copy { font-family: var(--font-mono); font-size: 0.65rem; color: var(--color-footer-text); letter-spacing: 0.02em; opacity: 0.7; }
+    .site-footer__copy a { color: var(--color-footer-text); text-decoration: none; }
+    .site-footer__copy a:hover { color: var(--color-footer-text-hover); }
+
+    @media (max-width: 640px) {
+      html { font-size: 16px; }
+      .site-header__sep, .site-header__tagline { display: none; }
+      .tool-hero { padding-top: var(--space-lg); }
+      .tool-form__row { flex-wrap: wrap; }
+      .tool-form__input { width: 100%; }
+      .tool-form__btn { width: 100%; padding: 0.85rem; }
+      .bot-table .col-status { display: none; }
+      .site-footer__inner { grid-template-columns: 1fr; gap: var(--space-md); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="site-header__left">
+        <a href="/" class="site-header__logo">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="var(--color-accent)" style="margin-bottom: -2px;" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <span class="site-header__sep">|</span>
+        <span class="site-header__tagline">Science-backed data on why AI says what it says</span>
+      </div>
+      <nav class="site-header__nav">
+        <a href="/ai-crawler-checker" class="is-active">Tools</a>
+        <a href="/research">Research</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="tool-main">
+
+    <section class="tool-hero">
+      <div class="tool-hero__label">Free Tool · No Signup</div>
+      <h1 class="tool-hero__title">What AI Sees</h1>
+      <p class="tool-hero__sub">Paste a URL. See exactly what AI crawlers — GPTBot, ClaudeBot, PerplexityBot and others — actually receive when they hit your page, and whether you're set up to be cited.</p>
+    </section>
+
+    <form class="tool-form" id="check-form">
+      <div class="tool-form__row">
+        <input type="url" id="url-input" class="tool-form__input" placeholder="https://example.com/page" autocomplete="off" spellcheck="false" required>
+        <button type="submit" class="tool-form__btn" id="check-btn">Check</button>
+      </div>
+      <p class="tool-form__hint">Checks robots.txt per bot, the raw-HTML content gap, llms.txt, and citeability basics. <a href="#how" id="example-link">Or try an example →</a></p>
+    </form>
+
+    <div class="report-wrap">
+      <div id="status" class="tool-status" hidden></div>
+      <div id="report" class="report" hidden></div>
+    </div>
+
+    <!-- What we check (transparency moat — real content in raw HTML) -->
+    <section class="tool-explain" id="how">
+      <div class="tool-explain__inner">
+        <div class="tool-explain__label">How this works</div>
+        <h2>What we check, and why it matters</h2>
+        <p>Most AI crawlers don't run JavaScript. A <a href="https://vercel.com/blog/the-rise-of-the-ai-crawler" target="_blank" rel="noopener">study of real crawler logs</a> found GPTBot, ClaudeBot, PerplexityBot and CCBot all take the <strong>raw HTML</strong> — they never execute your scripts. Only Gemini (Google-Extended) and Applebot render. So if your content loads client-side, most AI simply doesn't see it.</p>
+        <p>This tool fetches your page the way those bots do and shows you the gap. Every check is something we can point to research for:</p>
+        <ul>
+          <li><strong>Server &amp; robots.txt access</strong> — does your server or robots.txt turn specific AI bots away (403, disallow)? If so, nothing else matters.</li>
+          <li><strong>The raw-vs-rendered gap</strong> — how much of your content exists in the HTML before JavaScript runs. This is what non-JS crawlers get.</li>
+          <li><strong>Citeability basics</strong> — title, meta description, a clean H1→H2→H3 hierarchy, and structured data. <a href="https://arxiv.org/abs/2311.09735" target="_blank" rel="noopener">Peer-reviewed GEO research</a> ties clear structure, quotes and citations to 30–40% more visibility in AI answers.</li>
+          <li><strong>llms.txt</strong> — we check for it, but we'll tell you the truth: a <a href="https://seranking.com/blog/llms-txt/" target="_blank" rel="noopener">300,000-domain study</a> found it has no measurable effect on AI citations. It's hygiene, not a lever.</li>
+        </ul>
+        <p class="tool-bridge">This checks whether AI <em>can</em> read your page. To track whether AI actually <em>cites</em> you across ChatGPT, Gemini and Perplexity, see <a href="https://beamtrace.com" target="_blank" rel="noopener">Beamtrace</a>.<!-- TODO: confirm Beamtrace URL --></p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <a href="/" class="site-footer__logo">
+          <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <p class="site-footer__desc">AI research paper digest for non-academic audiences.</p>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Tools</div>
+        <ul>
+          <li><a href="/ai-crawler-checker">What AI Sees</a></li>
+        </ul>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Research</div>
+        <ul>
+          <li><a href="/research">All articles</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="site-footer__bottom">
+      <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
+      <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var form = document.getElementById('check-form');
+      var input = document.getElementById('url-input');
+      var btn = document.getElementById('check-btn');
+      var statusEl = document.getElementById('status');
+      var reportEl = document.getElementById('report');
+      var exampleLink = document.getElementById('example-link');
+
+      function el(tag, cls, text) {
+        var n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text != null) n.textContent = text;
+        return n;
+      }
+
+      function setStatus(msg, isError) {
+        reportEl.hidden = true;
+        statusEl.hidden = false;
+        statusEl.textContent = msg;
+        statusEl.className = 'tool-status' + (isError ? ' tool-status--error' : '');
+      }
+
+      var GLYPH = { pass: '✓', fail: '✕', warn: '!', info: '•' };
+
+      function run(url) {
+        if (!url) return;
+        input.value = url;
+        btn.disabled = true;
+        btn.textContent = 'Checking…';
+        setStatus('Fetching ' + url + ' as each AI crawler…', false);
+
+        fetch('/api/check?url=' + encodeURIComponent(url))
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+          .then(function (res) {
+            if (!res.body || res.body.ok === false) {
+              setStatus(res.body && res.body.error ? res.body.error : 'Something went wrong.', true);
+              return;
+            }
+            render(res.body);
+            // Make the report shareable: reflect the URL in the address bar.
+            try { history.replaceState(null, '', '?url=' + encodeURIComponent(url)); } catch (e) {}
+          })
+          .catch(function () { setStatus('Network error — please try again.', true); })
+          .finally(function () { btn.disabled = false; btn.textContent = 'Check'; });
+      }
+
+      function render(data) {
+        statusEl.hidden = true;
+        reportEl.hidden = false;
+        reportEl.innerHTML = '';
+
+        // Head: URL + summary
+        var head = el('div', 'report__head');
+        var u = el('div', 'report__url');
+        u.appendChild(el('span', null, 'Checked: '));
+        u.appendChild(document.createTextNode(data.url));
+        head.appendChild(u);
+
+        var s = data.summary || {};
+        var sum = el('div', 'report__summary');
+        var pass = el('span', null); pass.append(el('b', null, String(s.pass || 0)), document.createTextNode(' pass'));
+        var warn = el('span', null); warn.append(el('b', null, String(s.warn || 0)), document.createTextNode(' warn'));
+        var fail = el('span', (s.fail ? 'has-fail' : '')); var fb = el('b', null, String(s.fail || 0)); if (s.fail) fb.style.color = 'var(--color-accent)'; fail.append(fb, document.createTextNode(' fail'));
+        sum.append(pass, warn, fail);
+        head.appendChild(sum);
+        reportEl.appendChild(head);
+
+        // Findings
+        reportEl.appendChild(el('div', 'report__section-label', 'Findings'));
+        (data.findings || []).forEach(function (f) {
+          var card = el('div', 'finding finding--' + f.status);
+          var h = el('div', 'finding__head');
+          h.appendChild(el('span', 'finding__glyph', GLYPH[f.status] || '•'));
+          h.appendChild(el('span', 'finding__label', f.label));
+          card.appendChild(h);
+          if (f.detail) card.appendChild(el('p', 'finding__detail', f.detail));
+          if (f.why) card.appendChild(el('p', 'finding__why', f.why));
+          if (f.source && f.source.url) {
+            var srcWrap = el('div', 'finding__src');
+            var a = el('a', null, 'Source: ' + f.source.label);
+            a.href = f.source.url; a.target = '_blank'; a.rel = 'noopener';
+            srcWrap.appendChild(a);
+            card.appendChild(srcWrap);
+          }
+          reportEl.appendChild(card);
+        });
+
+        // Per-bot access table
+        reportEl.appendChild(el('div', 'report__section-label', 'Per-bot access'));
+        var table = el('table', 'bot-table');
+        var thead = el('thead');
+        var hr = el('tr');
+        ['Crawler', 'Runs JS?', 'robots.txt', 'Server'].forEach(function (t, i) {
+          var th = el('th', i === 3 ? 'col-status' : null, t); hr.appendChild(th);
+        });
+        thead.appendChild(hr); table.appendChild(thead);
+        var tbody = el('tbody');
+        (data.botAccess || []).forEach(function (b) {
+          var tr = el('tr');
+          var name = el('td', 'bot-name'); name.appendChild(document.createTextNode(b.label));
+          name.appendChild(el('span', 'owner', b.owner)); tr.appendChild(name);
+          tr.appendChild(el('td', null, b.rendersJS ? 'Yes' : 'No'));
+          var robots = el('td'); robots.appendChild(pill(b.robots, b.robots === 'disallowed')); tr.appendChild(robots);
+          var server = el('td', 'col-status'); server.appendChild(pill(b.server, b.server === 'blocked' || b.server === 'cloaked')); tr.appendChild(server);
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        reportEl.appendChild(table);
+
+        // Share
+        var share = el('div', 'report__share');
+        var copy = el('button', 'share-btn', 'Copy report link');
+        copy.addEventListener('click', function () {
+          navigator.clipboard.writeText(window.location.href).then(function () {
+            copy.classList.add('copied'); copy.textContent = 'Copied!';
+            setTimeout(function () { copy.classList.remove('copied'); copy.textContent = 'Copy report link'; }, 2000);
+          });
+        });
+        share.appendChild(copy);
+        share.appendChild(el('span', 'site-footer__copy', 'Checked with BLURSOR · What AI Sees'));
+        reportEl.appendChild(share);
+      }
+
+      function pill(text, bad) {
+        return el('span', 'pill ' + (bad ? 'pill--bad' : 'pill--ok'), text);
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        run(input.value.trim());
+      });
+
+      exampleLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        run('https://vercel.com/blog/the-rise-of-the-ai-crawler');
+      });
+
+      // Auto-run from ?url= (shareable permalinks)
+      var params = new URLSearchParams(window.location.search);
+      var initial = params.get('url');
+      if (initial) run(initial);
+    })();
+  </script>
+
+</body>
+</html>
