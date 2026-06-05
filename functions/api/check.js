@@ -63,13 +63,13 @@ export async function onRequestGet({ request, env }) {
     ]);
 
     if (!baseline.ok && baseline.status === 0) {
-      return json({ ok: false, error: `Couldn't reach ${target.href} — ${baseline.error || "no response"}. Double-check the address.` }, 502);
+      return json({ ok: false, error: `Couldn't reach ${target.href} — ${baseline.error || "no response"}. Double-check the address.` }, 422);
     }
     if (baseline.status === 403 || baseline.status === 429) {
-      return json({ ok: false, error: `We were blocked from loading ${target.href} (HTTP ${baseline.status}) — the site may be protected against automated tools, so we can't read it the way AI would.` }, 502);
+      return json({ ok: false, error: `We were blocked from loading ${target.href} (HTTP ${baseline.status}) — the site may be protected against automated tools, so we can't read it the way AI would.` }, 422);
     }
     if (baseline.status >= 400) {
-      return json({ ok: false, error: `That page returned an error (HTTP ${baseline.status}) — there may be no live page at ${target.href}.` }, 502);
+      return json({ ok: false, error: `That page returned an error (HTTP ${baseline.status}) — there may be no live page at ${target.href}.` }, 422);
     }
     if (baseline.contentType && !/text\/html|application\/xhtml/i.test(baseline.contentType)) {
       return json({ ok: false, error: `That link isn't a web page (it's ${baseline.contentType.split(";")[0].trim()}). Paste a normal page URL instead.` }, 415);
