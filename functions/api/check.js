@@ -102,6 +102,15 @@ export async function onRequestGet({ request, env }) {
     const render = await renderViaCloudflare(target.href, env);
     const renderedPage = render.html ? analyzeHtml(render.html) : null;
 
+    // If there's essentially nothing to analyze — no title, no text, no headings, and no JS
+    // app to explain the emptiness — and rendering didn't reveal content either, don't
+    // fabricate a report. It's likely a parked domain, an empty page, or a redirect.
+    const rawEmpty = rawPage.visibleTextChars < 50 && !rawPage.title && rawPage.headings.h1 + rawPage.headings.h2 === 0 && !rawPage.frameworkHint && rawPage.scriptBytes < 2000;
+    const renEmpty = !renderedPage || renderedPage.visibleTextChars < 50;
+    if (rawEmpty && renEmpty) {
+      return json({ ok: false, error: `We reached ${target.href} but found almost no readable content — it may be a parked domain, an empty page, or a redirect. Try the specific page you want to check.` }, 422);
+    }
+
     const llms = { present: llmsRes.ok && llmsRes.status === 200, looksValid: false };
     if (llms.present) llms.looksValid = /^\s*#\s+/.test(llmsRes.body) && /\n\s*##\s+/.test(llmsRes.body);
 

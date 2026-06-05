@@ -543,7 +543,7 @@
         var bv = el('div', 'botview');
         var hasRendered = data.rendered && data.rendered.outline && data.rendered.outline.length;
         bv.appendChild(el('p', 'botview__intro', hasRendered
-          ? 'This is the exact text an AI assistant pulls from your page. Most AI reads the “Crawler” version (no JavaScript); a few — Google’s and Apple’s — read the “Rendering bot” version. Flip between them, and search for any word to check it’s there.'
+          ? 'This is the exact text an AI assistant pulls from your page. Most AI reads the raw version (no JavaScript); a few — Google’s and Apple’s — also read the JavaScript-rendered version. Flip between them, and search for any word to check it’s there.'
           : 'This is the exact text an AI assistant pulls from your page — everything it can read, nav and footer included. Search for any word to check it’s there.'));
         var rawChars = (data.content && data.content.visibleTextChars) || 0;
 
@@ -551,8 +551,8 @@
         var bRaw, bRen;
         if (hasRendered) {
           var tg = el('div', 'botview__toggle');
-          bRaw = el('button', 'active', 'Crawler (raw)');
-          bRen = el('button', null, 'Rendering bot');
+          bRaw = el('button', 'active', 'Most AI');
+          bRen = el('button', null, 'Google & Apple AI');
           tg.appendChild(bRaw); tg.appendChild(bRen);
           controls.appendChild(tg);
         }
