@@ -109,7 +109,7 @@ export async function onRequestGet({ request, env }) {
       summary,
       botAccess,
       content: rawPage,
-      rendered: renderedPage ? { visibleTextChars: renderedPage.visibleTextChars, headings: renderedPage.headings, hasJsonLd: renderedPage.hasJsonLd } : null,
+      rendered: renderedPage ? { visibleTextChars: renderedPage.visibleTextChars, headings: renderedPage.headings, hasJsonLd: renderedPage.hasJsonLd, outline: renderedPage.outline } : null,
       llms,
       findings,
     });
@@ -304,7 +304,37 @@ function analyzeHtml(html) {
     hasJsonLd: jsonLdBlocks.length > 0, jsonLdTypes: [...new Set(jsonLdTypes)],
     visibleTextChars, htmlBytes, scriptBytes, textRatio: Math.round(textRatio * 1000) / 1000,
     looksLikeJsShell, frameworkHint,
+    outline: extractOutline(html),
   };
+}
+
+// Pull readable blocks (headings, paragraphs, lists) in document order — a
+// heuristic "what the crawler actually extracts" view. Operates on script-free
+// HTML so it reflects readable content, not code.
+function extractOutline(html) {
+  const clean = html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    // Drop nav/footer chrome so the outline focuses on main content (and so a
+    // big mega-menu doesn't eat the block budget). <header> is kept — it often
+    // holds the page title.
+    .replace(/<nav[\s\S]*?<\/nav>/gi, " ")
+    .replace(/<footer[\s\S]*?<\/footer>/gi, " ");
+  const blocks = [];
+  const re = /<(h[1-6]|p|li|blockquote)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+  let m, total = 0;
+  while ((m = re.exec(clean)) !== null) {
+    const tag = m[1].toLowerCase();
+    let text = decode(m[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+    if (!text) continue;
+    if (text.length > 300) text = text.slice(0, 299) + "…";
+    blocks.push({ tag, text });
+    total += text.length;
+    if (blocks.length >= 60 || total > 6000) { blocks.push({ tag: "more", text: "…(truncated — showing the first part)" }); break; }
+  }
+  return blocks;
 }
 
 function detectFramework(html) {

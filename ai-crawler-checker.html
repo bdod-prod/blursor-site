@@ -154,6 +154,23 @@
     .pill--bad { color: var(--color-accent); font-weight: 500; }
     .pill--ok { color: var(--color-text-secondary); }
 
+    /* Bot's-eye view */
+    .botview__intro { font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: var(--space-sm); line-height: 1.6; }
+    .botview__toggle { display: flex; margin-bottom: var(--space-sm); }
+    .botview__toggle button { font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; border: 1px solid var(--color-border); background: transparent; color: var(--color-text-secondary); padding: 0.4rem 0.85rem; cursor: pointer; }
+    .botview__toggle button + button { border-left: none; }
+    .botview__toggle button.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+    .botview__box { border: 1px solid var(--color-border); background: var(--color-surface); padding: var(--space-md); max-height: 460px; overflow-y: auto; }
+    .botview__empty { font-style: italic; color: var(--color-text-secondary); font-size: 0.9rem; }
+    .bv-h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; margin: 0.7rem 0 0.3rem; }
+    .bv-h2 { font-size: 1.02rem; font-weight: 600; margin: 0.65rem 0 0.25rem; }
+    .bv-h3 { font-size: 0.92rem; font-weight: 600; margin: 0.5rem 0 0.2rem; }
+    .bv-p { font-size: 0.9rem; color: var(--color-text-secondary); margin: 0.25rem 0; line-height: 1.65; }
+    .bv-li { font-size: 0.9rem; color: var(--color-text-secondary); margin: 0.18rem 0 0.18rem 1.1rem; position: relative; line-height: 1.6; }
+    .bv-li::before { content: '–'; position: absolute; left: -1rem; color: var(--color-accent); }
+    .bv-blockquote { font-style: italic; color: var(--color-text-secondary); border-left: 2px solid var(--color-border); padding-left: 0.7rem; margin: 0.45rem 0; }
+    .bv-more { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-text-secondary); margin-top: 0.6rem; }
+
     /* Findings */
     .finding { border: 1px solid var(--color-border); border-left-width: 3px; background: var(--color-surface); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-xs); }
     .finding--fail { border-left-color: var(--color-accent); }
@@ -407,6 +424,9 @@
           reportEl.appendChild(card);
         });
 
+        // Bot's-eye view — the actual extracted content
+        renderBotView(data);
+
         // Per-bot access table
         reportEl.appendChild(el('div', 'report__section-label', 'Per-bot access'));
         var table = el('table', 'bot-table');
@@ -441,6 +461,39 @@
         share.appendChild(copy);
         share.appendChild(el('span', 'site-footer__copy', 'Checked with BLURSOR · What AI Sees'));
         reportEl.appendChild(share);
+      }
+
+      function renderBotView(data) {
+        reportEl.appendChild(el('div', 'report__section-label', 'Bot’s-eye view'));
+        var bv = el('div', 'botview');
+        var hasRendered = data.rendered && data.rendered.outline && data.rendered.outline.length;
+        bv.appendChild(el('p', 'botview__intro', hasRendered
+          ? 'The actual content extracted from your page — toggle between what a non-JS crawler gets (raw) and what a rendering bot gets (rendered).'
+          : 'The actual content a non-JS crawler (GPTBot, ClaudeBot, PerplexityBot, CCBot) extracts from your raw HTML — this is all they get.'));
+        var box = el('div', 'botview__box');
+        function paint(blocks) {
+          box.innerHTML = '';
+          if (!blocks || !blocks.length) { box.appendChild(el('div', 'botview__empty', 'No readable text blocks in the raw HTML — a non-JS crawler would get almost nothing here.')); return; }
+          blocks.forEach(function (b) {
+            var cls = b.tag === 'h1' ? 'bv-h1' : b.tag === 'h2' ? 'bv-h2'
+              : (b.tag === 'h3' || b.tag === 'h4' || b.tag === 'h5' || b.tag === 'h6') ? 'bv-h3'
+              : b.tag === 'li' ? 'bv-li' : b.tag === 'blockquote' ? 'bv-blockquote'
+              : b.tag === 'more' ? 'bv-more' : 'bv-p';
+            box.appendChild(el('div', cls, b.text));
+          });
+        }
+        if (hasRendered) {
+          var tg = el('div', 'botview__toggle');
+          var bRaw = el('button', 'active', 'Crawler (raw)');
+          var bRen = el('button', null, 'Rendering bot');
+          bRaw.addEventListener('click', function () { bRaw.className = 'active'; bRen.className = ''; paint(data.content.outline); });
+          bRen.addEventListener('click', function () { bRen.className = 'active'; bRaw.className = ''; paint(data.rendered.outline); });
+          tg.appendChild(bRaw); tg.appendChild(bRen);
+          bv.appendChild(tg);
+        }
+        bv.appendChild(box);
+        reportEl.appendChild(bv);
+        paint(data.content.outline);
       }
 
       function pill(text, bad) {
