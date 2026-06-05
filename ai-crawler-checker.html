@@ -160,6 +160,8 @@
     .botview__toggle { display: flex; }
     .botview__search { flex: 1; min-width: 180px; font-family: var(--font-mono); font-size: 0.72rem; border: 1px solid var(--color-border); background: var(--color-bg); padding: 0.45rem 0.7rem; color: var(--color-text); outline: none; }
     .botview__search:focus { border-color: var(--color-accent); }
+    .botview__count { font-family: var(--font-mono); font-size: 0.66rem; color: var(--color-text-secondary); white-space: nowrap; }
+    .bv-hit { background: rgba(196,59,42,0.22); border-radius: 2px; padding: 0 1px; }
     .botview__toggle button { font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; border: 1px solid var(--color-border); background: transparent; color: var(--color-text-secondary); padding: 0.4rem 0.85rem; cursor: pointer; }
     .botview__toggle button + button { border-left: none; }
     .botview__toggle button.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
@@ -471,58 +473,83 @@
         var bv = el('div', 'botview');
         var hasRendered = data.rendered && data.rendered.outline && data.rendered.outline.length;
         bv.appendChild(el('p', 'botview__intro', hasRendered
-          ? 'Everything a bot actually receives as text — nav and footer included. Toggle between a rendering bot (Gemini, Applebot) and a non-JS crawler (GPTBot, ClaudeBot, and most others), and search for any word.'
+          ? 'Everything a bot actually receives as text — nav and footer included. Toggle between a non-JS crawler (GPTBot, ClaudeBot, and most others) and a rendering bot (Gemini, Applebot), and search to jump to any word.'
           : 'Everything a non-JS crawler (GPTBot, ClaudeBot, PerplexityBot, CCBot) actually receives as text from your raw HTML — nav and footer included.'));
         var rawChars = (data.content && data.content.visibleTextChars) || 0;
 
         var controls = el('div', 'botview__controls');
-        var bRen, bRaw;
+        var bRaw, bRen;
         if (hasRendered) {
           var tg = el('div', 'botview__toggle');
-          bRen = el('button', 'active', 'Rendering bot');
-          bRaw = el('button', null, 'Crawler (raw)');
-          tg.appendChild(bRen); tg.appendChild(bRaw);
+          bRaw = el('button', 'active', 'Crawler (raw)');
+          bRen = el('button', null, 'Rendering bot');
+          tg.appendChild(bRaw); tg.appendChild(bRen);
           controls.appendChild(tg);
         }
         var search = el('input', 'botview__search');
         search.type = 'search';
         search.placeholder = 'Search the extracted text…';
         controls.appendChild(search);
+        var countEl = el('span', 'botview__count');
+        controls.appendChild(countEl);
         bv.appendChild(controls);
 
         var box = el('div', 'botview__box');
         bv.appendChild(box);
         reportEl.appendChild(bv);
 
-        var current = hasRendered ? data.rendered.outline : data.content.outline;
+        var current = data.content.outline;
+
+        function highlightInto(parent, text, q) {
+          if (!q) { parent.appendChild(document.createTextNode(text)); return 0; }
+          var lower = text.toLowerCase(), from = 0, idx, n = 0;
+          while ((idx = lower.indexOf(q, from)) !== -1) {
+            if (idx > from) parent.appendChild(document.createTextNode(text.slice(from, idx)));
+            var hit = document.createElement('span');
+            hit.className = 'bv-hit';
+            hit.textContent = text.slice(idx, idx + q.length);
+            parent.appendChild(hit);
+            from = idx + q.length;
+            n++;
+          }
+          if (from < text.length) parent.appendChild(document.createTextNode(text.slice(from)));
+          return n;
+        }
 
         function paint() {
           var q = search.value.trim().toLowerCase();
-          var blocks = (current || []).filter(function (b) {
-            if (b.tag === 'more') return !q;
-            return !q || b.text.toLowerCase().indexOf(q) !== -1;
-          });
+          var blocks = current || [];
           box.innerHTML = '';
           if (!blocks.length) {
-            var msg;
-            if (q) msg = 'No extracted text matches “' + search.value.trim() + '”.';
-            else if (current === data.content.outline) msg = 'No headings, paragraphs, or list items in the raw HTML (~' + rawChars + ' chars of text total) — the content isn’t in standard tags, so most AI crawlers can’t parse it cleanly.';
-            else msg = 'Nothing could be extracted from the rendered page.';
-            box.appendChild(el('div', 'botview__empty', msg));
+            countEl.textContent = '';
+            box.appendChild(el('div', 'botview__empty', current === data.content.outline
+              ? ('No headings, paragraphs, or list items in the raw HTML (~' + rawChars + ' chars of text total) — the content isn’t in standard tags, so most AI crawlers can’t parse it cleanly.')
+              : 'Nothing could be extracted from the rendered page.'));
             return;
           }
+          var hits = 0;
           blocks.forEach(function (b) {
             var cls = b.tag === 'h1' ? 'bv-h1' : b.tag === 'h2' ? 'bv-h2'
               : (b.tag === 'h3' || b.tag === 'h4' || b.tag === 'h5' || b.tag === 'h6') ? 'bv-h3'
               : b.tag === 'li' ? 'bv-li' : b.tag === 'blockquote' ? 'bv-blockquote'
               : b.tag === 'more' ? 'bv-more' : 'bv-p';
-            box.appendChild(el('div', cls, b.text));
+            var div = el('div', cls);
+            if (b.tag === 'more') div.textContent = b.text;
+            else hits += highlightInto(div, b.text, q);
+            box.appendChild(div);
           });
+          countEl.textContent = q ? (hits + (hits === 1 ? ' match' : ' matches')) : '';
+          if (q && hits) {
+            var first = box.querySelector('.bv-hit');
+            if (first) box.scrollTop += first.getBoundingClientRect().top - box.getBoundingClientRect().top - 16;
+          } else {
+            box.scrollTop = 0;
+          }
         }
 
         if (hasRendered) {
-          bRen.addEventListener('click', function () { bRen.className = 'active'; bRaw.className = ''; current = data.rendered.outline; paint(); });
           bRaw.addEventListener('click', function () { bRaw.className = 'active'; bRen.className = ''; current = data.content.outline; paint(); });
+          bRen.addEventListener('click', function () { bRen.className = 'active'; bRaw.className = ''; current = data.rendered.outline; paint(); });
         }
         search.addEventListener('input', paint);
         paint();
