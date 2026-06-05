@@ -17,6 +17,7 @@ const BASE_URL = 'https://blursor.ai';
 // its on-disk source so lastmod reflects the file's real mtime.
 const STATIC_ROUTES = [
   { path: '/', file: path.join(DEPLOY_ROOT, 'index.html') },
+  { path: '/ai-crawler-checker', file: path.join(DEPLOY_ROOT, 'ai-crawler-checker.html') },
   { path: '/research', file: INDEX_PATH },
   { path: '/author/alex-rostovtsev', file: path.join(DEPLOY_ROOT, 'author', 'alex-rostovtsev.html') },
 ];
