@@ -346,7 +346,7 @@
         input.value = url;
         btn.disabled = true;
         btn.textContent = 'Checking…';
-        setStatus('Fetching ' + url + ' as each AI crawler…', false);
+        setStatus('Checking ' + url + ' — fetching as each crawler (rendering can take a few seconds)…', false);
 
         fetch('/api/check?url=' + encodeURIComponent(url))
           .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
@@ -382,6 +382,9 @@
         var fail = el('span', (s.fail ? 'has-fail' : '')); var fb = el('b', null, String(s.fail || 0)); if (s.fail) fb.style.color = 'var(--color-accent)'; fail.append(fb, document.createTextNode(' fail'));
         sum.append(pass, warn, fail);
         head.appendChild(sum);
+        var mode = el('div', null, data.renderMode === 'rendered' ? '✓ render-verified — we rendered the page and compared raw vs rendered' : 'heuristic estimate — live render not enabled yet');
+        mode.style.cssText = 'flex-basis:100%;font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.04em;color:var(--color-text-secondary);margin-top:0.4rem';
+        head.appendChild(mode);
         reportEl.appendChild(head);
 
         // Findings
