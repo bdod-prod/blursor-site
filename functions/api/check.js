@@ -109,19 +109,40 @@ const AGENT_PROBE_JS = `(function(){
     R.a11y.landmarks=document.querySelectorAll('main,nav,header,footer,aside,[role="main"],[role="navigation"],[role="banner"],[role="contentinfo"]').length;
     R.a11y.h1=document.querySelectorAll('h1').length;
   }catch(e){R.a11y.error=1;}
-  // --- Layout stability: CLS from buffered layout-shift entries ---
+  // --- write results back into the page for the server to read ---
+  function write(){
+    try{
+      var node=document.getElementById('__blursor_agentic__')||document.createElement('script');
+      node.type='application/json'; node.id='__blursor_agentic__';
+      node.textContent=JSON.stringify(R).replace(/</g,'\\\\u003c');
+      (document.body||document.documentElement).appendChild(node);
+    }catch(e){}
+  }
+  // --- Layout stability (CLS). Prefer a buffered observer — it reports shifts
+  // that happened before this probe was injected. Fall back to a sync read. An
+  // empty result on a browser that supports the API means zero shift (good),
+  // not "unknown" — so report 0, not null. ---
   try{
-    var ls=[]; try{ls=performance.getEntriesByType('layout-shift')||[];}catch(e){}
-    if(ls.length){var c=0; for(var m=0;m<ls.length;m++){if(!ls[m].hadRecentInput)c+=ls[m].value;} R.cls=Math.round(c*1000)/1000;}
+    var supported=!!(window.PerformanceObserver&&PerformanceObserver.supportedEntryTypes&&PerformanceObserver.supportedEntryTypes.indexOf('layout-shift')>=0);
+    var got=false;
+    if(supported){
+      try{
+        var total=0;
+        var obs=new PerformanceObserver(function(list){
+          list.getEntries().forEach(function(e){ if(!e.hadRecentInput) total+=e.value; });
+          R.cls=Math.round(total*1000)/1000; got=true; write();
+        });
+        obs.observe({type:'layout-shift',buffered:true});
+      }catch(e){}
+    }
+    if(!got){
+      var ls=[]; try{ls=performance.getEntriesByType('layout-shift')||[];}catch(e){}
+      if(ls.length){var c=0;for(var m=0;m<ls.length;m++){if(!ls[m].hadRecentInput)c+=ls[m].value;}R.cls=Math.round(c*1000)/1000;}
+      else{R.cls=supported?0:null;}
+    }
     try{var lcp=performance.getEntriesByType('largest-contentful-paint'); if(lcp&&lcp.length)R.vitals.lcp=Math.round(lcp[lcp.length-1].startTime);}catch(e){}
   }catch(e){R.cls=null;}
-  // --- write results back into the page for the server to read ---
-  try{
-    var node=document.getElementById('__blursor_agentic__')||document.createElement('script');
-    node.type='application/json'; node.id='__blursor_agentic__';
-    node.textContent=JSON.stringify(R).replace(/</g,'\\\\u003c');
-    (document.body||document.documentElement).appendChild(node);
-  }catch(e){}
+  write();
 })();`;
 
 export async function onRequestGet({ request, env }) {
@@ -510,7 +531,7 @@ function analyzeAgentic({ injected, renderedHtml, rawHtml, llms }) {
   const cls = haveProbe && typeof injected.cls === "number" ? injected.cls : null;
 
   // WebMCP: live presence (probe) OR a source-level mention in the page code.
-  const srcScan = scanWebmcpSource(rawHtml, renderedHtml);
+  const srcScan = scanWebmcpSource(rawHtml);
   const webmcp = {
     present: !!(injected && injected.webmcp && injected.webmcp.present) || srcScan.found,
     runtime: !!(injected && injected.webmcp && injected.webmcp.present),
@@ -665,8 +686,10 @@ function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
 // Source-level WebMCP backstop: catch pages that reference the API even if the
 // runtime probe didn't observe a registered tool in time.
-function scanWebmcpSource(rawHtml, renderedHtml) {
-  const hay = `${rawHtml || ""}\n${renderedHtml || ""}`;
+function scanWebmcpSource(rawHtml) {
+  // Scan the RAW HTML only. The rendered HTML contains our own injected probe
+  // (which references modelContext), which would otherwise self-trigger this.
+  const hay = rawHtml || "";
   if (/\bmodelContext\b/.test(hay)) return { found: true, how: "modelContext in page code" };
   if (/\bregisterTool\s*\(/.test(hay)) return { found: true, how: "registerTool() in page code" };
   return { found: false, how: null };
