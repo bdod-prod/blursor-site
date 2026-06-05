@@ -1,9 +1,15 @@
-// BLURSOR — AI crawler-readability checker (v2)
+// BLURSOR — AI crawler-readability + agent-readiness checker
 // Cloudflare Pages Function:  GET /api/check?url=<target>
 //
-// Fetches a URL the way AI crawlers do (raw HTML, no JS), and — when a
-// Cloudflare Browser Rendering token is configured — ALSO renders the page and
-// diffs raw vs rendered to measure exactly how much content is client-only.
+// Two halves, one request:
+//   1. Can AI READ the page? Fetch it the way AI crawlers do (raw HTML, no JS),
+//      and — when a Cloudflare Browser Rendering token is configured — ALSO
+//      render it and diff raw vs rendered to measure how much is client-only.
+//   2. Can an AI AGENT USE the page? While rendering, an injected probe reads the
+//      live page for WebMCP tools, accessible names on buttons/forms/images, and
+//      layout stability (CLS) — the signals Google's Lighthouse "Agentic
+//      Browsing" category checks. Falls back to HTML heuristics if render is off.
+//
 // Without a token (or if rendering fails/quota-limits), it falls back to a
 // heuristic. Transparency is the point: every finding carries a plain-English
 // "why" and a research source.
@@ -35,12 +41,88 @@ const SRC = {
   vercel:    { label: "Vercel AI-crawler study (2024)",         url: "https://vercel.com/blog/the-rise-of-the-ai-crawler" },
   seranking: { label: "SE Ranking, 300k-domain llms.txt study", url: "https://seranking.com/blog/llms-txt/" },
   geo:       { label: "GEO paper (Princeton et al., KDD '24)",  url: "https://arxiv.org/abs/2311.09735" },
+  lighthouse:{ label: "Google Lighthouse — Agentic Browsing",   url: "https://developer.chrome.com/docs/lighthouse/agentic-browsing/scoring" },
+  webmcp:    { label: "WebMCP (W3C Community Group draft)",      url: "https://github.com/webmachinelearning/webmcp" },
 };
 
 const FETCH_TIMEOUT_MS = 9000;
-const RENDER_TIMEOUT_MS = 22000;
+const RENDER_TIMEOUT_MS = 25000;
 const MAX_BYTES = 2_500_000;
 const RENDER_CACHE_TTL = 21600; // 6h
+
+// Injected into the page during render (addScriptTag) to read the signals an AI
+// AGENT needs — things that only exist after JS runs and can't be seen in static
+// HTML: live WebMCP tools (document.modelContext), the accessible name of every
+// interactive control (computed against the real DOM), and the layout shift
+// (CLS) that accumulated during load. It writes one JSON <script> node back into
+// the page; the server reads it out of the returned HTML (see extractInjected).
+// All wrapped in try/catch so a quirky page can never break the render.
+const AGENT_PROBE_JS = `(function(){
+  function t(s){return (s||'').replace(/\\s+/g,' ').trim();}
+  var R={v:1,webmcp:{},a11y:{},cls:null,vitals:{}};
+  // --- WebMCP (current spec: document.modelContext; older drafts: navigator) ---
+  try{
+    var mc=(typeof document!=='undefined'&&document.modelContext)||(typeof navigator!=='undefined'&&navigator.modelContext)||null;
+    R.webmcp.present=!!mc;
+    if(mc){
+      R.webmcp.api=(document.modelContext?'document.modelContext':'navigator.modelContext');
+      var n=null;
+      try{ if(typeof mc.getTools==='function'){var g=mc.getTools(); if(g&&g.length!=null)n=g.length;} }catch(e){}
+      try{ if(n==null&&mc.tools&&mc.tools.length!=null)n=mc.tools.length; }catch(e){}
+      R.webmcp.tools=n;
+    }
+  }catch(e){R.webmcp.error=1;}
+  // --- Agent-centric accessibility (computed on the live DOM) ---
+  try{
+    function vis(el){
+      try{var s=getComputedStyle(el); if(s.display==='none'||s.visibility==='hidden'||parseFloat(s.opacity||'1')===0)return false;}catch(e){}
+      if(el.closest&&el.closest('[aria-hidden="true"]'))return false;
+      var r=el.getBoundingClientRect?el.getBoundingClientRect():null;
+      if(r&&r.width===0&&r.height===0)return false;
+      return true;
+    }
+    function name(el){
+      var al=el.getAttribute&&el.getAttribute('aria-label'); if(t(al))return t(al);
+      var lb=el.getAttribute&&el.getAttribute('aria-labelledby');
+      if(lb){var ref=document.getElementById(lb.split(/\\s+/)[0]); if(ref&&t(ref.textContent))return t(ref.textContent);}
+      var tx=t(el.textContent); if(tx)return tx;
+      var ti=el.getAttribute&&el.getAttribute('title'); if(t(ti))return t(ti);
+      var tag=(el.tagName||'').toLowerCase(), ty=(el.getAttribute&&el.getAttribute('type')||'').toLowerCase();
+      if(tag==='input'&&(ty==='submit'||ty==='button')){var v=el.getAttribute('value'); if(t(v))return t(v);}
+      if(tag==='input'&&ty==='image'){var a=el.getAttribute('alt'); if(t(a))return t(a);}
+      if(el.id){try{var lf=document.querySelector('label[for="'+(window.CSS&&CSS.escape?CSS.escape(el.id):el.id)+'"]'); if(lf&&t(lf.textContent))return t(lf.textContent);}catch(e){}}
+      var pl=el.closest&&el.closest('label'); if(pl&&t(pl.textContent))return t(pl.textContent);
+      var ph=el.getAttribute&&el.getAttribute('placeholder'); if(t(ph))return t(ph);
+      var im=el.querySelector&&el.querySelector('img[alt]'); if(im&&t(im.getAttribute('alt')))return t(im.getAttribute('alt'));
+      return '';
+    }
+    var sel='a[href],button,[role="button"],[role="link"],[role="menuitem"],[role="tab"],[role="checkbox"],[role="switch"],input:not([type="hidden"]),select,textarea';
+    var els=document.querySelectorAll(sel), total=0, unnamed=0, samples=[];
+    for(var i=0;i<els.length;i++){var el=els[i]; if(!vis(el))continue; total++; if(!name(el)){unnamed++; if(samples.length<8){var h=(el.getAttribute&&(el.getAttribute('class')||el.id))||''; samples.push(((el.tagName||'').toLowerCase())+(h?('.'+String(h).split(/\\s+/)[0]):''));}}}
+    R.a11y.interactive=total; R.a11y.unnamed=unnamed; R.a11y.unnamedSamples=samples;
+    var fields=document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="image"]):not([type="reset"]),select,textarea');
+    var ft=0,fn=0; for(var j=0;j<fields.length;j++){var fe=fields[j]; if(!vis(fe))continue; ft++; if(!name(fe))fn++;}
+    R.a11y.fields=ft; R.a11y.fieldsNoLabel=fn;
+    var imgs=document.querySelectorAll('img'); var it=0,ina=0; for(var k=0;k<imgs.length;k++){var im2=imgs[k]; if(!vis(im2))continue; if(im2.getAttribute('role')==='presentation'||im2.getAttribute('aria-hidden')==='true')continue; it++; if(im2.getAttribute('alt')==null)ina++;}
+    R.a11y.images=it; R.a11y.imagesNoAlt=ina;
+    R.a11y.hasMain=!!document.querySelector('main,[role="main"]');
+    R.a11y.landmarks=document.querySelectorAll('main,nav,header,footer,aside,[role="main"],[role="navigation"],[role="banner"],[role="contentinfo"]').length;
+    R.a11y.h1=document.querySelectorAll('h1').length;
+  }catch(e){R.a11y.error=1;}
+  // --- Layout stability: CLS from buffered layout-shift entries ---
+  try{
+    var ls=[]; try{ls=performance.getEntriesByType('layout-shift')||[];}catch(e){}
+    if(ls.length){var c=0; for(var m=0;m<ls.length;m++){if(!ls[m].hadRecentInput)c+=ls[m].value;} R.cls=Math.round(c*1000)/1000;}
+    try{var lcp=performance.getEntriesByType('largest-contentful-paint'); if(lcp&&lcp.length)R.vitals.lcp=Math.round(lcp[lcp.length-1].startTime);}catch(e){}
+  }catch(e){R.cls=null;}
+  // --- write results back into the page for the server to read ---
+  try{
+    var node=document.getElementById('__blursor_agentic__')||document.createElement('script');
+    node.type='application/json'; node.id='__blursor_agentic__';
+    node.textContent=JSON.stringify(R).replace(/</g,'\\\\u003c');
+    (document.body||document.documentElement).appendChild(node);
+  }catch(e){}
+})();`;
 
 export async function onRequestGet({ request, env }) {
   const reqUrl = new URL(request.url);
@@ -117,6 +199,9 @@ export async function onRequestGet({ request, env }) {
     const findings = buildFindings({ botAccess, rawPage, renderedPage, llms });
     const summary = findings.reduce((a, f) => ((a[f.status] = (a[f.status] || 0) + 1), a), { pass: 0, warn: 0, fail: 0 });
 
+    // The second half: can an AI AGENT use the page (not just read it)?
+    const agentic = analyzeAgentic({ injected: render.agentic, renderedHtml: render.html, rawHtml, llms });
+
     return json({
       ok: true,
       url: target.href,
@@ -130,6 +215,7 @@ export async function onRequestGet({ request, env }) {
       rendered: renderedPage ? { visibleTextChars: renderedPage.visibleTextChars, headings: renderedPage.headings, hasJsonLd: renderedPage.hasJsonLd, outline: renderedPage.outline } : null,
       llms,
       findings,
+      agentic,
     });
   } catch (e) {
     return json({ ok: false, error: `Check failed: ${e.message}` }, 500);
@@ -139,15 +225,17 @@ export async function onRequestGet({ request, env }) {
 // --- Browser Rendering (Cloudflare REST API) --------------------------------
 
 async function renderViaCloudflare(url, env) {
-  if (!env || !env.CF_ACCOUNT_ID || !env.CF_BROWSER_TOKEN) return { html: null, status: "no-credentials" };
+  if (!env || !env.CF_ACCOUNT_ID || !env.CF_BROWSER_TOKEN) return { html: null, agentic: null, status: "no-credentials" };
 
-  // Edge-cache renders by URL so repeat checks don't burn the daily budget.
+  // Edge-cache renders by URL so repeat checks don't burn the daily budget. The
+  // agent probe writes its results into the HTML (a JSON <script> node), so
+  // caching the HTML caches the agent signals too — we just re-extract on a hit.
   let cache = null, cacheKey = null;
   try {
     cache = caches.default;
-    cacheKey = new Request("https://render-cache.blursor.ai/v2/" + encodeURIComponent(url));
+    cacheKey = new Request("https://render-cache.blursor.ai/v3/" + encodeURIComponent(url));
     const hit = await cache.match(cacheKey);
-    if (hit) { const t = await hit.text(); if (t) return { html: t, status: "cached" }; }
+    if (hit) { const t = await hit.text(); if (t) return { html: t, agentic: extractInjected(t), status: "cached" }; }
   } catch { /* cache optional */ }
 
   const endpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/browser-rendering/content`;
@@ -157,23 +245,42 @@ async function renderViaCloudflare(url, env) {
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { Authorization: `Bearer ${env.CF_BROWSER_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ url, gotoOptions: { waitUntil: "networkidle0", timeout: 15000 } }),
+      body: JSON.stringify({
+        url,
+        gotoOptions: { waitUntil: "networkidle0", timeout: 15000 },
+        // Inject the agent probe, then let late JS register WebMCP tools / layout
+        // settle before the HTML is captured.
+        addScriptTag: [{ content: AGENT_PROBE_JS }],
+        waitForTimeout: 1000,
+      }),
       signal: ctrl.signal,
     });
-    if (res.status === 429) return { html: null, status: "quota-exceeded" };
-    if (!res.ok) return { html: null, status: `error-${res.status}` };
+    if (res.status === 429) return { html: null, agentic: null, status: "quota-exceeded" };
+    if (!res.ok) return { html: null, agentic: null, status: `error-${res.status}` };
     const data = await res.json().catch(() => null);
     const html = data && data.success && typeof data.result === "string" ? data.result : null;
-    if (!html) return { html: null, status: "empty" };
+    if (!html) return { html: null, agentic: null, status: "empty" };
     if (cache && cacheKey) {
       try { await cache.put(cacheKey, new Response(html, { headers: { "Cache-Control": `public, max-age=${RENDER_CACHE_TTL}` } })); } catch {}
     }
-    return { html, status: "rendered" };
+    return { html, agentic: extractInjected(html), status: "rendered" };
   } catch (e) {
-    return { html: null, status: e.name === "AbortError" ? "timeout" : "error" };
+    return { html: null, agentic: null, status: e.name === "AbortError" ? "timeout" : "error" };
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Read the agent-probe results the injected script wrote into the page. The JSON
+// has its "<" escaped to <, so it can't contain a literal </script> to trip
+// this regex (or the browser's own HTML parser).
+function extractInjected(html) {
+  try {
+    const m = html.match(/<script[^>]+id=["']__blursor_agentic__["'][^>]*>([\s\S]*?)<\/script>/i);
+    if (!m) return null;
+    const parsed = JSON.parse(m[1].trim());
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch { return null; }
 }
 
 // --- Helpers ----------------------------------------------------------------
@@ -374,6 +481,264 @@ function attr(tag, name) {
 
 function decode(s) {
   return s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/gi, "'");
+}
+
+// --- Agentic readiness ------------------------------------------------------
+// Can an AI AGENT navigate and USE the page (not just read it)? Judged on the
+// RENDERED page — agents drive a real browser — using the live probe when it
+// came back, and HTML heuristics otherwise. Mirrors the signals in Google's
+// Lighthouse "Agentic Browsing" category: WebMCP tools, accessible names on
+// interactive controls, layout stability (CLS), and llms.txt discoverability.
+
+function analyzeAgentic({ injected, renderedHtml, rawHtml, llms }) {
+  const haveProbe = !!(injected && injected.a11y && !injected.a11y.error && typeof injected.a11y.interactive === "number");
+  // measured  = live probe ran in the browser (accurate)
+  // rendered-html = page rendered but the probe didn't report; read the HTML
+  // heuristic = no render at all; rough read of the raw HTML
+  const mode = haveProbe ? "measured" : (renderedHtml ? "rendered-html" : "heuristic");
+
+  const a11y = haveProbe ? normalizeA11y(injected.a11y) : a11yFromHtml(renderedHtml || rawHtml || "");
+  const cls = haveProbe && typeof injected.cls === "number" ? injected.cls : null;
+
+  // WebMCP: live presence (probe) OR a source-level mention in the page code.
+  const srcScan = scanWebmcpSource(rawHtml, renderedHtml);
+  const webmcp = {
+    present: !!(injected && injected.webmcp && injected.webmcp.present) || srcScan.found,
+    runtime: !!(injected && injected.webmcp && injected.webmcp.present),
+    tools: injected && injected.webmcp && injected.webmcp.tools != null ? injected.webmcp.tools : null,
+    source: srcScan.found ? srcScan.how : null,
+  };
+
+  // Static layout-shift risk (used when CLS couldn't be measured): images with
+  // no set size are the classic cause of content jumping during load.
+  const imgRisk = countDimensionlessImages(renderedHtml || rawHtml || "");
+
+  const findings = buildAgenticFindings({ mode, a11y, cls, webmcp, imgRisk, llms });
+  const summary = findings.reduce((acc, f) => ((acc[f.status] = (acc[f.status] || 0) + 1), acc), { pass: 0, warn: 0, fail: 0, info: 0 });
+
+  return {
+    mode,
+    summary,
+    findings,
+    signals: { webmcp, a11y, cls, lcp: haveProbe && injected.vitals ? (injected.vitals.lcp ?? null) : null, imgRisk },
+  };
+}
+
+function normalizeA11y(a) {
+  return {
+    interactive: a.interactive || 0,
+    unnamed: a.unnamed || 0,
+    unnamedSamples: a.unnamedSamples || [],
+    fields: a.fields || 0,
+    fieldsNoLabel: a.fieldsNoLabel || 0,
+    images: a.images || 0,
+    imagesNoAlt: a.imagesNoAlt || 0,
+    hasMain: !!a.hasMain,
+    landmarks: a.landmarks || 0,
+    h1: a.h1 || 0,
+    approx: false,
+  };
+}
+
+function buildAgenticFindings({ mode, a11y, cls, webmcp, imgRisk, llms }) {
+  const f = [];
+  const ratio = a11y.interactive > 0 ? a11y.unnamed / a11y.interactive : 0;
+
+  // 1. Accessible names on interactive controls — the core "can an agent operate this?" check
+  if (a11y.interactive === 0) {
+    f.push(finding("agent-labels", "No interactive elements found", "info",
+      "We didn't find buttons, links, or form fields on the rendered page.",
+      "Agents act by using controls. A page with nothing to operate is read-only to them — fine for an article, limiting for an app.", SRC.lighthouse));
+  } else if (a11y.unnamed === 0) {
+    f.push(finding("agent-labels", "Buttons and links are clearly labeled", "pass",
+      `All ${a11y.interactive} interactive elements have a name an agent can read.`,
+      "Agents pick what to click by each control's accessible name. Clear names mean reliable actions.", SRC.lighthouse));
+  } else {
+    const st = ratio > 0.25 ? "fail" : "warn";
+    const eg = a11y.unnamedSamples && a11y.unnamedSamples.length ? ` (e.g. ${a11y.unnamedSamples.slice(0, 4).join(", ")})` : "";
+    f.push(finding("agent-labels", "Some buttons or links have no readable label", st,
+      `${a11y.unnamed} of ${a11y.interactive} interactive elements have no name an agent can read${eg}.`,
+      "An icon-only button or a bare link is invisible or ambiguous to an agent — and to screen-reader users. Give each a clear label.", SRC.lighthouse));
+  }
+
+  // 2. Form fields
+  if (a11y.fields > 0) {
+    if (a11y.fieldsNoLabel === 0) {
+      f.push(finding("agent-forms", "Form fields are labeled", "pass",
+        `All ${a11y.fields} form field${a11y.fields === 1 ? "" : "s"} have a label.`,
+        "To fill a form, an agent needs to know what each field is for.", SRC.lighthouse));
+    } else {
+      const st = a11y.fieldsNoLabel >= a11y.fields ? "fail" : "warn";
+      f.push(finding("agent-forms", "Some form fields have no label", st,
+        `${a11y.fieldsNoLabel} of ${a11y.fields} form fields have no label.`,
+        "An unlabeled field forces an agent to guess what to type — a common point of failure.", SRC.lighthouse));
+    }
+  }
+
+  // 3. Images
+  if (a11y.images > 0) {
+    if (a11y.imagesNoAlt === 0) {
+      f.push(finding("agent-images", "Images have text descriptions", "pass",
+        `All ${a11y.images} content image${a11y.images === 1 ? "" : "s"} have alt text.`,
+        "Agents and blind users read images through their alt text.", SRC.lighthouse));
+    } else {
+      f.push(finding("agent-images", "Some images have no text description", "warn",
+        `${a11y.imagesNoAlt} of ${a11y.images} content images have no alt text.`,
+        "Without alt text, what an image shows is invisible to an agent.", SRC.lighthouse));
+    }
+  }
+
+  // 4. Structure / landmarks
+  const sIssues = [];
+  if (!a11y.hasMain) sIssues.push("no main-content landmark");
+  if (a11y.h1 !== 1) sIssues.push(`${a11y.h1} H1 heading${a11y.h1 === 1 ? "" : "s"} (want exactly 1)`);
+  if (sIssues.length === 0) {
+    f.push(finding("agent-structure", "Clear structure to navigate", "pass",
+      "One H1 and a main-content landmark are present.",
+      "Agents use landmarks and a single clear H1 to tell your content from the page chrome.", SRC.lighthouse));
+  } else {
+    f.push(finding("agent-structure", "Page structure could be clearer", "warn",
+      `${cap(sIssues.join("; "))}.`,
+      "Without a main landmark and one clear H1, an agent has a harder time finding the actual content.", SRC.lighthouse));
+  }
+
+  // 5. Layout stability (CLS)
+  if (cls !== null && cls !== undefined) {
+    if (cls <= 0.1) {
+      f.push(finding("agent-stability", "Your page holds still as it loads", "pass",
+        `Layout shift (CLS) is ${cls} — Google's "good" mark is 0.1 or under.`,
+        "When content stays put, an agent clicks what it means to.", SRC.lighthouse));
+    } else if (cls <= 0.25) {
+      f.push(finding("agent-stability", "Your page shifts a little as it loads", "warn",
+        `Layout shift (CLS) is ${cls} (good is 0.1 or under).`,
+        "Moving content can make an agent click the wrong thing as the page settles.", SRC.lighthouse));
+    } else {
+      f.push(finding("agent-stability", "Your page jumps around as it loads", "fail",
+        `Layout shift (CLS) is ${cls} (good is 0.1 or under).`,
+        "A lot of movement during load is a recipe for mis-clicks — by agents and people alike.", SRC.lighthouse));
+    }
+  } else {
+    const d = imgRisk > 0
+      ? `We couldn't measure it on this render. ${imgRisk} image${imgRisk === 1 ? "" : "s"} have no set size — the most common cause of layout jumps.`
+      : "We couldn't measure it on this render, and saw no obvious layout-shift risks in the markup.";
+    f.push(finding("agent-stability", "Layout shift not measured", "info", d,
+      "If content moves while loading, an agent can click the wrong thing. Worth a manual look.", SRC.lighthouse));
+  }
+
+  // 6. WebMCP — forward-looking, never counted against the page
+  if (webmcp.present) {
+    const how = webmcp.runtime
+      ? (webmcp.tools != null ? `${webmcp.tools} tool${webmcp.tools === 1 ? "" : "s"} registered live via the WebMCP API` : "registered live via the WebMCP API (document.modelContext)")
+      : `referenced in the page's code (${webmcp.source})`;
+    f.push(finding("agent-webmcp", "Exposes agent actions (WebMCP)", "pass", cap(how) + ".",
+      "Rare and ahead of the curve: WebMCP lets an agent call your site's actions directly, instead of guessing from the UI.", SRC.webmcp));
+  } else {
+    f.push(finding("agent-webmcp", "No agent actions yet (WebMCP) — that's normal", "info",
+      "We found no WebMCP tools. Almost no site has them yet — the standard is brand new (Chrome-only, experimental).",
+      "Forward-looking only: a site isn't behind for lacking WebMCP today. Worth knowing about for when agents start using it.", SRC.webmcp));
+  }
+
+  // 7. Discoverability — Lighthouse's agentic category checks for llms.txt
+  if (llms && llms.present) {
+    f.push(finding("agent-discoverability", "llms.txt is present", "info",
+      "Lighthouse's agentic checks count llms.txt being present.",
+      "Worth knowing it's there — though a 300k-site study found llms.txt doesn't actually drive AI citations.", SRC.seranking));
+  } else {
+    f.push(finding("agent-discoverability", "No llms.txt (that's fine)", "info",
+      "Lighthouse counts llms.txt presence, but it's optional.",
+      "Research shows llms.txt doesn't move the needle, so skipping it costs nothing.", SRC.seranking));
+  }
+
+  return f;
+}
+
+function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+// Source-level WebMCP backstop: catch pages that reference the API even if the
+// runtime probe didn't observe a registered tool in time.
+function scanWebmcpSource(rawHtml, renderedHtml) {
+  const hay = `${rawHtml || ""}\n${renderedHtml || ""}`;
+  if (/\bmodelContext\b/.test(hay)) return { found: true, how: "modelContext in page code" };
+  if (/\bregisterTool\s*\(/.test(hay)) return { found: true, how: "registerTool() in page code" };
+  return { found: false, how: null };
+}
+
+function countDimensionlessImages(html) {
+  if (!html) return 0;
+  const imgs = html.match(/<img\b[^>]*>/gi) || [];
+  let n = 0;
+  for (const tag of imgs) {
+    if (/aria-hidden=["']true["']/i.test(tag)) continue;
+    const hasW = /\swidth\s*=/i.test(tag) || /style=["'][^"']*\bwidth\s*:/i.test(tag) || /\baspect-ratio\s*:/i.test(tag);
+    const hasH = /\sheight\s*=/i.test(tag) || /style=["'][^"']*\bheight\s*:/i.test(tag) || /\baspect-ratio\s*:/i.test(tag);
+    if (!(hasW && hasH)) n++;
+  }
+  return n;
+}
+
+// Fallback accessible-name read straight from HTML, used when the live probe
+// didn't run. Cruder than the in-page probe (it can't resolve label[for] or
+// computed visibility), so results carry approx:true and the UI says so.
+function a11yFromHtml(html) {
+  const res = { interactive: 0, unnamed: 0, unnamedSamples: [], fields: 0, fieldsNoLabel: 0, images: 0, imagesNoAlt: 0, hasMain: false, landmarks: 0, h1: 0, approx: true };
+  if (!html) return res;
+  res.hasMain = /<main[\s>]/i.test(html) || /role=["']main["']/i.test(html);
+  res.landmarks = (html.match(/<(main|nav|header|footer|aside)[\s>]/gi) || []).length + (html.match(/role=["'](main|navigation|banner|contentinfo)["']/gi) || []).length;
+  res.h1 = (html.match(/<h1[\s>]/gi) || []).length;
+
+  const named = (attrs, inner) =>
+    /aria-label\s*=\s*["'][^"']+["']/i.test(attrs) ||
+    /title\s*=\s*["'][^"']+["']/i.test(attrs) ||
+    (inner != null && inner.replace(/<[^>]+>/g, " ").replace(/&[a-z#0-9]+;/gi, " ").replace(/\s+/g, " ").trim().length > 0) ||
+    (inner != null && /<img[^>]+alt\s*=\s*["'][^"']+["']/i.test(inner));
+
+  const note = (label) => { res.unnamed++; if (res.unnamedSamples.length < 8) res.unnamedSamples.push(label); };
+
+  let m, guard = 0;
+  const linkRe = /<(a|button)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
+  while ((m = linkRe.exec(html)) !== null && guard++ < 5000) {
+    const tag = m[1].toLowerCase(), attrs = m[2], inner = m[3];
+    if (tag === "a" && !/\shref\s*=/i.test(attrs)) continue; // anchors without href aren't controls
+    res.interactive++;
+    if (!named(attrs, inner)) note(tag);
+  }
+
+  guard = 0;
+  const inputRe = /<input\b([^>]*)>/gi;
+  while ((m = inputRe.exec(html)) !== null && guard++ < 5000) {
+    const attrs = m[1];
+    const type = ((attrs.match(/type\s*=\s*["']([^"']+)["']/i) || [])[1] || "text").toLowerCase();
+    if (type === "hidden") continue;
+    if (type === "submit" || type === "button" || type === "image" || type === "reset") {
+      res.interactive++;
+      const ok = /value\s*=\s*["'][^"']+["']/i.test(attrs) || /aria-label\s*=\s*["'][^"']+["']/i.test(attrs) || /alt\s*=\s*["'][^"']+["']/i.test(attrs);
+      if (!ok) note("input." + type);
+      continue;
+    }
+    res.interactive++; res.fields++;
+    const ok = /aria-label\s*=\s*["'][^"']+["']/i.test(attrs) || /title\s*=\s*["'][^"']+["']/i.test(attrs) || /placeholder\s*=\s*["'][^"']+["']/i.test(attrs) || /aria-labelledby\s*=/i.test(attrs);
+    if (!ok) { res.fieldsNoLabel++; note("input." + type); }
+  }
+
+  guard = 0;
+  const fieldRe = /<(select|textarea)\b([^>]*)>/gi;
+  while ((m = fieldRe.exec(html)) !== null && guard++ < 5000) {
+    const attrs = m[2];
+    res.interactive++; res.fields++;
+    const ok = /aria-label\s*=\s*["'][^"']+["']/i.test(attrs) || /title\s*=\s*["'][^"']+["']/i.test(attrs) || /aria-labelledby\s*=/i.test(attrs);
+    if (!ok) { res.fieldsNoLabel++; note(m[1].toLowerCase()); }
+  }
+
+  guard = 0;
+  const imgRe = /<img\b([^>]*)>/gi;
+  while ((m = imgRe.exec(html)) !== null && guard++ < 5000) {
+    const attrs = m[1];
+    if (/role=["']presentation["']/i.test(attrs) || /aria-hidden=["']true["']/i.test(attrs)) continue;
+    res.images++;
+    if (!/\salt\s*=/i.test(attrs)) res.imagesNoAlt++;
+  }
+
+  return res;
 }
 
 // --- Findings ---------------------------------------------------------------

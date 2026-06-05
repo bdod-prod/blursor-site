@@ -293,7 +293,7 @@
     <section class="tool-hero">
       <div class="tool-hero__label">Free Tool · No Signup</div>
       <h1 class="tool-hero__title">What AI Sees</h1>
-      <p class="tool-hero__sub">More and more people ask AI assistants like ChatGPT for recommendations instead of searching Google. Paste your link to see whether AI can actually read your site — and exactly what it's missing.</p>
+      <p class="tool-hero__sub">More and more people ask AI assistants like ChatGPT for recommendations instead of searching Google. Paste your link to see whether AI can actually read your site — and whether an AI agent could use it too.</p>
     </section>
 
     <form class="tool-form" id="check-form">
@@ -379,6 +379,24 @@
       }
 
       var GLYPH = { pass: '✓', fail: '✕', warn: '!', info: '•' };
+
+      function findingCard(f) {
+        var card = el('div', 'finding finding--' + f.status);
+        var h = el('div', 'finding__head');
+        h.appendChild(el('span', 'finding__glyph', GLYPH[f.status] || '•'));
+        h.appendChild(el('span', 'finding__label', f.label));
+        card.appendChild(h);
+        if (f.detail) card.appendChild(el('p', 'finding__detail', f.detail));
+        if (f.why) card.appendChild(el('p', 'finding__why', f.why));
+        if (f.source && f.source.url) {
+          var srcWrap = el('div', 'finding__src');
+          var a = el('a', null, 'Source: ' + f.source.label);
+          a.href = f.source.url; a.target = '_blank'; a.rel = 'noopener';
+          srcWrap.appendChild(a);
+          card.appendChild(srcWrap);
+        }
+        return card;
+      }
 
       function run(url) {
         if (!url) return;
@@ -474,28 +492,21 @@
         // ---- Bot's-eye view (the proof) ----
         renderBotView(data);
 
+        // ---- Can an AI agent USE the site? (the second half) ----
+        renderAgentSection(data);
+
         // ---- Technical details (collapsible expert layer) ----
         var details = el('details', 'report__details');
         details.appendChild(el('summary', 'report__details-summary', 'Technical details'));
 
-        details.appendChild(el('div', 'report__section-label', 'All checks — ' + (s.pass || 0) + ' pass · ' + (s.warn || 0) + ' warn · ' + (s.fail || 0) + ' fail'));
-        (data.findings || []).forEach(function (f) {
-          var card = el('div', 'finding finding--' + f.status);
-          var h = el('div', 'finding__head');
-          h.appendChild(el('span', 'finding__glyph', GLYPH[f.status] || '•'));
-          h.appendChild(el('span', 'finding__label', f.label));
-          card.appendChild(h);
-          if (f.detail) card.appendChild(el('p', 'finding__detail', f.detail));
-          if (f.why) card.appendChild(el('p', 'finding__why', f.why));
-          if (f.source && f.source.url) {
-            var srcWrap = el('div', 'finding__src');
-            var a = el('a', null, 'Source: ' + f.source.label);
-            a.href = f.source.url; a.target = '_blank'; a.rel = 'noopener';
-            srcWrap.appendChild(a);
-            card.appendChild(srcWrap);
-          }
-          details.appendChild(card);
-        });
+        details.appendChild(el('div', 'report__section-label', 'Readability checks — ' + (s.pass || 0) + ' pass · ' + (s.warn || 0) + ' warn · ' + (s.fail || 0) + ' fail'));
+        (data.findings || []).forEach(function (f) { details.appendChild(findingCard(f)); });
+
+        if (data.agentic && data.agentic.findings && data.agentic.findings.length) {
+          var as = data.agentic.summary || {};
+          details.appendChild(el('div', 'report__section-label', 'Agent-readiness checks — ' + (as.pass || 0) + ' pass · ' + (as.warn || 0) + ' warn · ' + (as.fail || 0) + ' fail'));
+          data.agentic.findings.forEach(function (f) { details.appendChild(findingCard(f)); });
+        }
 
         details.appendChild(el('div', 'report__section-label', 'Per-bot access'));
         var table = el('table', 'bot-table');
@@ -623,6 +634,78 @@
         }
         search.addEventListener('input', paint);
         paint();
+      }
+
+      function renderAgentSection(data) {
+        var ag = data.agentic;
+        if (!ag || !ag.findings || !ag.findings.length) return;
+
+        var host = data.url;
+        try { host = new URL(data.url).hostname.replace(/^www\./, ''); } catch (e) {}
+
+        var PLAIN_AGENT = {
+          'agent-labels': { title: 'Some buttons or links have no label an agent can read.', fix: 'Give every button and link clear text, or an aria-label. Icon-only buttons especially — an agent (and a screen reader) can’t tell what they do.' },
+          'agent-forms': { title: 'Some form fields aren’t labeled.', fix: 'Add a visible label to each field. Without one, an agent has to guess what to type — and often gets it wrong.' },
+          'agent-images': { title: 'Some images have no text description.', fix: 'Add alt text describing each meaningful image. Purely decorative images can stay empty.' },
+          'agent-structure': { title: 'Your page structure could be clearer.', fix: 'Use one main heading and wrap the real content in a “main” region, so an agent can find it past the menus.' },
+          'agent-stability': { title: 'Your page moves around as it loads.', fix: 'Set sizes on images and reserve space for anything that loads late, so content doesn’t jump. Ask whoever built your site about “layout shift” (CLS).' }
+        };
+
+        reportEl.appendChild(el('div', 'report__section-label', 'Can an AI agent use your site?'));
+        var modeNote = ag.mode === 'measured'
+          ? 'Checked by loading your page in a real browser and looking at it the way an agent would.'
+          : ag.mode === 'rendered-html'
+            ? 'Read from your rendered page.'
+            : 'A rough read from your code — we couldn’t open your site in a browser this time.';
+        reportEl.appendChild(el('p', 'botview__intro', 'Being readable is step one. Step two: could an AI agent actually navigate and act on your site — find the right buttons, fill a form, use your tools? ' + modeNote));
+
+        var anyFail = ag.findings.some(function (f) { return f.status === 'fail'; });
+        var anyWarn = ag.findings.some(function (f) { return f.status === 'warn'; });
+        var labels = ag.findings.filter(function (f) { return f.id === 'agent-labels'; })[0];
+        var noControls = labels && labels.status === 'info';
+
+        var tone, title, why;
+        if (anyFail) {
+          tone = 'bad';
+          title = 'An AI agent would struggle to use ' + host;
+          why = 'Some controls aren’t labeled the way an agent needs, or the page shifts as it loads. The fixes below are the ones that matter most.';
+        } else if (anyWarn) {
+          tone = 'warn';
+          title = 'An agent could mostly use ' + host + ', with a few snags';
+          why = 'An agent can get around your site, but a few things would trip it up. The fixes below are quick.';
+        } else if (noControls) {
+          tone = 'good';
+          title = 'Not much for an agent to do on ' + host;
+          why = 'This page is mostly read-only — few buttons or forms. Fine for an article; it just means there’s little for an agent to act on.';
+        } else {
+          tone = 'good';
+          title = 'An AI agent could navigate and use ' + host;
+          why = 'Your buttons and forms are labeled, the page holds still as it loads, and the structure is clear.';
+        }
+
+        var v = el('div', 'verdict verdict--' + tone);
+        v.appendChild(el('div', 'verdict__icon', tone === 'good' ? '✓' : '!'));
+        var vt = el('div', 'verdict__text');
+        vt.appendChild(el('h2', 'verdict__title', title));
+        vt.appendChild(el('p', 'verdict__why', why));
+        v.appendChild(vt);
+        reportEl.appendChild(v);
+
+        var issues = [];
+        ag.findings.forEach(function (f) {
+          if ((f.status === 'fail' || f.status === 'warn') && PLAIN_AGENT[f.id]) issues.push({ status: f.status, info: PLAIN_AGENT[f.id] });
+        });
+        if (issues.length) {
+          reportEl.appendChild(el('div', 'report__section-label', 'What to fix for agents'));
+          issues.forEach(function (it) {
+            var card = el('div', 'issue issue--' + it.status);
+            card.appendChild(el('div', 'issue__title', it.info.title));
+            card.appendChild(el('div', 'issue__fix', it.info.fix));
+            reportEl.appendChild(card);
+          });
+        } else {
+          reportEl.appendChild(el('p', 'report__allgood', 'Nothing to fix for agents — your page is set up well for them. The full checklist is under “Technical details” below.'));
+        }
       }
 
       function pill(text, bad) {
