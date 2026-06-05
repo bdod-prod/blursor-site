@@ -468,12 +468,15 @@
         var bv = el('div', 'botview');
         var hasRendered = data.rendered && data.rendered.outline && data.rendered.outline.length;
         bv.appendChild(el('p', 'botview__intro', hasRendered
-          ? 'The actual content extracted from your page — toggle between what a non-JS crawler gets (raw) and what a rendering bot gets (rendered).'
+          ? 'The actual content extracted from your page — toggle between what a rendering bot gets (Gemini, Applebot) and what a non-JS crawler gets (GPTBot, ClaudeBot, and most others).'
           : 'The actual content a non-JS crawler (GPTBot, ClaudeBot, PerplexityBot, CCBot) extracts from your raw HTML — this is all they get.'));
+        var rawChars = (data.content && data.content.visibleTextChars) || 0;
+        var emptyRaw = 'No main content in the raw HTML. A non-JS crawler receives only ~' + rawChars + ' characters — navigation, footer, and boilerplate — not the actual page content, which is loaded by JavaScript.' + (hasRendered ? ' Switch to "Rendering bot" to see what it misses.' : '');
+        var emptyRen = 'Nothing could be extracted from the rendered page.';
         var box = el('div', 'botview__box');
-        function paint(blocks) {
+        function paint(blocks, emptyMsg) {
           box.innerHTML = '';
-          if (!blocks || !blocks.length) { box.appendChild(el('div', 'botview__empty', 'No readable text blocks in the raw HTML — a non-JS crawler would get almost nothing here.')); return; }
+          if (!blocks || !blocks.length) { box.appendChild(el('div', 'botview__empty', emptyMsg)); return; }
           blocks.forEach(function (b) {
             var cls = b.tag === 'h1' ? 'bv-h1' : b.tag === 'h2' ? 'bv-h2'
               : (b.tag === 'h3' || b.tag === 'h4' || b.tag === 'h5' || b.tag === 'h6') ? 'bv-h3'
@@ -484,16 +487,20 @@
         }
         if (hasRendered) {
           var tg = el('div', 'botview__toggle');
-          var bRaw = el('button', 'active', 'Crawler (raw)');
-          var bRen = el('button', null, 'Rendering bot');
-          bRaw.addEventListener('click', function () { bRaw.className = 'active'; bRen.className = ''; paint(data.content.outline); });
-          bRen.addEventListener('click', function () { bRen.className = 'active'; bRaw.className = ''; paint(data.rendered.outline); });
-          tg.appendChild(bRaw); tg.appendChild(bRen);
+          var bRen = el('button', 'active', 'Rendering bot');
+          var bRaw = el('button', null, 'Crawler (raw)');
+          bRen.addEventListener('click', function () { bRen.className = 'active'; bRaw.className = ''; paint(data.rendered.outline, emptyRen); });
+          bRaw.addEventListener('click', function () { bRaw.className = 'active'; bRen.className = ''; paint(data.content.outline, emptyRaw); });
+          tg.appendChild(bRen); tg.appendChild(bRaw);
           bv.appendChild(tg);
+          bv.appendChild(box);
+          reportEl.appendChild(bv);
+          paint(data.rendered.outline, emptyRen);
+        } else {
+          bv.appendChild(box);
+          reportEl.appendChild(bv);
+          paint(data.content.outline, emptyRaw);
         }
-        bv.appendChild(box);
-        reportEl.appendChild(bv);
-        paint(data.content.outline);
       }
 
       function pill(text, bad) {
