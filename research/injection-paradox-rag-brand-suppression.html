@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Safety-trained RAG models can turn a prompt injection into brand suppression — BLURSOR Research</title>
+  <meta name="description" content="Safety-trained RAG models can suppress a brand entirely after a single injected document.">
+  <link rel="canonical" href="https://blursor.ai/research/injection-paradox-rag-brand-suppression">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Safety-trained RAG models can turn a prompt injection into brand suppression — BLURSOR Research">
+  <meta property="og:description" content="Why safety alignment can turn retrieval-time injections into brand-level anti-promoters">
+  <meta property="og:url" content="https://blursor.ai/research/injection-paradox-rag-brand-suppression">
+  <meta property="og:site_name" content="BLURSOR Research">
+  <meta property="article:published_time" content="2026-06-09">
+  <meta property="article:author" content="https://blursor.ai/author/alex-rostovtsev">
+  <meta property="og:image" content="https://blursor.ai/assets/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="BLURSOR Research">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Safety-trained RAG models can turn a prompt injection into brand suppression — BLURSOR Research">
+  <meta name="twitter:description" content="Why safety alignment can turn retrieval-time injections into brand-level anti-promoters">
+  <meta name="twitter:image" content="https://blursor.ai/assets/og-default.png">
+
+  <script type="application/ld+json">
+  {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "@id": "https://blursor.ai/research/injection-paradox-rag-brand-suppression#article",
+  "headline": "Safety-trained RAG models can turn a prompt injection into brand suppression",
+  "description": "Safety-trained RAG models can suppress a brand entirely after a single injected document.",
+  "datePublished": "2026-06-09",
+  "dateModified": "2026-06-09",
+  "author": {
+    "@type": "Person",
+    "@id": "https://blursor.ai/author/alex-rostovtsev#person",
+    "name": "Alex Rostovtsev",
+    "url": "https://blursor.ai/author/alex-rostovtsev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://blursor.ai/#organization",
+    "name": "BLURSOR",
+    "url": "https://blursor.ai"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://blursor.ai/research/injection-paradox-rag-brand-suppression"
+  },
+  "about": {
+    "@type": "ScholarlyArticle",
+    "name": "The Injection Paradox: Brand-Level Suppression in Safety-Trained LLM Recommendations via RAG Context Injection",
+    "sameAs": "https://arxiv.org/abs/2606.09204"
+  }
+}
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ——— Reset & base ——— */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-bg: #f0ece4;
+      --color-bg-warm: #e8e3d9;
+      --color-surface: #f5f1ea;
+      --color-text: #1a1a18;
+      --color-text-secondary: #7a776e;
+      --color-text-ghost: rgba(26, 26, 24, 0.07);
+      --color-border: #d4d0c8;
+      --color-border-light: rgba(26, 26, 24, 0.08);
+      --color-accent: #c43b2a;
+      --color-footer-bg: #1a1a18;
+      --color-footer-text: #a09d95;
+      --color-footer-text-hover: #f0ece4;
+
+      --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 3rem;
+      --space-xl: 5rem;
+
+      /* Layout */
+      --sidebar-w: 160px;
+      --article-w: 640px;
+      --col-gap: 2.5rem;
+      --layout-max: 1080px;
+      --layout-pad: var(--space-md);
+    }
+
+    html {
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-serif);
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    main { flex: 1; }
+
+    /* ——— Shared layout grid ——— */
+    .layout-grid {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) minmax(0, var(--article-w)) var(--sidebar-w);
+      column-gap: var(--col-gap);
+      max-width: var(--layout-max);
+      margin: 0 auto;
+      padding: 0 var(--layout-pad);
+      align-items: start;
+    }
+
+    /* ——— Site header ——— */
+    .site-header {
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .site-header__inner {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-header__left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .site-header__logo {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--color-text);
+      text-decoration: none;
+      margin-top: -2px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .site-header__sep {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-border);
+    }
+
+    .site-header__tagline {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+
+    .site-header__tagline .why {
+      text-decoration: underline;
+      text-decoration-color: rgba(196,59,42,0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+
+    .site-header__nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .site-header__nav a {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.03em;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.15s ease;
+    }
+
+    .site-header__nav a:hover {
+      color: var(--color-text);
+    }
+
+    /* ——— Article header ——— */
+    .article-header {
+      position: relative;
+      overflow: hidden;
+      padding: var(--space-xl) 0 var(--space-lg);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .article-header__bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .article-header__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-accent);
+      margin-bottom: 0.875rem;
+    }
+
+    .article-header__title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.625rem, 2.8vw, 2.375rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--color-text);
+      margin-bottom: var(--space-md);
+    }
+
+    .article-header__meta {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .article-header__meta .sep {
+      color: var(--color-border);
+    }
+
+    .article-header__meta .arxiv-link {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .article-header__meta .arxiv-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ——— Article layout ——— */
+    .article-main {
+      padding: var(--space-md) 0 var(--space-xl);
+    }
+
+    /* ——— Sidebars ——— */
+    .article-sidebar {
+      position: sticky;
+      top: 2.5rem;
+    }
+
+    .sidebar-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+      opacity: 0.7;
+    }
+
+    /* Left sidebar: paper info */
+    .paper-info__section {
+      margin-bottom: var(--space-md);
+    }
+
+    .paper-info__title {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      font-style: italic;
+      line-height: 1.55;
+      color: var(--color-text);
+    }
+
+    .paper-info__value {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      line-height: 1.55;
+      color: var(--color-text-secondary);
+    }
+
+    .paper-info__arxiv {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .paper-info__arxiv:hover {
+      text-decoration: underline;
+    }
+
+    /* Right sidebar: TOC */
+    .toc__list {
+      list-style: none;
+    }
+
+    .toc__link {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      line-height: 1.4;
+      display: block;
+      padding: 0.4rem 0 0.4rem 0.75rem;
+      border-left: 2px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .toc__link:hover {
+      color: var(--color-text);
+      border-left-color: var(--color-accent);
+    }
+
+    /* ——— Article body ——— */
+    .article-body p {
+      font-size: 1.0625rem;
+      line-height: 1.85;
+      color: var(--color-text);
+      margin-bottom: 1.75rem;
+    }
+
+    .article-body p.lead {
+      font-size: 1.125rem;
+      line-height: 1.8;
+      color: var(--color-text-secondary);
+      margin-bottom: 1.75rem;
+    }
+
+    .article-body h2 {
+      font-family: var(--font-serif);
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--color-text);
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+      margin: 3.5rem 0 1.25rem;
+    }
+
+    .article-body strong {
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .article-body a {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .article-body a:hover {
+      text-decoration: underline;
+    }
+
+    .article-body hr {
+      border: none;
+      border-top: 1px solid var(--color-border-light);
+      margin: var(--space-lg) 0;
+    }
+
+    /* ——— Stat callout (the 43%) ——— */
+    .stat-callout {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin: var(--space-lg) 0;
+      padding: var(--space-md) var(--space-md);
+      border-left: 3px solid var(--color-accent);
+      background: var(--color-surface);
+    }
+
+    .stat-callout__number {
+      font-family: var(--font-mono);
+      font-size: 3.25rem;
+      font-weight: 500;
+      color: var(--color-accent);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .stat-callout__text {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ——— Failure map ——— */
+    .failure-map {
+      margin: var(--space-md) 0 var(--space-lg);
+      border: 1px solid var(--color-border-light);
+    }
+
+    .failure-map__row {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-sm);
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .failure-map__row:last-child {
+      border-bottom: none;
+    }
+
+    .failure-map__pct {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      min-width: 2.75rem;
+    }
+
+    .failure-map__label {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--color-text);
+    }
+
+    .failure-map__row--primary .failure-map__pct {
+      color: var(--color-accent);
+      font-size: 1rem;
+    }
+
+    .failure-map__row--primary .failure-map__label {
+      font-weight: 600;
+    }
+
+    /* ——— Performance callout ——— */
+    .performance-callout {
+      display: flex;
+      align-items: center;
+      gap: var(--space-lg);
+      margin: var(--space-lg) 0;
+      padding: var(--space-md) var(--space-md);
+      background: var(--color-bg-warm);
+      border-left: 3px solid var(--color-border);
+    }
+
+    .performance-callout__item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .performance-callout__figure {
+      font-family: var(--font-mono);
+      font-size: 2.25rem;
+      font-weight: 500;
+      color: var(--color-text);
+      line-height: 1;
+    }
+
+    .performance-callout__desc {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      line-height: 1.4;
+      max-width: 13rem;
+    }
+
+    .performance-callout__divider {
+      width: 1px;
+      height: 2.5rem;
+      background: var(--color-border);
+      flex-shrink: 0;
+    }
+
+    /* ——— Key takeaway ——— */
+    .key-takeaway {
+      margin: 0 0 var(--space-md);
+      padding: var(--space-md) var(--space-md);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+    }
+
+    .key-takeaway__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-accent);
+      margin-bottom: 0.875rem;
+    }
+
+    .key-takeaway p {
+      font-size: 0.9375rem !important;
+      color: var(--color-text-secondary) !important;
+      line-height: 1.75 !important;
+      margin-bottom: 0.75rem !important;
+    }
+
+    .key-takeaway p:last-child {
+      margin-bottom: 0 !important;
+      color: var(--color-text) !important;
+      font-style: italic;
+    }
+
+    .org-name {
+      text-decoration: underline;
+      text-decoration-color: rgba(196, 59, 42, 0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    /* ——— Source citation ——— */
+    .source-citation {
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--color-border-light);
+    }
+
+    .source-citation__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-secondary);
+      opacity: 0.7;
+      margin-bottom: 0.5rem;
+    }
+
+    .source-citation p {
+      font-family: var(--font-mono) !important;
+      font-size: 0.75rem !important;
+      color: var(--color-text-secondary) !important;
+      line-height: 1.6 !important;
+      margin-bottom: 0 !important;
+    }
+
+    .source-citation a {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .source-citation a:hover {
+      text-decoration: underline;
+    }
+
+    /* ——— More articles ——— */
+    .more-articles {
+      background: var(--color-bg-warm);
+      border-top: 1px solid var(--color-border-light);
+      padding: var(--space-xl) 0;
+    }
+
+    .more-articles__inner {
+      max-width: var(--layout-max);
+      margin: 0 auto;
+      padding: 0 var(--layout-pad);
+    }
+
+    .more-articles__header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding-bottom: var(--space-md);
+      margin-bottom: var(--space-lg);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .more-articles__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-secondary);
+    }
+
+    .more-articles__all {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+    }
+
+    .more-articles__all:hover {
+      text-decoration: underline;
+    }
+
+    .more-articles__grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-lg);
+    }
+
+    .more-card {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      padding-bottom: var(--space-md);
+      border-bottom: 2px solid var(--color-border-light);
+      transition: border-color 0.2s ease;
+    }
+
+    .more-card:hover {
+      border-bottom-color: var(--color-accent);
+    }
+
+    .more-card__meta {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .more-card__title {
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--color-text);
+      line-height: 1.4;
+      margin-bottom: 0.65rem;
+      transition: color 0.15s ease;
+    }
+
+    .more-card:hover .more-card__title {
+      color: var(--color-accent);
+    }
+
+    .more-card__source {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+    }
+
+    /* ——— Byline ——— */
+    .article-byline {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+
+    .article-byline__link {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .article-byline__link:hover {
+      color: var(--color-accent);
+    }
+
+    /* ——— Subscribe block ——— */
+    .subscribe-block {
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      padding: var(--space-md);
+      margin: var(--space-lg) 0;
+    }
+
+    .subscribe-block__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-accent);
+    }
+
+    .subscribe-block__text {
+      font-family: var(--font-serif);
+      color: var(--color-text-secondary);
+      font-size: 0.9375rem;
+      margin: var(--space-xs) 0 var(--space-sm);
+    }
+
+    .subscribe-block__form {
+      display: flex;
+      gap: var(--space-xs);
+    }
+
+    .subscribe-block__input {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      padding: 0.5rem 0.75rem;
+      color: var(--color-text);
+      outline: none;
+    }
+
+    .subscribe-block__input:focus {
+      border-color: var(--color-text-secondary);
+    }
+
+    .subscribe-block__btn {
+      background: var(--color-accent);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.5rem 1rem;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .subscribe-block__btn:hover {
+      opacity: 0.88;
+    }
+
+    /* ——— Share buttons ——— */
+    .share-block {
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--color-border-light);
+    }
+
+    .share-buttons {
+      display: flex;
+      gap: 0.375rem;
+      margin-top: 0.75rem;
+    }
+
+    .share-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--color-border);
+      background: transparent;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.15s ease, border-color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .share-btn:hover,
+    .share-btn.copied {
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+    }
+
+    /* ——— Footer ——— */
+    .site-footer { background: var(--color-footer-bg); padding: var(--space-lg) 0 0; }
+    .site-footer__inner { max-width: 980px; margin: 0 auto; padding: 0 var(--space-md); display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--space-lg); align-items: start; }
+    .site-footer__brand { display: flex; flex-direction: column; gap: 0.75rem; }
+    .site-footer__logo { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; letter-spacing: 0.08em; color: var(--color-footer-text-hover); text-decoration: none; }
+    .site-footer__logo:hover { color: #fff; }
+    .site-footer__desc { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); letter-spacing: 0.02em; line-height: 1.7; }
+    .site-footer__tagline { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); opacity: 0.6; }
+    .site-footer__col-heading { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-footer-text-hover); margin-bottom: 0.875rem; }
+    .site-footer__col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+    .site-footer__col ul a { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); text-decoration: none; letter-spacing: 0.02em; transition: color 0.15s ease; }
+    .site-footer__col ul a:hover { color: var(--color-footer-text-hover); }
+    .site-footer__col li { display: flex; align-items: center; gap: 0.4rem; }
+    .site-footer__x-link { display: flex; align-items: center; }
+    .site-footer__col-sep { color: rgba(255,255,255,0.2); font-family: var(--font-mono); font-size: 0.65rem; }
+    .site-footer__bottom { max-width: 980px; margin: var(--space-lg) auto 0; padding: var(--space-sm) var(--space-md); border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; }
+    .site-footer__copy { font-family: var(--font-mono); font-size: 0.65rem; color: var(--color-footer-text); letter-spacing: 0.02em; opacity: 0.7; }
+    .site-footer__copy a { color: var(--color-footer-text); text-decoration: none; transition: color 0.15s ease; }
+    .site-footer__copy a:hover { color: var(--color-footer-text-hover); }
+
+    /* ——— Responsive ——— */
+    @media (max-width: 900px) {
+      .layout-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .article-sidebar--left {
+        display: none;
+      }
+
+      .article-sidebar--right {
+        display: none;
+      }
+
+      .performance-callout {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+      }
+
+      .performance-callout__divider {
+        width: 2.5rem;
+        height: 1px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      :root {
+        --space-xl: 3rem;
+        --space-lg: 2rem;
+      }
+
+      .article-header__title {
+        font-size: 1.5rem;
+      }
+
+      .stat-callout {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .stat-callout__number {
+        font-size: 2.5rem;
+      }
+
+      .more-articles__grid {
+        grid-template-columns: 1fr;
+      }
+
+      .site-header__nav { display: none; }
+      .site-header__sep { display: none; }
+      .site-header__tagline { display: none; }
+      .article-body p { font-size: 1rem; }
+      .article-body p.lead { font-size: 1.0625rem; }
+      .subscribe-block__form { flex-wrap: wrap; }
+      .subscribe-block__input { width: 100%; }
+      .subscribe-block__btn { width: 100%; }
+      .site-footer__inner { grid-template-columns: 1fr; gap: var(--space-md); }
+    }
+  </style>
+</head>
+<body>
+  <!-- BLURSOR-META: {"slug":"injection-paradox-rag-brand-suppression","title":"Safety-trained RAG models can turn a prompt injection into brand suppression","subtitle":"Why safety alignment can turn retrieval-time injections into brand-level anti-promoters","summary_for_card":"Why safety alignment can turn retrieval-time injections into brand-level anti-promoters","published_date":"2026-06-09","reading_time_min":9,"category_label":"RAG · Safety","hero_variant":"A","arxiv_id":"2606.09204"} -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="site-header__left">
+        <a href="/" class="site-header__logo">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="var(--color-accent)" style="margin-bottom: -2px;" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <span class="site-header__sep">|</span>
+        <span class="site-header__tagline">Science-backed data on <span class="why">why</span> AI says what it says</span>
+      </div>
+      <nav class="site-header__nav">
+        <a href="/research">Archive</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="article-header">
+    <svg class="article-header__bg" viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <circle cx="-60" cy="480" r="380"  fill="none" stroke="rgba(26,26,24,0.28)" stroke-width="1"/>
+      <circle cx="-60" cy="480" r="560"  fill="none" stroke="rgba(26,26,24,0.22)" stroke-width="1"/>
+      <circle cx="-60" cy="480" r="740"  fill="none" stroke="rgba(26,26,24,0.16)" stroke-width="1"/>
+      <circle cx="-60" cy="480" r="920"  fill="none" stroke="rgba(26,26,24,0.11)" stroke-width="1"/>
+      <circle cx="-60" cy="480" r="1100" fill="none" stroke="rgba(26,26,24,0.07)" stroke-width="1"/>
+    </svg>
+    <div class="layout-grid">
+      <div></div>
+      <div class="article-header__content">
+        <div class="article-header__label">RAG · SAFETY</div>
+        <h1 class="article-header__title">Safety-trained RAG models can turn a prompt injection into brand suppression</h1>
+        <div class="article-header__meta">
+          <span>Jun 9, 2026</span>
+          <span class="sep">·</span>
+          <span>9 min read</span>
+          <span class="sep">·</span>
+          <a href="https://arxiv.org/abs/2606.09204" target="_blank" rel="noopener" class="arxiv-link">arXiv:2606.09204</a>
+        </div>
+      </div>
+      <div></div>
+    </div>
+  </div>
+
+  <main class="article-main">
+    <div class="layout-grid">
+
+      <aside class="article-sidebar article-sidebar--left">
+        <div class="paper-info__section">
+          <div class="sidebar-label">Referenced Paper</div>
+          <div class="paper-info__title">The Injection Paradox: Brand-Level Suppression in Safety-Trained LLM Recommendations via RAG Context Injection</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Authors</div>
+          <div class="paper-info__value">Paeng, H.</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Institution</div>
+          <div class="paper-info__value"></div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Published</div>
+          <div class="paper-info__value">June 08, 2026</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Source</div>
+          <a href="https://arxiv.org/abs/2606.09204" target="_blank" rel="noopener" class="paper-info__arxiv">arXiv:2606.09204 ↗</a>
+        </div>
+      </aside>
+
+      <div class="article-body">
+        <p class="lead">A prompt injection in retrieved text is usually framed as a way to steer a model toward the attacker’s goal. This paper shows a nastier failure mode: in safety-trained LLMs, the injection can backfire and push the target brand below the no-injection baseline.</p>
+
+<p>That matters because the failure is not just a weird one-off. The authors turn it into a reproducible recommendation problem, run it across seven models, and show that the effect can survive at the brand level even when only one document in the corpus is contaminated.</p>
+
+<p>In Claude Opus 4.6, the target brand falls from a 54% baseline to 0% top-2 recommendations across 50 trials.</p>
+
+<hr>
+
+<h2 id="what-the-paper-proves-in-one-failure-the-injection-can-erase-the-target-brand">What the paper proves in one failure: the injection can erase the target brand</h2>
+
+<p>The cleanest result is also the most uncomfortable one. In the main Claude Opus 4.6 setting, a single injected document flips the expected direction of attack: instead of promoting the target brand, the model stops recommending it entirely.</p>
+
+<p>The paper reports a 54% baseline top-2 hit rate for the target brand. Under the Injection condition, that drops to 0% across all 50 trials. That is not a small degradation. It is a complete collapse of recommendation success.</p>
+
+<p>The authors call this the Injection Paradox because the prompt injection backfires against the attacker. In stronger safety-trained models, the injected directive is treated as a safety problem, and the model responds by suppressing the very brand the attacker wanted to surface.</p>
+
+<p>What makes this especially relevant for practitioners is that the failure is directional. If you are thinking only in terms of “will the attack elevate my product or suppress a rival,” this paper says the model may do something stranger: it may treat the injected brand as broadly untrustworthy and push it out of the ranking altogether.</p>
+
+<hr>
+
+<h2 id="the-trigger-is-narrow-but-not-narrow-enough">The trigger is narrow, but not narrow enough</h2>
+
+<p>The failure only appears when three conditions line up: the model has safety training of the Constitutional AI / normative-objective kind, at least one retrieved document contains an injection-like directive, and recommendations that involve that pattern are treated as unsafe output.</p>
+
+<p>That is a useful boundary because it makes the mechanism legible. The authors are not claiming that every RAG system will behave this way. They are saying the combination of alignment and retrieved directives can change the model’s output policy in a way that is visible at the recommendation layer.</p>
+
+<p>A single retrieved document is enough. In their setup, one injection-containing document in a 40-document corpus is sufficient to trigger the failure. The reproduction is also lightweight: they achieve it with roughly a 10% document-length increase from payload insertion, without changing the system prompt, decoding setup, or any other RAG pipeline structure.</p>
+
+<p>For anyone running retrieval over third-party or semi-trusted content, that is the important bit. You do not need a large poisoning campaign to create a failure mode. One contaminated document can be enough to poison the brand-level outcome.</p>
+
+<hr>
+
+<h2 id="why-just-remove-the-bad-doc-is-not-the-right-mental-model">Why “just remove the bad doc” is not the right mental model</h2>
+
+<p>The paper’s most operationally useful claim is that the effect composes at the brand level. Once the model detects an injection pattern in one document for a brand, it can suppress the remaining unmodified documents from that same brand.</p>
+
+<p>That makes the failure strictly worse than a document-level cleanup problem. If the model merely ignored the contaminated document, the damage would be limited. Instead, the injected document can act like a trust poison that spills onto the rest of the brand’s corpus.</p>
+
+<p>The authors treat this as a composable primitive rather than a one-off artifact. The same directional signature shows up when the operator is moved across Edifier, Apple, and Galaxy, which suggests the effect is not tied to a particular product name or a single target item.</p>
+
+<p>There is a practical distinction here that matters for safety work. A document-level filter answers “is this text malicious?” The paper suggests you also need to ask “did this document make the model distrust the brand behind it?” Those are different failure surfaces, and the second one is harder to spot after the fact.</p>
+
+<hr>
+
+<h2 id="how-the-experiment-was-built-and-where-it-stops">How the experiment was built, and where it stops</h2>
+
+<p>The setup is deliberately simple: a wireless earbud recommendation task in Korean, built from 40 documents across 9 brands. The corpus was curated and edited from real blog reviews, product description pages, and expert reviews, then directly injected into the model context to simulate the generation stage of RAG.</p>
+
+<p>The metric is top-2 recommendation hit rate. If the target product appears in the top-2 of the JSON ranking output, it counts as a hit. Otherwise it is a miss. The paper uses Fisher’s exact test, 95% Wilson confidence intervals, and Cohen’s d, and it runs more than 4,500 trials across seven models.</p>
+
+<p>That setup gives the paper a very specific kind of strength. It isolates the generation-time behavior cleanly, so you can see the injection effect without retrieval noise getting in the way. But it also means retrieval, re-ranking, and chunking are out of scope. In a live RAG stack, those stages may dampen the effect, amplify it, or change it in ways this experiment cannot measure.</p>
+
+<p>The model lineup also matters. GPT-4o-mini and Claude Haiku 4.5 were run for 100 trials per condition, while Claude Sonnet 4.6 and Claude Opus 4.6 were run for 50 trials. Within Claude, scale and alignment are confounded, so the paper cannot cleanly separate whether the observed behavior is driven more by model size or by safety configuration.</p>
+
+<hr>
+
+<h2 id="what-to-do-about-it-in-a-real-rag-stack">What to do about it in a real RAG stack</h2>
+
+<p>Treat retrieved content as an integrity and availability problem, not just a relevance problem. If a single injected document can suppress a whole brand, then ingestion-time defenses matter at least as much as ranking-time defenses.</p>
+
+<p>The first practical move is to harden corpus sanitization before retrieval. That means scanning documents for injection-like directive patterns, metadata-style payloads, and anything that could be interpreted as a hidden instruction rather than ordinary content. If you wait until generation time to notice it, the trust penalty may already have spread across the brand.</p>
+
+<p>The second move is to make injection detection document-scoped and brand-scoped. The paper suggests that the failure is not confined to the contaminated page. Your defenses should therefore track whether one document changes the model’s treatment of sibling documents from the same source or brand.</p>
+
+<p>The third move is to test for suppression, not just promotion. Many prompt-injection evaluations implicitly ask whether an attacker can make a model say “buy this.” This paper says the more important question for safety-aligned systems may be whether an attacker can make the model distrust everything tied to that brand.</p>
+
+<p>That is the actionable shift: stop thinking of prompt injection only as content steering. In safety-aligned RAG, it can become a brand-level anti-promotion mechanism, and your controls need to be built for that failure mode.</p>
+
+<div class="key-takeaway">
+  <div class="key-takeaway__label">Key Takeaway</div>
+  <p>The authors show the failure is triggered by safety-trained gating reacting to injection-like directives present in RAG-style context, and the effect aggregates at brand level.</p>
+  <p>For practitioners, treat retrieval-time prompt injections as an integrity and availability risk: even if you expect “promotion” attacks, safety-aligned models may instead suppress entire brands—so harden corpus sanitization and injection detection at the document ingestion stage.</p>
+</div>
+
+<div class="source-citation">
+  <div class="source-citation__label">Source</div>
+  <p>Hyunseok Paeng (2026). <em>The Injection Paradox: Brand-Level Suppression in Safety-Trained LLM Recommendations via RAG Context Injection.</em> arXiv:<a href="https://arxiv.org/abs/2606.09204">2606.09204</a></p>
+</div>
+
+
+      </div>
+
+      <aside class="article-sidebar article-sidebar--right">
+        <div class="sidebar-label">In this article</div>
+        <nav>
+          <ul class="toc__list">
+      <li><a href="#what-the-paper-proves-in-one-failure-the-injection-can-erase-the-target-brand" class="toc__link">What the paper proves in one failure: the injection can erase the target brand</a></li>
+      <li><a href="#the-trigger-is-narrow-but-not-narrow-enough" class="toc__link">The trigger is narrow, but not narrow enough</a></li>
+      <li><a href="#why-just-remove-the-bad-doc-is-not-the-right-mental-model" class="toc__link">Why “just remove the bad doc” is not the right mental model</a></li>
+      <li><a href="#how-the-experiment-was-built-and-where-it-stops" class="toc__link">How the experiment was built, and where it stops</a></li>
+      <li><a href="#what-to-do-about-it-in-a-real-rag-stack" class="toc__link">What to do about it in a real RAG stack</a></li>
+          </ul>
+        </nav>
+        <div class="share-block">
+          <div class="sidebar-label">Share</div>
+          <div class="share-buttons">
+            <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fblursor.ai%2Fresearch%2Fcitation-failures-geo&text=Diagnosing+Citation+Failures+in+GEO%3A+What+a+New+Paper+From+Virginia+Tech+Actually+Shows"
+               target="_blank" rel="noopener" class="share-btn" title="Share on X" aria-label="Share on X">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+              </svg>
+            </a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fblursor.ai%2Fresearch%2Fcitation-failures-geo"
+               target="_blank" rel="noopener" class="share-btn" title="Share on LinkedIn" aria-label="Share on LinkedIn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+            </a>
+            <button class="share-btn" id="copy-url-btn" title="Copy link" aria-label="Copy link">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <section class="more-articles">
+    <div class="more-articles__inner">
+      <div class="more-articles__header">
+        <span class="more-articles__label">More from Research</span>
+        <a href="/research" class="more-articles__all">All articles &rarr;</a>
+      </div>
+      <div class="more-articles__grid">
+        <a href="/research/rag-ranking-signal-amplification" class="more-card">
+          <div class="more-card__meta">Mar 7, 2026 &middot; 11 min read</div>
+          <h3 class="more-card__title">RAG systems inherit ranking signals from their retriever&thinsp;—&thinsp;and amplify them</h3>
+          <div class="more-card__source">arXiv:2603.03195</div>
+        </a>
+        <a href="/research/brand-mention-llm-recommendation" class="more-card">
+          <div class="more-card__meta">Mar 3, 2026 &middot; 6 min read</div>
+          <h3 class="more-card__title">Brand mention frequency in training data predicts LLM recommendation behavior</h3>
+          <div class="more-card__source">arXiv:2602.18440</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <a href="/" class="site-footer__logo">
+          <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <p class="site-footer__desc">AI research paper digest for non-academic audiences.</p>
+        <span class="site-footer__tagline">Now you have no excuses not to act on it.</span>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Research</div>
+        <ul>
+          <li><a href="/research">All articles</a></li>
+          <li><a href="/digest">Weekly Digest</a></li>
+        </ul>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Connect</div>
+        <ul>
+          <li><a href="/digest">Newsletter</a></li>
+          <li>
+            <a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener" class="site-footer__x-link">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+            </a>
+            <span class="site-footer__col-sep">|</span>
+            <a href="mailto:contact@blursor.ai">contact@blursor.ai</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="site-footer__bottom">
+      <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
+      <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>
+    </div>
+  </footer>
+
+  <script>
+    // Copy URL button
+    document.getElementById('copy-url-btn').addEventListener('click', function() {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        this.classList.add('copied');
+        this.setAttribute('title', 'Copied!');
+        setTimeout(() => {
+          this.classList.remove('copied');
+          this.setAttribute('title', 'Copy link');
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>
