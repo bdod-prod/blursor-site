@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>High Temperature Doesn't Make LLMs More Creative — It Makes Them Incoherent — BLURSOR Research</title>
+  <meta name="description" content="New research shows T=1.5 was ranked most creative by LLM and human judges on 0 of 500 prompts — high temperature produces incoherence, not creativity.">
+  <link rel="canonical" href="https://blursor.ai/research/temperature-creativity-incoherence-cliff">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="High Temperature Doesn't Make LLMs More Creative — It Makes Them Incoherent — BLURSOR Research">
+  <meta property="og:description" content="Temperature's Creativity Signal Lives at the Incoherence Cliff">
+  <meta property="og:url" content="https://blursor.ai/research/temperature-creativity-incoherence-cliff">
+  <meta property="og:site_name" content="BLURSOR Research">
+  <meta property="article:published_time" content="2026-06-02">
+  <meta property="article:author" content="https://blursor.ai/author/alex-rostovtsev">
+  <meta property="og:image" content="https://blursor.ai/assets/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="BLURSOR Research">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="High Temperature Doesn't Make LLMs More Creative — It Makes Them Incoherent — BLURSOR Research">
+  <meta name="twitter:description" content="Temperature's Creativity Signal Lives at the Incoherence Cliff">
+  <meta name="twitter:image" content="https://blursor.ai/assets/og-default.png">
+
+  <script type="application/ld+json">
+  {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "@id": "https://blursor.ai/research/temperature-creativity-incoherence-cliff#article",
+  "headline": "High Temperature Doesn't Make LLMs More Creative — It Makes Them Incoherent",
+  "description": "New research shows T=1.5 was ranked most creative by LLM and human judges on 0 of 500 prompts — high temperature produces incoherence, not creativity.",
+  "datePublished": "2026-06-02",
+  "dateModified": "2026-06-02",
+  "author": {
+    "@type": "Person",
+    "@id": "https://blursor.ai/author/alex-rostovtsev#person",
+    "name": "Alex Rostovtsev",
+    "url": "https://blursor.ai/author/alex-rostovtsev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://blursor.ai/#organization",
+    "name": "BLURSOR",
+    "url": "https://blursor.ai"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://blursor.ai/research/temperature-creativity-incoherence-cliff"
+  },
+  "about": {
+    "@type": "ScholarlyArticle",
+    "name": "Before and After Temperature: A Distributional View of Creative LLM Generation",
+    "sameAs": "https://arxiv.org/abs/2606.01451"
+  }
+}
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ——— Reset & base ——— */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-bg: #f0ece4;
+      --color-bg-warm: #e8e3d9;
+      --color-surface: #f5f1ea;
+      --color-text: #1a1a18;
+      --color-text-secondary: #7a776e;
+      --color-text-ghost: rgba(26, 26, 24, 0.07);
+      --color-border: #d4d0c8;
+      --color-border-light: rgba(26, 26, 24, 0.08);
+      --color-accent: #c43b2a;
+      --color-footer-bg: #1a1a18;
+      --color-footer-text: #a09d95;
+      --color-footer-text-hover: #f0ece4;
+
+      --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 3rem;
+      --space-xl: 5rem;
+
+      /* Layout */
+      --sidebar-w: 160px;
+      --article-w: 640px;
+      --col-gap: 2.5rem;
+      --layout-max: 1080px;
+      --layout-pad: var(--space-md);
+    }
+
+    html {
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-serif);
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    main { flex: 1; }
+
+    /* ——— Shared layout grid ——— */
+    .layout-grid {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) minmax(0, var(--article-w)) var(--sidebar-w);
+      column-gap: var(--col-gap);
+      max-width: var(--layout-max);
+      margin: 0 auto;
+      padding: 0 var(--layout-pad);
+      align-items: start;
+    }
+
+    /* ——— Site header ——— */
+    .site-header {
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .site-header__inner {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-header__left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .site-header__logo {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--color-text);
+      text-decoration: none;
+      margin-top: -2px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .site-header__sep {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-border);
+    }
+
+    .site-header__tagline {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+
+    .site-header__tagline .why {
+      text-decoration: underline;
+      text-decoration-color: rgba(196,59,42,0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+
+    .site-header__nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .site-header__nav a {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.03em;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.15s ease;
+    }
+
+    .site-header__nav a:hover {
+      color: var(--color-text);
+    }
+
+    /* ——— Article header ——— */
+    .article-header {
+      position: relative;
+      overflow: hidden;
+      padding: var(--space-xl) 0 var(--space-lg);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .article-header__bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .article-header__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-accent);
+      margin-bottom: 0.875rem;
+    }
+
+    .article-header__title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.625rem, 2.8vw, 2.375rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--color-text);
+      margin-bottom: var(--space-md);
+    }
+
+    .article-header__meta {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .article-header__meta .sep {
+      color: var(--color-border);
+    }
+
+    .article-header__meta .arxiv-link {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .article-header__meta .arxiv-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ——— Article layout ——— */
+    .article-main {
+      padding: var(--space-md) 0 var(--space-xl);
+    }
+
+    /* ——— Sidebars ——— */
+    .article-sidebar {
+      position: sticky;
+      top: 2.5rem;
+    }
+
+    .sidebar-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+      opacity: 0.7;
+    }
+
+    /* Left sidebar: paper info */
+    .paper-info__section {
+      margin-bottom: var(--space-md);
+    }
+
+    .paper-info__title {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      font-style: italic;
+      line-height: 1.55;
+      color: var(--color-text);
+    }
+
+    .paper-info__value {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      line-height: 1.55;
+      color: var(--color-text-secondary);
+    }
+
+    .paper-info__arxiv {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .paper-info__arxiv:hover {
+      text-decoration: underline;
+    }
+
+    /* Right sidebar: TOC */
+    .toc__list {
+      list-style: none;
+    }
+
+    .toc__link {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      line-height: 1.4;
+      display: block;
+      padding: 0.4rem 0 0.4rem 0.75rem;
+      border-left: 2px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .toc__link:hover {
+      color: var(--color-text);
+      border-left-color: var(--color-accent);
+    }
+
+    /* ——— Article body ——— */
+    .article-body p {
+      font-size: 1.0625rem;
+      line-height: 1.85;
+      color: var(--color-text);
+      margin-bottom: 1.75rem;
+    }
+
+    .article-body p.lead {
+      font-size: 1.125rem;
+      line-height: 1.8;
+      color: var(--color-text-secondary);
+      margin-bottom: 1.75rem;
+    }
+
+    .article-body h2 {
+      font-family: var(--font-serif);
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--color-text);
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+      margin: 3.5rem 0 1.25rem;
+    }
+
+    .article-body strong {
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .article-body a {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .article-body a:hover {
+      text-decoration: underline;
+    }
+
+    .article-body hr {
+      border: none;
+      border-top: 1px solid var(--color-border-light);
+      margin: var(--space-lg) 0;
+    }
+
+    /* ——— Stat callout (the 43%) ——— */
+    .stat-callout {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin: var(--space-lg) 0;
+      padding: var(--space-md) var(--space-md);
+      border-left: 3px solid var(--color-accent);
+      background: var(--color-surface);
+    }
+
+    .stat-callout__number {
+      font-family: var(--font-mono);
+      font-size: 3.25rem;
+      font-weight: 500;
+      color: var(--color-accent);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .stat-callout__text {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ——— Failure map ——— */
+    .failure-map {
+      margin: var(--space-md) 0 var(--space-lg);
+      border: 1px solid var(--color-border-light);
+    }
+
+    .failure-map__row {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-sm);
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .failure-map__row:last-child {
+      border-bottom: none;
+    }
+
+    .failure-map__pct {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      min-width: 2.75rem;
+    }
+
+    .failure-map__label {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--color-text);
+    }
+
+    .failure-map__row--primary .failure-map__pct {
+      color: var(--color-accent);
+      font-size: 1rem;
+    }
+
+    .failure-map__row--primary .failure-map__label {
+      font-weight: 600;
+    }
+
+    /* ——— Performance callout ——— */
+    .performance-callout {
+      display: flex;
+      align-items: center;
+      gap: var(--space-lg);
+      margin: var(--space-lg) 0;
+      padding: var(--space-md) var(--space-md);
+      background: var(--color-bg-warm);
+      border-left: 3px solid var(--color-border);
+    }
+
+    .performance-callout__item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .performance-callout__figure {
+      font-family: var(--font-mono);
+      font-size: 2.25rem;
+      font-weight: 500;
+      color: var(--color-text);
+      line-height: 1;
+    }
+
+    .performance-callout__desc {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      line-height: 1.4;
+      max-width: 13rem;
+    }
+
+    .performance-callout__divider {
+      width: 1px;
+      height: 2.5rem;
+      background: var(--color-border);
+      flex-shrink: 0;
+    }
+
+    /* ——— Key takeaway ——— */
+    .key-takeaway {
+      margin: 0 0 var(--space-md);
+      padding: var(--space-md) var(--space-md);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+    }
+
+    .key-takeaway__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-accent);
+      margin-bottom: 0.875rem;
+    }
+
+    .key-takeaway p {
+      font-size: 0.9375rem !important;
+      color: var(--color-text-secondary) !important;
+      line-height: 1.75 !important;
+      margin-bottom: 0.75rem !important;
+    }
+
+    .key-takeaway p:last-child {
+      margin-bottom: 0 !important;
+      color: var(--color-text) !important;
+      font-style: italic;
+    }
+
+    .org-name {
+      text-decoration: underline;
+      text-decoration-color: rgba(196, 59, 42, 0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    /* ——— Source citation ——— */
+    .source-citation {
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--color-border-light);
+    }
+
+    .source-citation__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-secondary);
+      opacity: 0.7;
+      margin-bottom: 0.5rem;
+    }
+
+    .source-citation p {
+      font-family: var(--font-mono) !important;
+      font-size: 0.75rem !important;
+      color: var(--color-text-secondary) !important;
+      line-height: 1.6 !important;
+      margin-bottom: 0 !important;
+    }
+
+    .source-citation a {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .source-citation a:hover {
+      text-decoration: underline;
+    }
+
+    /* ——— More articles ——— */
+    .more-articles {
+      background: var(--color-bg-warm);
+      border-top: 1px solid var(--color-border-light);
+      padding: var(--space-xl) 0;
+    }
+
+    .more-articles__inner {
+      max-width: var(--layout-max);
+      margin: 0 auto;
+      padding: 0 var(--layout-pad);
+    }
+
+    .more-articles__header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding-bottom: var(--space-md);
+      margin-bottom: var(--space-lg);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .more-articles__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-secondary);
+    }
+
+    .more-articles__all {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+    }
+
+    .more-articles__all:hover {
+      text-decoration: underline;
+    }
+
+    .more-articles__grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-lg);
+    }
+
+    .more-card {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      padding-bottom: var(--space-md);
+      border-bottom: 2px solid var(--color-border-light);
+      transition: border-color 0.2s ease;
+    }
+
+    .more-card:hover {
+      border-bottom-color: var(--color-accent);
+    }
+
+    .more-card__meta {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .more-card__title {
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--color-text);
+      line-height: 1.4;
+      margin-bottom: 0.65rem;
+      transition: color 0.15s ease;
+    }
+
+    .more-card:hover .more-card__title {
+      color: var(--color-accent);
+    }
+
+    .more-card__source {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+    }
+
+    /* ——— Byline ——— */
+    .article-byline {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+
+    .article-byline__link {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .article-byline__link:hover {
+      color: var(--color-accent);
+    }
+
+    /* ——— Subscribe block ——— */
+    .subscribe-block {
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      padding: var(--space-md);
+      margin: var(--space-lg) 0;
+    }
+
+    .subscribe-block__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-accent);
+    }
+
+    .subscribe-block__text {
+      font-family: var(--font-serif);
+      color: var(--color-text-secondary);
+      font-size: 0.9375rem;
+      margin: var(--space-xs) 0 var(--space-sm);
+    }
+
+    .subscribe-block__form {
+      display: flex;
+      gap: var(--space-xs);
+    }
+
+    .subscribe-block__input {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      padding: 0.5rem 0.75rem;
+      color: var(--color-text);
+      outline: none;
+    }
+
+    .subscribe-block__input:focus {
+      border-color: var(--color-text-secondary);
+    }
+
+    .subscribe-block__btn {
+      background: var(--color-accent);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.5rem 1rem;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .subscribe-block__btn:hover {
+      opacity: 0.88;
+    }
+
+    /* ——— Share buttons ——— */
+    .share-block {
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--color-border-light);
+    }
+
+    .share-buttons {
+      display: flex;
+      gap: 0.375rem;
+      margin-top: 0.75rem;
+    }
+
+    .share-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--color-border);
+      background: transparent;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.15s ease, border-color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .share-btn:hover,
+    .share-btn.copied {
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+    }
+
+    /* ——— Footer ——— */
+    .site-footer { background: var(--color-footer-bg); padding: var(--space-lg) 0 0; }
+    .site-footer__inner { max-width: 980px; margin: 0 auto; padding: 0 var(--space-md); display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--space-lg); align-items: start; }
+    .site-footer__brand { display: flex; flex-direction: column; gap: 0.75rem; }
+    .site-footer__logo { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; letter-spacing: 0.08em; color: var(--color-footer-text-hover); text-decoration: none; }
+    .site-footer__logo:hover { color: #fff; }
+    .site-footer__desc { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); letter-spacing: 0.02em; line-height: 1.7; }
+    .site-footer__tagline { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); opacity: 0.6; }
+    .site-footer__col-heading { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-footer-text-hover); margin-bottom: 0.875rem; }
+    .site-footer__col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+    .site-footer__col ul a { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); text-decoration: none; letter-spacing: 0.02em; transition: color 0.15s ease; }
+    .site-footer__col ul a:hover { color: var(--color-footer-text-hover); }
+    .site-footer__col li { display: flex; align-items: center; gap: 0.4rem; }
+    .site-footer__x-link { display: flex; align-items: center; }
+    .site-footer__col-sep { color: rgba(255,255,255,0.2); font-family: var(--font-mono); font-size: 0.65rem; }
+    .site-footer__bottom { max-width: 980px; margin: var(--space-lg) auto 0; padding: var(--space-sm) var(--space-md); border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; }
+    .site-footer__copy { font-family: var(--font-mono); font-size: 0.65rem; color: var(--color-footer-text); letter-spacing: 0.02em; opacity: 0.7; }
+    .site-footer__copy a { color: var(--color-footer-text); text-decoration: none; transition: color 0.15s ease; }
+    .site-footer__copy a:hover { color: var(--color-footer-text-hover); }
+
+    /* ——— Responsive ——— */
+    @media (max-width: 900px) {
+      .layout-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .article-sidebar--left {
+        display: none;
+      }
+
+      .article-sidebar--right {
+        display: none;
+      }
+
+      .performance-callout {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+      }
+
+      .performance-callout__divider {
+        width: 2.5rem;
+        height: 1px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      :root {
+        --space-xl: 3rem;
+        --space-lg: 2rem;
+      }
+
+      .article-header__title {
+        font-size: 1.5rem;
+      }
+
+      .stat-callout {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .stat-callout__number {
+        font-size: 2.5rem;
+      }
+
+      .more-articles__grid {
+        grid-template-columns: 1fr;
+      }
+
+      .site-header__nav { display: none; }
+      .site-header__sep { display: none; }
+      .site-header__tagline { display: none; }
+      .article-body p { font-size: 1rem; }
+      .article-body p.lead { font-size: 1.0625rem; }
+      .subscribe-block__form { flex-wrap: wrap; }
+      .subscribe-block__input { width: 100%; }
+      .subscribe-block__btn { width: 100%; }
+      .site-footer__inner { grid-template-columns: 1fr; gap: var(--space-md); }
+    }
+  </style>
+</head>
+<body>
+  <!-- BLURSOR-META: {"slug":"temperature-creativity-incoherence-cliff","title":"High Temperature Doesn't Make LLMs More Creative — It Makes Them Incoherent","subtitle":"Temperature's Creativity Signal Lives at the Incoherence Cliff","summary_for_card":"Temperature's Creativity Signal Lives at the Incoherence Cliff","published_date":"2026-06-02","reading_time_min":6,"category_label":"Generation · Creativity","hero_variant":"A","arxiv_id":"2606.01451"} -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="site-header__left">
+        <a href="/" class="site-header__logo">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="var(--color-accent)" style="margin-bottom: -2px;" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <span class="site-header__sep">|</span>
+        <span class="site-header__tagline">Science-backed data on <span class="why">why</span> AI says what it says</span>
+      </div>
+      <nav class="site-header__nav">
+        <a href="/research">Archive</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="article-header">
+    <svg class="article-header__bg" viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <circle cx="-60" cy="480" r="380"  fill="none" stroke="rgba(26,26,24,0.28)" stroke-width="1"/>
+      <circle cx="-60" cy="480" r="560"  fill="none" stroke="rgba(26,26,24,0.22)" stroke-width="1"/>
+      <circle cx="-60" cy="480" r="740"  fill="none" stroke="rgba(26,26,24,0.16)" stroke-width="1"/>
+      <circle cx="-60" cy="480" r="920"  fill="none" stroke="rgba(26,26,24,0.11)" stroke-width="1"/>
+      <circle cx="-60" cy="480" r="1100" fill="none" stroke="rgba(26,26,24,0.07)" stroke-width="1"/>
+    </svg>
+    <div class="layout-grid">
+      <div></div>
+      <div class="article-header__content">
+        <div class="article-header__label">GENERATION · CREATIVITY</div>
+        <h1 class="article-header__title">High Temperature Doesn't Make LLMs More Creative — It Makes Them Incoherent</h1>
+        <div class="article-header__meta">
+          <span>Jun 2, 2026</span>
+          <span class="sep">·</span>
+          <span>6 min read</span>
+          <span class="sep">·</span>
+          <a href="https://arxiv.org/abs/2606.01451" target="_blank" rel="noopener" class="arxiv-link">arXiv:2606.01451</a>
+        </div>
+      </div>
+      <div></div>
+    </div>
+  </div>
+
+  <main class="article-main">
+    <div class="layout-grid">
+
+      <aside class="article-sidebar article-sidebar--left">
+        <div class="paper-info__section">
+          <div class="sidebar-label">Referenced Paper</div>
+          <div class="paper-info__title">Before and After Temperature: A Distributional View of Creative LLM Generation</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Authors</div>
+          <div class="paper-info__value">Parupudi, V.S.R. · Ponnada, H. · Kaushal, A. · Parupudi, S.S. · Dasari, S. · Bulusu, S.</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Institution</div>
+          <div class="paper-info__value">University of California, San Diego</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Published</div>
+          <div class="paper-info__value">May 31, 2026</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Source</div>
+          <a href="https://arxiv.org/abs/2606.01451" target="_blank" rel="noopener" class="paper-info__arxiv">arXiv:2606.01451 ↗</a>
+        </div>
+      </aside>
+
+      <div class="article-body">
+        <p class="lead">The conventional wisdom around temperature and creativity goes something like this: turn it up to get more surprising, imaginative output. That intuition is wrong in a specific and measurable way. A new paper from UC San Diego shows that T=1.5 doesn't produce more creative writing — it produces incoherent writing, and the two things look very different when you examine what temperature actually does to the model's logit distributions.</p>
+
+<p>The researchers captured the raw logits before and after temperature scaling at every generation step across 1,500 traces, then asked whether any per-token distributional feature could predict how human and LLM judges would rank the outputs for creativity. The answer is yes — but the reason why reveals something more important than the method itself.</p>
+
+<p>Across 500 prompts evaluated by both GPT-4o and Gemini-2.5-Pro, T=1.5 was ranked most creative by either judge on essentially zero prompts.</p>
+
+<hr>
+
+<h2 id="the-setup-measuring-what-temperature-actually-does-to-logits">The Setup: Measuring What Temperature Actually Does to Logits</h2>
+
+<p>At each generation step, the model produces a distribution over its vocabulary before temperature is applied — call it P. Temperature scaling reshapes that into Q. The paper treats these as two distinct distributions and computes a catalogue of divergences between them: KL in both directions, Jensen-Shannon, total variation, Hellinger distance, plus metrics tracking how much probability mass leaks off the pre-temperature plausible set.</p>
+
+<p>This happens at every token across 1,500 generation traces — 500 prompts drawn from WritingPrompts, the Alternative Uses Task, and HellaSwag ActivityNet, each generated at T=0.3, T=0.8, and T=1.5 using Llama-3.1-8B-Instruct. That's 437,837 token positions in total. Each trace gets a per-response aggregate (mean, median, 10th percentile, 90th percentile, max) for every divergence measure.</p>
+
+<p>The question is whether any of those aggregates correlates with within-prompt creativity rankings — without any reference text, just the logit geometry of the generation itself.</p>
+
+<hr>
+
+<h2 id="neither-judge-ever-preferred-t-1-5">Neither Judge Ever Preferred T=1.5</h2>
+
+<p>Before getting to the distributional features, the ground truth is worth sitting with. GPT-4o ranked T=0.8 first on 293 of 500 prompts and T=0.3 first on 217. Gemini-2.5-Pro ranked T=0.8 first on 321 and T=0.3 first on 248. T=1.5 was ranked first by neither judge on more than one prompt out of 500.</p>
+
+<div class="stat-callout">
+  <div class="stat-callout__number">0 / 500</div>
+  <div class="stat-callout__text">Prompts where T=1.5 was ranked most creative by either LLM judge — the high-temperature regime is an incoherence regime, not a creativity regime.</div>
+</div>
+
+<p>The human raters — three co-authors working blind to temperature labels, annotating a 150-prompt subset — agreed with the LLM judges above the inter-human ceiling, which means the two ground truths are measuring the same thing. The averaged LLM judge isn't a noisy proxy for human judgment here; it's tracking the same construct, just with more coverage.</p>
+
+<p>What this establishes is that the creativity-temperature relationship isn't a smooth curve where more temperature means more creativity until some quality cliff. The cliff is the whole story. T=1.5 is not a creative regime — it's an incoherence regime.</p>
+
+<hr>
+
+<h2 id="the-distributional-signal-a-step-function-not-a-gradient">The Distributional Signal: A Step Function, Not a Gradient</h2>
+
+<p>The mass leakage metric — postCumOnPre, measuring how much of the post-temperature distribution's mass falls within the pre-temperature plausible set — sits near 1.0 at both T=0.3 and T=0.8. At T=1.5, it drops roughly 20 percentage points to around 0.8. That drop is not gradual. T=0.3 and T=0.8 are nearly indistinguishable from each other; T=1.5 is a discrete step away from both.</p>
+
+<div class="performance-callout">
+  <div class="performance-callout__item">
+    <div class="performance-callout__figure">~1.0</div>
+    <div class="performance-callout__desc">postCumOnPre mass retention at T=0.3 and T=0.8 (nearly identical)</div>
+  </div>
+  <div class="performance-callout__divider"></div>
+  <div class="performance-callout__item">
+    <div class="performance-callout__figure">~0.8</div>
+    <div class="performance-callout__desc">postCumOnPre mass retention at T=1.5 — a ~20pp step drop</div>
+  </div>
+</div>
+
+<p>The cumulative-mass width (top-p width) inflates substantially at T=1.5 as well. And the append rate — the fraction of positions where the sampled token fell outside the captured top-K logits and had to be added manually — was 0.00% at T=0.3, 0.09% at T=0.8, and 88.41% at T=1.5. That last number is striking: at high temperature, the model is routinely sampling tokens that weren't even in the top 200 candidates by pre-temperature probability.</p>
+
+<p>The distributional features are picking up a real phenomenon. But the structure of that phenomenon — a step function rather than a gradient — tells you exactly what the features are detecting: whether the model has crossed into incoherence, not how creative it is within the coherent range.</p>
+
+<hr>
+
+<h2 id="beating-baselines-but-for-a-narrow-reason">Beating Baselines — But for a Narrow Reason</h2>
+
+<p>The top distributional feature outperforms all four standard reference-free baselines: self-perplexity, mean predictive entropy, top-1 margin, and gzip compression ratio. Those baselines cluster tightly within about 0.02 of each other on the averaged-LLM ground truth, so the comparison is against a narrow band of performance. The distributional feature clears that band.</p>
+
+<div class="failure-map">
+  <div class="failure-map__row failure-map__row--primary">
+    <span class="failure-map__pct">Resolved</span>
+    <span class="failure-map__label">Incoherence detection (T=1.5 vs. coherent range) — strong per-token signal</span>
+  </div>
+  <div class="failure-map__row">
+    <span class="failure-map__pct">Unresolved</span>
+    <span class="failure-map__label">Mid-vs-bland distinction (T=0.3 vs. T=0.8) — per-token features are identical</span>
+  </div>
+  <div class="failure-map__row">
+    <span class="failure-map__pct">Unresolved</span>
+    <span class="failure-map__label">Sequence-level creativity quality — explicitly left to future sequence-level features</span>
+  </div>
+</div>
+
+<p>The reason it wins is structurally explained by the step function. Any feature that captures the T=1.5 cliff will outperform baselines that don't explicitly model the divergence between pre- and post-temperature distributions. The baselines aren't measuring that gap — they're measuring properties of the output sequence alone.</p>
+
+<p>But here's what the method can't do: it cannot separate T=0.3 from T=0.8. The per-token feature values at those two temperatures are nearly identical. The gap from either to T=1.5 is one to three orders of magnitude on every metric; the gap between them is essentially nothing. The distinction between genuinely creative output and competent-but-bland output — the distinction that actually matters for practitioners trying to tune a generation pipeline — is not resolved by any single per-token statistic in the catalogue.</p>
+
+<p>The paper is explicit about this. Discriminating the two coherent regimes is left to sequence-level features, described as a complementary layer for future work.</p>
+
+<hr>
+
+<h2 id="what-this-changes-for-practitioners">What This Changes for Practitioners</h2>
+
+<p>If you're running creative generation tasks and using T=1.5 or higher because you believe higher temperature produces more creative output, the evidence here is clear: stop. Both LLM judges and human raters consistently preferred T=0.8 over T=1.5 across 500 diverse prompts, and the distributional analysis explains why — high temperature is pushing the model to sample tokens that were implausible under its own pre-temperature distribution, which reads as incoherence, not creativity.</p>
+
+<p>The harder question — whether T=0.8 is meaningfully better than T=0.3 for your specific use case — remains open. The judges preferred T=0.8 more often, but the per-token distributional features can't tell them apart, and the paper doesn't claim the T=0.8 advantage is large or consistent enough to generalize. That distinction likely depends on prompt type, model, and what you mean by creative.</p>
+
+<p>For teams building automated quality filters for generated content, the incoherence detection result is immediately useful: pre-vs-post-temperature mass leakage is a lightweight, reference-free signal that catches the regime where high temperature has gone wrong. It won't tell you whether the output is good — but it will tell you whether it's coherent.</p>
+
+<div class="key-takeaway">
+  <div class="key-takeaway__label">Key Takeaway</div>
+  <p>The study is limited to a single model (Llama-3.1-8B-Instruct), and the human raters are co-authors working blind to temperature labels — not independent annotators.</p>
+  <p>Distributional pre-vs-post-temperature features reliably detect when temperature has pushed a model into incoherence, but they cannot yet distinguish genuinely creative output from competent-but-bland output within the coherent range — that problem requires sequence-level analysis.</p>
+</div>
+
+<div class="source-citation">
+  <div class="source-citation__label">Source</div>
+  <p>Parupudi, V.S. Raghu, Ponnada, Harsha, Kaushal, Aditi, Parupudi, S. Shria, Dasari, Saiteja, Bulusu, Sahiti (2026). <em>Before and After Temperature: A Distributional View of Creative LLM Generation.</em> arXiv:<a href="https://arxiv.org/abs/2606.01451">2606.01451</a></p>
+</div>
+
+
+      </div>
+
+      <aside class="article-sidebar article-sidebar--right">
+        <div class="sidebar-label">In this article</div>
+        <nav>
+          <ul class="toc__list">
+      <li><a href="#the-setup-measuring-what-temperature-actually-does-to-logits" class="toc__link">The Setup: Measuring What Temperature Actually Does to Logits</a></li>
+      <li><a href="#neither-judge-ever-preferred-t-1-5" class="toc__link">Neither Judge Ever Preferred T=1.5</a></li>
+      <li><a href="#the-distributional-signal-a-step-function-not-a-gradient" class="toc__link">The Distributional Signal: A Step Function, Not a Gradient</a></li>
+      <li><a href="#beating-baselines-but-for-a-narrow-reason" class="toc__link">Beating Baselines — But for a Narrow Reason</a></li>
+      <li><a href="#what-this-changes-for-practitioners" class="toc__link">What This Changes for Practitioners</a></li>
+          </ul>
+        </nav>
+        <div class="share-block">
+          <div class="sidebar-label">Share</div>
+          <div class="share-buttons">
+            <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fblursor.ai%2Fresearch%2Fcitation-failures-geo&text=Diagnosing+Citation+Failures+in+GEO%3A+What+a+New+Paper+From+Virginia+Tech+Actually+Shows"
+               target="_blank" rel="noopener" class="share-btn" title="Share on X" aria-label="Share on X">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+              </svg>
+            </a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fblursor.ai%2Fresearch%2Fcitation-failures-geo"
+               target="_blank" rel="noopener" class="share-btn" title="Share on LinkedIn" aria-label="Share on LinkedIn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+            </a>
+            <button class="share-btn" id="copy-url-btn" title="Copy link" aria-label="Copy link">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <section class="more-articles">
+    <div class="more-articles__inner">
+      <div class="more-articles__header">
+        <span class="more-articles__label">More from Research</span>
+        <a href="/research" class="more-articles__all">All articles &rarr;</a>
+      </div>
+      <div class="more-articles__grid">
+        <a href="/research/rag-ranking-signal-amplification" class="more-card">
+          <div class="more-card__meta">Mar 7, 2026 &middot; 11 min read</div>
+          <h3 class="more-card__title">RAG systems inherit ranking signals from their retriever&thinsp;—&thinsp;and amplify them</h3>
+          <div class="more-card__source">arXiv:2603.03195</div>
+        </a>
+        <a href="/research/brand-mention-llm-recommendation" class="more-card">
+          <div class="more-card__meta">Mar 3, 2026 &middot; 6 min read</div>
+          <h3 class="more-card__title">Brand mention frequency in training data predicts LLM recommendation behavior</h3>
+          <div class="more-card__source">arXiv:2602.18440</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <a href="/" class="site-footer__logo">
+          <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <p class="site-footer__desc">AI research paper digest for non-academic audiences.</p>
+        <span class="site-footer__tagline">Now you have no excuses not to act on it.</span>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Research</div>
+        <ul>
+          <li><a href="/research">All articles</a></li>
+          <li><a href="/digest">Weekly Digest</a></li>
+        </ul>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Connect</div>
+        <ul>
+          <li><a href="/digest">Newsletter</a></li>
+          <li>
+            <a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener" class="site-footer__x-link">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+            </a>
+            <span class="site-footer__col-sep">|</span>
+            <a href="mailto:contact@blursor.ai">contact@blursor.ai</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="site-footer__bottom">
+      <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
+      <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>
+    </div>
+  </footer>
+
+  <script>
+    // Copy URL button
+    document.getElementById('copy-url-btn').addEventListener('click', function() {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        this.classList.add('copied');
+        this.setAttribute('title', 'Copied!');
+        setTimeout(() => {
+          this.classList.remove('copied');
+          this.setAttribute('title', 'Copy link');
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>
