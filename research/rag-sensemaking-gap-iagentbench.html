@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Can Look Things Up. It Still Can't Connect the Dots. — BLURSOR Research</title>
+  <meta name="description" content="A new UW benchmark shows RAG nearly solves factoid QA but leaves a persistent gap on cross-theme sensemaking — and agentic reflection makes some models worse.">
+  <link rel="canonical" href="https://blursor.ai/research/rag-sensemaking-gap-iagentbench">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="AI Can Look Things Up. It Still Can't Connect the Dots. — BLURSOR Research">
+  <meta property="og:description" content="Retrieval nails factoid questions but stalls on cross-topic sensemaking — and self-reflection made some models worse.">
+  <meta property="og:url" content="https://blursor.ai/research/rag-sensemaking-gap-iagentbench">
+  <meta property="og:site_name" content="BLURSOR Research">
+  <meta property="article:published_time" content="2026-05-22">
+  <meta property="article:author" content="https://blursor.ai/author/alex-rostovtsev">
+  <meta property="og:image" content="https://blursor.ai/assets/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="BLURSOR Research">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AI Can Look Things Up. It Still Can't Connect the Dots. — BLURSOR Research">
+  <meta name="twitter:description" content="Retrieval nails factoid questions but stalls on cross-topic sensemaking — and self-reflection made some models worse.">
+  <meta name="twitter:image" content="https://blursor.ai/assets/og-default.png">
+
+  <script type="application/ld+json">
+  {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "@id": "https://blursor.ai/research/rag-sensemaking-gap-iagentbench#article",
+  "headline": "AI Can Look Things Up. It Still Can't Connect the Dots.",
+  "description": "A new UW benchmark shows RAG nearly solves factoid QA but leaves a persistent gap on cross-theme sensemaking — and agentic reflection makes some models worse.",
+  "datePublished": "2026-05-22",
+  "dateModified": "2026-05-22",
+  "author": {
+    "@type": "Person",
+    "@id": "https://blursor.ai/author/alex-rostovtsev#person",
+    "name": "Alex Rostovtsev",
+    "url": "https://blursor.ai/author/alex-rostovtsev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://blursor.ai/#organization",
+    "name": "BLURSOR",
+    "url": "https://blursor.ai"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://blursor.ai/research/rag-sensemaking-gap-iagentbench"
+  },
+  "about": {
+    "@type": "ScholarlyArticle",
+    "name": "iAgentBench: Benchmarking Sensemaking Capabilities of Information-Seeking Agents on High-Traffic Topics",
+    "sameAs": "https://arxiv.org/abs/2603.04656"
+  }
+}
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ——— Reset & base ——— */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-bg: #f0ece4;
+      --color-bg-warm: #e8e3d9;
+      --color-surface: #f5f1ea;
+      --color-text: #1a1a18;
+      --color-text-secondary: #7a776e;
+      --color-text-ghost: rgba(26, 26, 24, 0.07);
+      --color-border: #d4d0c8;
+      --color-border-light: rgba(26, 26, 24, 0.08);
+      --color-accent: #c43b2a;
+      --color-footer-bg: #1a1a18;
+      --color-footer-text: #a09d95;
+      --color-footer-text-hover: #f0ece4;
+
+      --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 3rem;
+      --space-xl: 5rem;
+
+      /* Layout */
+      --sidebar-w: 160px;
+      --article-w: 640px;
+      --col-gap: 2.5rem;
+      --layout-max: 1080px;
+      --layout-pad: var(--space-md);
+    }
+
+    html {
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-serif);
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    main { flex: 1; }
+
+    /* ——— Shared layout grid ——— */
+    .layout-grid {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) minmax(0, var(--article-w)) var(--sidebar-w);
+      column-gap: var(--col-gap);
+      max-width: var(--layout-max);
+      margin: 0 auto;
+      padding: 0 var(--layout-pad);
+      align-items: start;
+    }
+
+    /* ——— Site header ——— */
+    .site-header {
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .site-header__inner {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-header__left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .site-header__logo {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--color-text);
+      text-decoration: none;
+      margin-top: -2px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .site-header__sep {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-border);
+    }
+
+    .site-header__tagline {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+
+    .site-header__tagline .why {
+      text-decoration: underline;
+      text-decoration-color: rgba(196,59,42,0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+
+    .site-header__nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .site-header__nav a {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.03em;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.15s ease;
+    }
+
+    .site-header__nav a:hover {
+      color: var(--color-text);
+    }
+
+    /* ——— Article header ——— */
+    .article-header {
+      position: relative;
+      overflow: hidden;
+      padding: var(--space-xl) 0 var(--space-lg);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .article-header__bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .article-header__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-accent);
+      margin-bottom: 0.875rem;
+    }
+
+    .article-header__title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.625rem, 2.8vw, 2.375rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--color-text);
+      margin-bottom: var(--space-md);
+    }
+
+    .article-header__meta {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .article-header__meta .sep {
+      color: var(--color-border);
+    }
+
+    .article-header__meta .arxiv-link {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .article-header__meta .arxiv-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ——— Article layout ——— */
+    .article-main {
+      padding: var(--space-md) 0 var(--space-xl);
+    }
+
+    /* ——— Sidebars ——— */
+    .article-sidebar {
+      position: sticky;
+      top: 2.5rem;
+    }
+
+    .sidebar-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+      opacity: 0.7;
+    }
+
+    /* Left sidebar: paper info */
+    .paper-info__section {
+      margin-bottom: var(--space-md);
+    }
+
+    .paper-info__title {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      font-style: italic;
+      line-height: 1.55;
+      color: var(--color-text);
+    }
+
+    .paper-info__value {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      line-height: 1.55;
+      color: var(--color-text-secondary);
+    }
+
+    .paper-info__arxiv {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .paper-info__arxiv:hover {
+      text-decoration: underline;
+    }
+
+    /* Right sidebar: TOC */
+    .toc__list {
+      list-style: none;
+    }
+
+    .toc__link {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      line-height: 1.4;
+      display: block;
+      padding: 0.4rem 0 0.4rem 0.75rem;
+      border-left: 2px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .toc__link:hover {
+      color: var(--color-text);
+      border-left-color: var(--color-accent);
+    }
+
+    /* ——— Article body ——— */
+    .article-body p {
+      font-size: 1.0625rem;
+      line-height: 1.85;
+      color: var(--color-text);
+      margin-bottom: 1.75rem;
+    }
+
+    .article-body p.lead {
+      font-size: 1.125rem;
+      line-height: 1.8;
+      color: var(--color-text-secondary);
+      margin-bottom: 1.75rem;
+    }
+
+    .article-body h2 {
+      font-family: var(--font-serif);
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--color-text);
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+      margin: 3.5rem 0 1.25rem;
+    }
+
+    .article-body strong {
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .article-body a {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .article-body a:hover {
+      text-decoration: underline;
+    }
+
+    .article-body hr {
+      border: none;
+      border-top: 1px solid var(--color-border-light);
+      margin: var(--space-lg) 0;
+    }
+
+    /* ——— Stat callout (the 43%) ——— */
+    .stat-callout {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin: var(--space-lg) 0;
+      padding: var(--space-md) var(--space-md);
+      border-left: 3px solid var(--color-accent);
+      background: var(--color-surface);
+    }
+
+    .stat-callout__number {
+      font-family: var(--font-mono);
+      font-size: 3.25rem;
+      font-weight: 500;
+      color: var(--color-accent);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .stat-callout__text {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ——— Failure map ——— */
+    .failure-map {
+      margin: var(--space-md) 0 var(--space-lg);
+      border: 1px solid var(--color-border-light);
+    }
+
+    .failure-map__row {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-sm);
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .failure-map__row:last-child {
+      border-bottom: none;
+    }
+
+    .failure-map__pct {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      min-width: 2.75rem;
+    }
+
+    .failure-map__label {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--color-text);
+    }
+
+    .failure-map__row--primary .failure-map__pct {
+      color: var(--color-accent);
+      font-size: 1rem;
+    }
+
+    .failure-map__row--primary .failure-map__label {
+      font-weight: 600;
+    }
+
+    /* ——— Performance callout ——— */
+    .performance-callout {
+      display: flex;
+      align-items: center;
+      gap: var(--space-lg);
+      margin: var(--space-lg) 0;
+      padding: var(--space-md) var(--space-md);
+      background: var(--color-bg-warm);
+      border-left: 3px solid var(--color-border);
+    }
+
+    .performance-callout__item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .performance-callout__figure {
+      font-family: var(--font-mono);
+      font-size: 2.25rem;
+      font-weight: 500;
+      color: var(--color-text);
+      line-height: 1;
+    }
+
+    .performance-callout__desc {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      line-height: 1.4;
+      max-width: 13rem;
+    }
+
+    .performance-callout__divider {
+      width: 1px;
+      height: 2.5rem;
+      background: var(--color-border);
+      flex-shrink: 0;
+    }
+
+    /* ——— Key takeaway ——— */
+    .key-takeaway {
+      margin: 0 0 var(--space-md);
+      padding: var(--space-md) var(--space-md);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+    }
+
+    .key-takeaway__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-accent);
+      margin-bottom: 0.875rem;
+    }
+
+    .key-takeaway p {
+      font-size: 0.9375rem !important;
+      color: var(--color-text-secondary) !important;
+      line-height: 1.75 !important;
+      margin-bottom: 0.75rem !important;
+    }
+
+    .key-takeaway p:last-child {
+      margin-bottom: 0 !important;
+      color: var(--color-text) !important;
+      font-style: italic;
+    }
+
+    .org-name {
+      text-decoration: underline;
+      text-decoration-color: rgba(196, 59, 42, 0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    /* ——— Source citation ——— */
+    .source-citation {
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--color-border-light);
+    }
+
+    .source-citation__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-secondary);
+      opacity: 0.7;
+      margin-bottom: 0.5rem;
+    }
+
+    .source-citation p {
+      font-family: var(--font-mono) !important;
+      font-size: 0.75rem !important;
+      color: var(--color-text-secondary) !important;
+      line-height: 1.6 !important;
+      margin-bottom: 0 !important;
+    }
+
+    .source-citation a {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .source-citation a:hover {
+      text-decoration: underline;
+    }
+
+    /* ——— More articles ——— */
+    .more-articles {
+      background: var(--color-bg-warm);
+      border-top: 1px solid var(--color-border-light);
+      padding: var(--space-xl) 0;
+    }
+
+    .more-articles__inner {
+      max-width: var(--layout-max);
+      margin: 0 auto;
+      padding: 0 var(--layout-pad);
+    }
+
+    .more-articles__header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding-bottom: var(--space-md);
+      margin-bottom: var(--space-lg);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .more-articles__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-secondary);
+    }
+
+    .more-articles__all {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+    }
+
+    .more-articles__all:hover {
+      text-decoration: underline;
+    }
+
+    .more-articles__grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-lg);
+    }
+
+    .more-card {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      padding-bottom: var(--space-md);
+      border-bottom: 2px solid var(--color-border-light);
+      transition: border-color 0.2s ease;
+    }
+
+    .more-card:hover {
+      border-bottom-color: var(--color-accent);
+    }
+
+    .more-card__meta {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .more-card__title {
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--color-text);
+      line-height: 1.4;
+      margin-bottom: 0.65rem;
+      transition: color 0.15s ease;
+    }
+
+    .more-card:hover .more-card__title {
+      color: var(--color-accent);
+    }
+
+    .more-card__source {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+    }
+
+    /* ——— Byline ——— */
+    .article-byline {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+
+    .article-byline__link {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .article-byline__link:hover {
+      color: var(--color-accent);
+    }
+
+    /* ——— Subscribe block ——— */
+    .subscribe-block {
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      padding: var(--space-md);
+      margin: var(--space-lg) 0;
+    }
+
+    .subscribe-block__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-accent);
+    }
+
+    .subscribe-block__text {
+      font-family: var(--font-serif);
+      color: var(--color-text-secondary);
+      font-size: 0.9375rem;
+      margin: var(--space-xs) 0 var(--space-sm);
+    }
+
+    .subscribe-block__form {
+      display: flex;
+      gap: var(--space-xs);
+    }
+
+    .subscribe-block__input {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      padding: 0.5rem 0.75rem;
+      color: var(--color-text);
+      outline: none;
+    }
+
+    .subscribe-block__input:focus {
+      border-color: var(--color-text-secondary);
+    }
+
+    .subscribe-block__btn {
+      background: var(--color-accent);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.5rem 1rem;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .subscribe-block__btn:hover {
+      opacity: 0.88;
+    }
+
+    /* ——— Share buttons ——— */
+    .share-block {
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--color-border-light);
+    }
+
+    .share-buttons {
+      display: flex;
+      gap: 0.375rem;
+      margin-top: 0.75rem;
+    }
+
+    .share-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--color-border);
+      background: transparent;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.15s ease, border-color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .share-btn:hover,
+    .share-btn.copied {
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+    }
+
+    /* ——— Footer ——— */
+    .site-footer { background: var(--color-footer-bg); padding: var(--space-lg) 0 0; }
+    .site-footer__inner { max-width: 980px; margin: 0 auto; padding: 0 var(--space-md); display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--space-lg); align-items: start; }
+    .site-footer__brand { display: flex; flex-direction: column; gap: 0.75rem; }
+    .site-footer__logo { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; letter-spacing: 0.08em; color: var(--color-footer-text-hover); text-decoration: none; }
+    .site-footer__logo:hover { color: #fff; }
+    .site-footer__desc { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); letter-spacing: 0.02em; line-height: 1.7; }
+    .site-footer__tagline { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); opacity: 0.6; }
+    .site-footer__col-heading { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-footer-text-hover); margin-bottom: 0.875rem; }
+    .site-footer__col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+    .site-footer__col ul a { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); text-decoration: none; letter-spacing: 0.02em; transition: color 0.15s ease; }
+    .site-footer__col ul a:hover { color: var(--color-footer-text-hover); }
+    .site-footer__col li { display: flex; align-items: center; gap: 0.4rem; }
+    .site-footer__x-link { display: flex; align-items: center; }
+    .site-footer__col-sep { color: rgba(255,255,255,0.2); font-family: var(--font-mono); font-size: 0.65rem; }
+    .site-footer__bottom { max-width: 980px; margin: var(--space-lg) auto 0; padding: var(--space-sm) var(--space-md); border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; }
+    .site-footer__copy { font-family: var(--font-mono); font-size: 0.65rem; color: var(--color-footer-text); letter-spacing: 0.02em; opacity: 0.7; }
+    .site-footer__copy a { color: var(--color-footer-text); text-decoration: none; transition: color 0.15s ease; }
+    .site-footer__copy a:hover { color: var(--color-footer-text-hover); }
+
+    /* ——— Responsive ——— */
+    @media (max-width: 900px) {
+      .layout-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .article-sidebar--left {
+        display: none;
+      }
+
+      .article-sidebar--right {
+        display: none;
+      }
+
+      .performance-callout {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+      }
+
+      .performance-callout__divider {
+        width: 2.5rem;
+        height: 1px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      :root {
+        --space-xl: 3rem;
+        --space-lg: 2rem;
+      }
+
+      .article-header__title {
+        font-size: 1.5rem;
+      }
+
+      .stat-callout {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .stat-callout__number {
+        font-size: 2.5rem;
+      }
+
+      .more-articles__grid {
+        grid-template-columns: 1fr;
+      }
+
+      .site-header__nav { display: none; }
+      .site-header__sep { display: none; }
+      .site-header__tagline { display: none; }
+      .article-body p { font-size: 1rem; }
+      .article-body p.lead { font-size: 1.0625rem; }
+      .subscribe-block__form { flex-wrap: wrap; }
+      .subscribe-block__input { width: 100%; }
+      .subscribe-block__btn { width: 100%; }
+      .site-footer__inner { grid-template-columns: 1fr; gap: var(--space-md); }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="site-header__left">
+        <a href="/" class="site-header__logo">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="var(--color-accent)" style="margin-bottom: -2px;" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <span class="site-header__sep">|</span>
+        <span class="site-header__tagline">Science-backed data on <span class="why">why</span> AI says what it says</span>
+      </div>
+      <nav class="site-header__nav">
+        <a href="/research">Archive</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="article-header">
+    <svg class="article-header__bg" viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <circle cx="-60" cy="480" r="380"  fill="none" stroke="rgba(26,26,24,0.20)" stroke-width="1"/>
+      <circle cx="-60" cy="480" r="740"  fill="none" stroke="rgba(26,26,24,0.12)" stroke-width="1"/>
+      <circle cx="1500" cy="-100" r="380" fill="none" stroke="rgba(26,26,24,0.20)" stroke-width="1"/>
+      <circle cx="1500" cy="-100" r="740" fill="none" stroke="rgba(26,26,24,0.12)" stroke-width="1"/>
+    </svg>
+    <div class="layout-grid">
+      <div></div>
+      <div class="article-header__content">
+        <div class="article-header__label">BENCHMARKS · RAG</div>
+        <h1 class="article-header__title">AI Can Look Things Up. It Still Can't Connect the Dots.</h1>
+        <div class="article-header__meta">
+          <span>May 22, 2026</span>
+          <span class="sep">·</span>
+          <span>6 min read</span>
+          <span class="sep">·</span>
+          <a href="https://arxiv.org/abs/2603.04656" target="_blank" rel="noopener" class="arxiv-link">arXiv:2603.04656</a>
+        </div>
+      </div>
+      <div></div>
+    </div>
+  </div>
+
+  <main class="article-main">
+    <div class="layout-grid">
+
+      <aside class="article-sidebar article-sidebar--left">
+        <div class="paper-info__section">
+          <div class="sidebar-label">Referenced Paper</div>
+          <div class="paper-info__title">iAgentBench: Benchmarking Sensemaking Capabilities of Information-Seeking Agents on High-Traffic Topics</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Authors</div>
+          <div class="paper-info__value">Dammu, P. P. S. · Palkhiwala, A. · Roosta, T. · Shah, C.</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Institution</div>
+          <div class="paper-info__value">University of Washington</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Published</div>
+          <div class="paper-info__value">March 04, 2026</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Source</div>
+          <a href="https://arxiv.org/abs/2603.04656" target="_blank" rel="noopener" class="paper-info__arxiv">arXiv:2603.04656 ↗</a>
+        </div>
+      </aside>
+
+      <div class="article-body">
+        <p class="lead">Most RAG evaluations are running on the wrong test. The benchmarks that dominate leaderboards — SimpleQA, HotpotQA — were designed to measure whether models can locate and extract facts. That is a useful capability. It is not the same as synthesizing evidence across thematically distinct sources, and conflating the two has produced a systematic blind spot in how retrieval pipelines get assessed.</p>
+
+<p>A paper from the University of Washington introduces iAgentBench, a dynamically constructed benchmark built specifically to require cross-theme sensemaking. Questions are only retained if they structurally depend on at least two distinct thematic communities and at least one connector relation between them — making single-passage retrieval insufficient by construction. The benchmark is built from GDELT news snapshots, parsed into story graphs via Leiden clustering, and verified by a three-LLM judge panel with majority vote. The researchers then ran four frontier models — Claude Sonnet 4.5, LLaMA 4 Maverick 17B, Mistral Large 3, and Gemma 3 27B — under three inference conditions: no tools, RAG, and Reflexion (agentic self-reflection over retrieved evidence).</p>
+
+<p>The number that anchors the paper: Claude Sonnet 4.5 jumps from 0.240 to 0.740 accuracy on SimpleQA once retrieval is enabled. On iAgentBench, the same model under the same retrieval setup reaches 0.584.</p>
+
+<hr>
+
+<h2 id="the-problem-with-existing-qa-benchmarks">The Problem With Existing QA Benchmarks</h2>
+
+<p>The authors' core methodological argument is that multi-hop reasoning is not equivalent to sensemaking. A model can chain two facts — person A worked at company B, company B was acquired by company C — without ever synthesizing evidence across thematically distinct communities of information. HotpotQA is the canonical multi-hop benchmark, but the paper argues its questions still often reward locating a small cluster of lexical matches or short supporting statements. The hard reasoning is shallow enough that retrieval of a single relevant passage frequently suffices.</p>
+
+<p>Sensemaking, as the paper defines it, requires integrating evidence that doesn't share obvious surface features — stories that are connected by influence, causation, or shared actors rather than shared keywords. iAgentBench enforces this structurally. Topics are seeded from GDELT daily snapshots, scored for salience and geographic breadth, then a query-conditioned web corpus is retrieved and parsed into a hypergraph of natural-language claims. Leiden clustering identifies thematic communities within that graph. A question packet is only constructed if it spans at least two communities with at least one cross-community connector relation — and a three-LLM judge panel verifies that the question genuinely requires both. Questions that could be answered from a single community are discarded.</p>
+
+<p>The construction has a practical cost. Unlike static datasets, generating a new evaluation window requires retrieval, graph construction, and generation from scratch. The benchmark degrades gracefully as news cycles evolve — new windows can be produced — but at higher compute and API overhead than pulling from a fixed test set.</p>
+
+<hr>
+
+<h2 id="retrieval-helps-everywhere-but-not-equally">Retrieval Helps Everywhere — But Not Equally</h2>
+
+<p>Across all four models and all three benchmarks, RAG outperforms the no-tool baseline without exception. That result is clean and consistent: evidence access is universally beneficial, even for frontier models that already carry substantial parametric knowledge.</p>
+
+<div class="performance-callout">
+  <div class="performance-callout__item">
+    <div class="performance-callout__figure">0.74</div>
+    <div class="performance-callout__desc">Claude Sonnet 4.5 RAG accuracy on SimpleQA — near-ceiling once evidence is retrieved</div>
+  </div>
+  <div class="performance-callout__divider"></div>
+  <div class="performance-callout__item">
+    <div class="performance-callout__figure">0.584</div>
+    <div class="performance-callout__desc">Claude Sonnet 4.5 RAG accuracy on iAgentBench — persistent gap despite identical retrieval setup</div>
+  </div>
+</div>
+
+<p>What varies is how much of the remaining gap retrieval closes. On SimpleQA, the gains are large enough to suggest the benchmark's difficulty was almost entirely an evidence-access problem. Claude Sonnet 4.5 goes from 0.240 to 0.740; LLaMA 4 Maverick goes from 0.174 to 0.657. Once a relevant passage is retrieved, extracting a short factoid answer is not the hard part.</p>
+
+<p>On iAgentBench, the same retrieval setup leaves a meaningful gap. Claude Sonnet 4.5 reaches 0.584 — well below its SimpleQA RAG score — and the pattern holds across models. Retrieving a passage is necessary but not sufficient when the question requires synthesizing across thematic communities that don't share surface-level features. The retrieval step surfaces relevant evidence; the synthesis step is where the deficit persists.</p>
+
+<p>This gap is the paper's central empirical finding. It doesn't mean RAG is failing — it means the benchmarks typically used to evaluate RAG are measuring a problem that retrieval largely solves, while the harder problem goes unmeasured.</p>
+
+<hr>
+
+<h2 id="agentic-self-reflection-is-not-a-free-upgrade">Agentic Self-Reflection Is Not a Free Upgrade</h2>
+
+<p>Reflexion — iterative self-reflection over retrieved evidence — is the agentic extension the paper tests. The expectation is that multi-step reasoning loops would help on cross-theme questions, where a single retrieval pass may not surface all necessary evidence. The results don't support that expectation uniformly.</p>
+
+<div class="failure-map">
+  <div class="failure-map__row failure-map__row--primary">
+    <span class="failure-map__pct">+18.0pp</span>
+    <span class="failure-map__label">LLaMA 4 Maverick: RAG→Reflexion gain on iAgentBench (0.532→0.628)</span>
+  </div>
+  <div class="failure-map__row">
+    <span class="failure-map__pct">−7.4pp</span>
+    <span class="failure-map__label">Mistral Large 3: RAG→Reflexion regression on iAgentBench (0.638→0.564)</span>
+  </div>
+  <div class="failure-map__row">
+    <span class="failure-map__pct">−2.2pp</span>
+    <span class="failure-map__label">Gemma 3 27B: RAG→Reflexion regression on iAgentBench (0.592→0.570)</span>
+  </div>
+</div>
+
+<p>LLaMA 4 Maverick improves under Reflexion on iAgentBench, rising from 0.532 to 0.628. That's a meaningful gain. But Mistral Large 3 drops from 0.638 to 0.564, and Gemma 3 27B drops from 0.592 to 0.570 — both regressions relative to plain RAG on the same benchmark. Adding reasoning loops made those models less accurate, not more.</p>
+
+<p>The inconsistency points to a specific failure mode. When the underlying evidence is cross-thematic and ambiguous, iterative reflection can amplify errors rather than correct them. A model that retrieves a plausible but incomplete picture of a cross-community connection may revise toward a more internally coherent but less accurate answer. The loop reinforces the error instead of catching it. Whether a given model benefits from Reflexion on sensemaking tasks appears to depend on properties of the model that aren't captured by its baseline or RAG performance — Mistral Large 3 has the highest RAG accuracy on iAgentBench among the four models and still regresses under Reflexion.</p>
+
+<hr>
+
+<h2 id="what-to-do-about-it">What to Do About It</h2>
+
+<p>The practical implication is not that RAG pipelines are broken. It's that the benchmarks used to validate them are systematically understating a real limitation — and that agentic extensions are being deployed on the assumption that more reasoning steps help, when the evidence for cross-theme sensemaking tasks is mixed at best.</p>
+
+<p>For teams building or evaluating retrieval systems, the first step is to check what the benchmark is actually measuring. If the evaluation set can be solved by locating a single relevant passage, strong RAG scores on that set don't tell you much about how the system will perform when questions require synthesizing across thematically distinct sources. That's a different capability, and it needs a different test.</p>
+
+<p>For agentic pipelines specifically, the Reflexion results argue against treating self-reflection as a default upgrade. The models that regressed weren't weak models — Mistral Large 3 at 675B parameters had the highest RAG accuracy on iAgentBench before Reflexion degraded it. The question of whether iterative reflection helps or hurts depends on the task structure, and cross-theme sensemaking appears to be a case where the answer is model-dependent and not reliably positive. Deploying Reflexion without evaluating it on sensemaking-type questions is working from incomplete evidence.</p>
+
+<p>The benchmark itself is available for evaluation, though the dynamic construction means each new window carries compute and API costs. For teams willing to absorb that overhead, it provides a more honest picture of where retrieval pipelines actually stand.</p>
+
+<div class="key-takeaway">
+  <div class="key-takeaway__label">Key Takeaway</div>
+  <p>On factoid benchmarks like SimpleQA, retrieval nearly solves the problem; the hard part was always evidence access, not reasoning.</p>
+  <p>For cross-theme sensemaking questions, neither retrieval nor agentic reflection reliably closes the gap — and reflection can make things worse — which means current RAG pipelines are being evaluated on benchmarks that systematically understate their real limitations.</p>
+</div>
+
+<div class="source-citation">
+  <div class="source-citation__label">Source</div>
+  <p>Dammu, Preetam Prabhu Srikar, Palkhiwala, Arnav, Roosta, Tanya, Shah, Chirag (2026). <em>iAgentBench: Benchmarking Sensemaking Capabilities of Information-Seeking Agents on High-Traffic Topics.</em> arXiv:<a href="https://arxiv.org/abs/2603.04656">2603.04656</a></p>
+</div>
+
+
+      </div>
+
+      <aside class="article-sidebar article-sidebar--right">
+        <div class="sidebar-label">In this article</div>
+        <nav>
+          <ul class="toc__list">
+      <li><a href="#the-problem-with-existing-qa-benchmarks" class="toc__link">The Problem With Existing QA Benchmarks</a></li>
+      <li><a href="#retrieval-helps-everywhere-but-not-equally" class="toc__link">Retrieval Helps Everywhere — But Not Equally</a></li>
+      <li><a href="#agentic-self-reflection-is-not-a-free-upgrade" class="toc__link">Agentic Self-Reflection Is Not a Free Upgrade</a></li>
+      <li><a href="#what-to-do-about-it" class="toc__link">What to Do About It</a></li>
+          </ul>
+        </nav>
+        <div class="share-block">
+          <div class="sidebar-label">Share</div>
+          <div class="share-buttons">
+            <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fblursor.ai%2Fresearch%2Fcitation-failures-geo&text=Diagnosing+Citation+Failures+in+GEO%3A+What+a+New+Paper+From+Virginia+Tech+Actually+Shows"
+               target="_blank" rel="noopener" class="share-btn" title="Share on X" aria-label="Share on X">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+              </svg>
+            </a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fblursor.ai%2Fresearch%2Fcitation-failures-geo"
+               target="_blank" rel="noopener" class="share-btn" title="Share on LinkedIn" aria-label="Share on LinkedIn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+            </a>
+            <button class="share-btn" id="copy-url-btn" title="Copy link" aria-label="Copy link">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <section class="more-articles">
+    <div class="more-articles__inner">
+      <div class="more-articles__header">
+        <span class="more-articles__label">More from Research</span>
+        <a href="/research" class="more-articles__all">All articles &rarr;</a>
+      </div>
+      <div class="more-articles__grid">
+        <a href="/research/rag-ranking-signal-amplification" class="more-card">
+          <div class="more-card__meta">Mar 7, 2026 &middot; 11 min read</div>
+          <h3 class="more-card__title">RAG systems inherit ranking signals from their retriever&thinsp;—&thinsp;and amplify them</h3>
+          <div class="more-card__source">arXiv:2603.03195</div>
+        </a>
+        <a href="/research/brand-mention-llm-recommendation" class="more-card">
+          <div class="more-card__meta">Mar 3, 2026 &middot; 6 min read</div>
+          <h3 class="more-card__title">Brand mention frequency in training data predicts LLM recommendation behavior</h3>
+          <div class="more-card__source">arXiv:2602.18440</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <a href="/" class="site-footer__logo">
+          <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <p class="site-footer__desc">AI research paper digest for non-academic audiences.</p>
+        <span class="site-footer__tagline">Now you have no excuses not to act on it.</span>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Research</div>
+        <ul>
+          <li><a href="/research">All articles</a></li>
+          <li><a href="/digest">Weekly Digest</a></li>
+        </ul>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Connect</div>
+        <ul>
+          <li><a href="/digest">Newsletter</a></li>
+          <li>
+            <a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener" class="site-footer__x-link">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+            </a>
+            <span class="site-footer__col-sep">|</span>
+            <a href="mailto:contact@blursor.ai">contact@blursor.ai</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="site-footer__bottom">
+      <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
+      <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>
+    </div>
+  </footer>
+
+  <script>
+    // Copy URL button
+    document.getElementById('copy-url-btn').addEventListener('click', function() {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        this.classList.add('copied');
+        this.setAttribute('title', 'Copied!');
+        setTimeout(() => {
+          this.classList.remove('copied');
+          this.setAttribute('title', 'Copy link');
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>
