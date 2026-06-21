@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Small Model Matched a Big One's Search Smarts, 20x Faster — BLURSOR Research</title>
+  <meta name="description" content="A 53.9M-parameter diffusion model delivers 10–20x lower latency than autoregressive LLM fan-out — but only when reward design prevents RL policy collapse.">
+  <link rel="canonical" href="https://blursor.ai/research/rl-diffusion-fanout-retrieval-efficiency">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="A Small Model Matched a Big One's Search Smarts, 20x Faster — BLURSOR Research">
+  <meta property="og:description" content="Distilling a large model's query expansion into a 54M-parameter model kept the quality and slashed the lag.">
+  <meta property="og:url" content="https://blursor.ai/research/rl-diffusion-fanout-retrieval-efficiency">
+  <meta property="og:site_name" content="BLURSOR Research">
+  <meta property="article:published_time" content="2026-05-22">
+  <meta property="article:author" content="https://blursor.ai/author/alex-rostovtsev">
+  <meta property="og:image" content="https://blursor.ai/assets/og-default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="BLURSOR Research">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="A Small Model Matched a Big One's Search Smarts, 20x Faster — BLURSOR Research">
+  <meta name="twitter:description" content="Distilling a large model's query expansion into a 54M-parameter model kept the quality and slashed the lag.">
+  <meta name="twitter:image" content="https://blursor.ai/assets/og-default.png">
+
+  <script type="application/ld+json">
+  {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "@id": "https://blursor.ai/research/rl-diffusion-fanout-retrieval-efficiency#article",
+  "headline": "A Small Model Matched a Big One's Search Smarts, 20x Faster",
+  "description": "A 53.9M-parameter diffusion model delivers 10–20x lower latency than autoregressive LLM fan-out — but only when reward design prevents RL policy collapse.",
+  "datePublished": "2026-05-22",
+  "dateModified": "2026-05-22",
+  "author": {
+    "@type": "Person",
+    "@id": "https://blursor.ai/author/alex-rostovtsev#person",
+    "name": "Alex Rostovtsev",
+    "url": "https://blursor.ai/author/alex-rostovtsev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://blursor.ai/#organization",
+    "name": "BLURSOR",
+    "url": "https://blursor.ai"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://blursor.ai/research/rl-diffusion-fanout-retrieval-efficiency"
+  },
+  "about": {
+    "@type": "ScholarlyArticle",
+    "name": "Efficient, Property-Aligned Fan-Out Retrieval via RL-Compiled Diffusion",
+    "sameAs": "https://arxiv.org/abs/2603.06397"
+  }
+}
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ——— Reset & base ——— */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-bg: #f0ece4;
+      --color-bg-warm: #e8e3d9;
+      --color-surface: #f5f1ea;
+      --color-text: #1a1a18;
+      --color-text-secondary: #7a776e;
+      --color-text-ghost: rgba(26, 26, 24, 0.07);
+      --color-border: #d4d0c8;
+      --color-border-light: rgba(26, 26, 24, 0.08);
+      --color-accent: #c43b2a;
+      --color-footer-bg: #1a1a18;
+      --color-footer-text: #a09d95;
+      --color-footer-text-hover: #f0ece4;
+
+      --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 3rem;
+      --space-xl: 5rem;
+
+      /* Layout */
+      --sidebar-w: 160px;
+      --article-w: 640px;
+      --col-gap: 2.5rem;
+      --layout-max: 1080px;
+      --layout-pad: var(--space-md);
+    }
+
+    html {
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-serif);
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    main { flex: 1; }
+
+    /* ——— Shared layout grid ——— */
+    .layout-grid {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) minmax(0, var(--article-w)) var(--sidebar-w);
+      column-gap: var(--col-gap);
+      max-width: var(--layout-max);
+      margin: 0 auto;
+      padding: 0 var(--layout-pad);
+      align-items: start;
+    }
+
+    /* ——— Site header ——— */
+    .site-header {
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .site-header__inner {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-header__left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .site-header__logo {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--color-text);
+      text-decoration: none;
+      margin-top: -2px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .site-header__sep {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-border);
+    }
+
+    .site-header__tagline {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+
+    .site-header__tagline .why {
+      text-decoration: underline;
+      text-decoration-color: rgba(196,59,42,0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+
+    .site-header__nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .site-header__nav a {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.03em;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.15s ease;
+    }
+
+    .site-header__nav a:hover {
+      color: var(--color-text);
+    }
+
+    /* ——— Article header ——— */
+    .article-header {
+      position: relative;
+      overflow: hidden;
+      padding: var(--space-xl) 0 var(--space-lg);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .article-header__bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .article-header__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-accent);
+      margin-bottom: 0.875rem;
+    }
+
+    .article-header__title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.625rem, 2.8vw, 2.375rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--color-text);
+      margin-bottom: var(--space-md);
+    }
+
+    .article-header__meta {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .article-header__meta .sep {
+      color: var(--color-border);
+    }
+
+    .article-header__meta .arxiv-link {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .article-header__meta .arxiv-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ——— Article layout ——— */
+    .article-main {
+      padding: var(--space-md) 0 var(--space-xl);
+    }
+
+    /* ——— Sidebars ——— */
+    .article-sidebar {
+      position: sticky;
+      top: 2.5rem;
+    }
+
+    .sidebar-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+      opacity: 0.7;
+    }
+
+    /* Left sidebar: paper info */
+    .paper-info__section {
+      margin-bottom: var(--space-md);
+    }
+
+    .paper-info__title {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      font-style: italic;
+      line-height: 1.55;
+      color: var(--color-text);
+    }
+
+    .paper-info__value {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      line-height: 1.55;
+      color: var(--color-text-secondary);
+    }
+
+    .paper-info__arxiv {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .paper-info__arxiv:hover {
+      text-decoration: underline;
+    }
+
+    /* Right sidebar: TOC */
+    .toc__list {
+      list-style: none;
+    }
+
+    .toc__link {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      line-height: 1.4;
+      display: block;
+      padding: 0.4rem 0 0.4rem 0.75rem;
+      border-left: 2px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .toc__link:hover {
+      color: var(--color-text);
+      border-left-color: var(--color-accent);
+    }
+
+    /* ——— Article body ——— */
+    .article-body p {
+      font-size: 1.0625rem;
+      line-height: 1.85;
+      color: var(--color-text);
+      margin-bottom: 1.75rem;
+    }
+
+    .article-body p.lead {
+      font-size: 1.125rem;
+      line-height: 1.8;
+      color: var(--color-text-secondary);
+      margin-bottom: 1.75rem;
+    }
+
+    .article-body h2 {
+      font-family: var(--font-serif);
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--color-text);
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+      margin: 3.5rem 0 1.25rem;
+    }
+
+    .article-body strong {
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .article-body a {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .article-body a:hover {
+      text-decoration: underline;
+    }
+
+    .article-body hr {
+      border: none;
+      border-top: 1px solid var(--color-border-light);
+      margin: var(--space-lg) 0;
+    }
+
+    /* ——— Stat callout (the 43%) ——— */
+    .stat-callout {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin: var(--space-lg) 0;
+      padding: var(--space-md) var(--space-md);
+      border-left: 3px solid var(--color-accent);
+      background: var(--color-surface);
+    }
+
+    .stat-callout__number {
+      font-family: var(--font-mono);
+      font-size: 3.25rem;
+      font-weight: 500;
+      color: var(--color-accent);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .stat-callout__text {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ——— Failure map ——— */
+    .failure-map {
+      margin: var(--space-md) 0 var(--space-lg);
+      border: 1px solid var(--color-border-light);
+    }
+
+    .failure-map__row {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-sm);
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .failure-map__row:last-child {
+      border-bottom: none;
+    }
+
+    .failure-map__pct {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      min-width: 2.75rem;
+    }
+
+    .failure-map__label {
+      font-family: var(--font-serif);
+      font-size: 0.9375rem;
+      color: var(--color-text);
+    }
+
+    .failure-map__row--primary .failure-map__pct {
+      color: var(--color-accent);
+      font-size: 1rem;
+    }
+
+    .failure-map__row--primary .failure-map__label {
+      font-weight: 600;
+    }
+
+    /* ——— Performance callout ——— */
+    .performance-callout {
+      display: flex;
+      align-items: center;
+      gap: var(--space-lg);
+      margin: var(--space-lg) 0;
+      padding: var(--space-md) var(--space-md);
+      background: var(--color-bg-warm);
+      border-left: 3px solid var(--color-border);
+    }
+
+    .performance-callout__item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .performance-callout__figure {
+      font-family: var(--font-mono);
+      font-size: 2.25rem;
+      font-weight: 500;
+      color: var(--color-text);
+      line-height: 1;
+    }
+
+    .performance-callout__desc {
+      font-family: var(--font-serif);
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      line-height: 1.4;
+      max-width: 13rem;
+    }
+
+    .performance-callout__divider {
+      width: 1px;
+      height: 2.5rem;
+      background: var(--color-border);
+      flex-shrink: 0;
+    }
+
+    /* ——— Key takeaway ——— */
+    .key-takeaway {
+      margin: 0 0 var(--space-md);
+      padding: var(--space-md) var(--space-md);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+    }
+
+    .key-takeaway__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-accent);
+      margin-bottom: 0.875rem;
+    }
+
+    .key-takeaway p {
+      font-size: 0.9375rem !important;
+      color: var(--color-text-secondary) !important;
+      line-height: 1.75 !important;
+      margin-bottom: 0.75rem !important;
+    }
+
+    .key-takeaway p:last-child {
+      margin-bottom: 0 !important;
+      color: var(--color-text) !important;
+      font-style: italic;
+    }
+
+    .org-name {
+      text-decoration: underline;
+      text-decoration-color: rgba(196, 59, 42, 0.35);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    /* ——— Source citation ——— */
+    .source-citation {
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--color-border-light);
+    }
+
+    .source-citation__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-secondary);
+      opacity: 0.7;
+      margin-bottom: 0.5rem;
+    }
+
+    .source-citation p {
+      font-family: var(--font-mono) !important;
+      font-size: 0.75rem !important;
+      color: var(--color-text-secondary) !important;
+      line-height: 1.6 !important;
+      margin-bottom: 0 !important;
+    }
+
+    .source-citation a {
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .source-citation a:hover {
+      text-decoration: underline;
+    }
+
+    /* ——— More articles ——— */
+    .more-articles {
+      background: var(--color-bg-warm);
+      border-top: 1px solid var(--color-border-light);
+      padding: var(--space-xl) 0;
+    }
+
+    .more-articles__inner {
+      max-width: var(--layout-max);
+      margin: 0 auto;
+      padding: 0 var(--layout-pad);
+    }
+
+    .more-articles__header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding-bottom: var(--space-md);
+      margin-bottom: var(--space-lg);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .more-articles__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-secondary);
+    }
+
+    .more-articles__all {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+    }
+
+    .more-articles__all:hover {
+      text-decoration: underline;
+    }
+
+    .more-articles__grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-lg);
+    }
+
+    .more-card {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      padding-bottom: var(--space-md);
+      border-bottom: 2px solid var(--color-border-light);
+      transition: border-color 0.2s ease;
+    }
+
+    .more-card:hover {
+      border-bottom-color: var(--color-accent);
+    }
+
+    .more-card__meta {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .more-card__title {
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--color-text);
+      line-height: 1.4;
+      margin-bottom: 0.65rem;
+      transition: color 0.15s ease;
+    }
+
+    .more-card:hover .more-card__title {
+      color: var(--color-accent);
+    }
+
+    .more-card__source {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--color-accent);
+    }
+
+    /* ——— Byline ——— */
+    .article-byline {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+
+    .article-byline__link {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .article-byline__link:hover {
+      color: var(--color-accent);
+    }
+
+    /* ——— Subscribe block ——— */
+    .subscribe-block {
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      padding: var(--space-md);
+      margin: var(--space-lg) 0;
+    }
+
+    .subscribe-block__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-accent);
+    }
+
+    .subscribe-block__text {
+      font-family: var(--font-serif);
+      color: var(--color-text-secondary);
+      font-size: 0.9375rem;
+      margin: var(--space-xs) 0 var(--space-sm);
+    }
+
+    .subscribe-block__form {
+      display: flex;
+      gap: var(--space-xs);
+    }
+
+    .subscribe-block__input {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      padding: 0.5rem 0.75rem;
+      color: var(--color-text);
+      outline: none;
+    }
+
+    .subscribe-block__input:focus {
+      border-color: var(--color-text-secondary);
+    }
+
+    .subscribe-block__btn {
+      background: var(--color-accent);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.5rem 1rem;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .subscribe-block__btn:hover {
+      opacity: 0.88;
+    }
+
+    /* ——— Share buttons ——— */
+    .share-block {
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--color-border-light);
+    }
+
+    .share-buttons {
+      display: flex;
+      gap: 0.375rem;
+      margin-top: 0.75rem;
+    }
+
+    .share-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--color-border);
+      background: transparent;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.15s ease, border-color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .share-btn:hover,
+    .share-btn.copied {
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+    }
+
+    /* ——— Footer ——— */
+    .site-footer { background: var(--color-footer-bg); padding: var(--space-lg) 0 0; }
+    .site-footer__inner { max-width: 980px; margin: 0 auto; padding: 0 var(--space-md); display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--space-lg); align-items: start; }
+    .site-footer__brand { display: flex; flex-direction: column; gap: 0.75rem; }
+    .site-footer__logo { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; letter-spacing: 0.08em; color: var(--color-footer-text-hover); text-decoration: none; }
+    .site-footer__logo:hover { color: #fff; }
+    .site-footer__desc { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); letter-spacing: 0.02em; line-height: 1.7; }
+    .site-footer__tagline { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); opacity: 0.6; }
+    .site-footer__col-heading { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-footer-text-hover); margin-bottom: 0.875rem; }
+    .site-footer__col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+    .site-footer__col ul a { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-footer-text); text-decoration: none; letter-spacing: 0.02em; transition: color 0.15s ease; }
+    .site-footer__col ul a:hover { color: var(--color-footer-text-hover); }
+    .site-footer__col li { display: flex; align-items: center; gap: 0.4rem; }
+    .site-footer__x-link { display: flex; align-items: center; }
+    .site-footer__col-sep { color: rgba(255,255,255,0.2); font-family: var(--font-mono); font-size: 0.65rem; }
+    .site-footer__bottom { max-width: 980px; margin: var(--space-lg) auto 0; padding: var(--space-sm) var(--space-md); border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; }
+    .site-footer__copy { font-family: var(--font-mono); font-size: 0.65rem; color: var(--color-footer-text); letter-spacing: 0.02em; opacity: 0.7; }
+    .site-footer__copy a { color: var(--color-footer-text); text-decoration: none; transition: color 0.15s ease; }
+    .site-footer__copy a:hover { color: var(--color-footer-text-hover); }
+
+    /* ——— Responsive ——— */
+    @media (max-width: 900px) {
+      .layout-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .article-sidebar--left {
+        display: none;
+      }
+
+      .article-sidebar--right {
+        display: none;
+      }
+
+      .performance-callout {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+      }
+
+      .performance-callout__divider {
+        width: 2.5rem;
+        height: 1px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      :root {
+        --space-xl: 3rem;
+        --space-lg: 2rem;
+      }
+
+      .article-header__title {
+        font-size: 1.5rem;
+      }
+
+      .stat-callout {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .stat-callout__number {
+        font-size: 2.5rem;
+      }
+
+      .more-articles__grid {
+        grid-template-columns: 1fr;
+      }
+
+      .site-header__nav { display: none; }
+      .site-header__sep { display: none; }
+      .site-header__tagline { display: none; }
+      .article-body p { font-size: 1rem; }
+      .article-body p.lead { font-size: 1.0625rem; }
+      .subscribe-block__form { flex-wrap: wrap; }
+      .subscribe-block__input { width: 100%; }
+      .subscribe-block__btn { width: 100%; }
+      .site-footer__inner { grid-template-columns: 1fr; gap: var(--space-md); }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="site-header__left">
+        <a href="/" class="site-header__logo">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="var(--color-accent)" style="margin-bottom: -2px;" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <span class="site-header__sep">|</span>
+        <span class="site-header__tagline">Science-backed data on <span class="why">why</span> AI says what it says</span>
+      </div>
+      <nav class="site-header__nav">
+        <a href="/research">Archive</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="article-header">
+    <svg class="article-header__bg" viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <circle cx="-60" cy="480" r="380"  fill="none" stroke="rgba(26,26,24,0.20)" stroke-width="1"/>
+      <circle cx="-60" cy="480" r="740"  fill="none" stroke="rgba(26,26,24,0.12)" stroke-width="1"/>
+      <circle cx="1500" cy="-100" r="380" fill="none" stroke="rgba(26,26,24,0.20)" stroke-width="1"/>
+      <circle cx="1500" cy="-100" r="740" fill="none" stroke="rgba(26,26,24,0.12)" stroke-width="1"/>
+    </svg>
+    <div class="layout-grid">
+      <div></div>
+      <div class="article-header__content">
+        <div class="article-header__label">RETRIEVAL · FAN-OUT</div>
+        <h1 class="article-header__title">A Small Model Matched a Big One's Search Smarts, 20x Faster</h1>
+        <div class="article-header__meta">
+          <span>May 22, 2026</span>
+          <span class="sep">·</span>
+          <span>7 min read</span>
+          <span class="sep">·</span>
+          <a href="https://arxiv.org/abs/2603.06397" target="_blank" rel="noopener" class="arxiv-link">arXiv:2603.06397</a>
+        </div>
+      </div>
+      <div></div>
+    </div>
+  </div>
+
+  <main class="article-main">
+    <div class="layout-grid">
+
+      <aside class="article-sidebar article-sidebar--left">
+        <div class="paper-info__section">
+          <div class="sidebar-label">Referenced Paper</div>
+          <div class="paper-info__title">Efficient, Property-Aligned Fan-Out Retrieval via RL-Compiled Diffusion</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Authors</div>
+          <div class="paper-info__value">Jiang, P. · Li, J. Y. · Ryu, M. · Hu, R. L. · Su, K. · Wan, Z. Y. · Hebert, L. · Peng, H. · Han, J. · Kuzmin, D. · Boutilier, C.</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Institution</div>
+          <div class="paper-info__value">University of Illinois Urbana-Champaign</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Published</div>
+          <div class="paper-info__value">March 06, 2026</div>
+        </div>
+        <div class="paper-info__section">
+          <div class="sidebar-label">Source</div>
+          <a href="https://arxiv.org/abs/2603.06397" target="_blank" rel="noopener" class="paper-info__arxiv">arXiv:2603.06397 ↗</a>
+        </div>
+      </aside>
+
+      <div class="article-body">
+        <p class="lead">Query fan-out — expanding a single user query into multiple sub-queries to broaden retrieval coverage — has become a standard technique in recommendation and search pipelines. The problem is cost. Running fan-out through a large autoregressive language model at inference time is slow, and running it multiple times (Best-of-N) to improve quality multiplies that cost. Most deployed systems either skip fan-out entirely or accept the latency penalty without a principled way to control what properties the generated sub-queries actually have.</p>
+
+<p>A paper from the University of Illinois Urbana-Champaign, published in March 2026, attacks this from an unusual angle. Rather than optimizing the LLM that generates sub-queries, the researchers train that LLM with reinforcement learning to produce high-quality fan-out trajectories, then distill those trajectories into a 53.9M-parameter diffusion model that generates all sub-queries simultaneously in a single forward pass. The result is a system — R4T (Retrieve-for-Train) — that separates the quality optimization problem (handled at training time by RL) from the deployment problem (handled at inference time by the diffusion model).</p>
+
+<p>Prior work on fan-out either treated sub-query generation as a prompt engineering problem or relied on Best-of-N sampling to improve quality, with no mechanism to enforce properties like diversity or semantic groundedness simultaneously. R4T is the first framework to compile RL-optimized behavior into a non-autoregressive retriever.</p>
+
+<p>The number that frames the efficiency case: the autoregressive LLM baseline takes 1.46 seconds for a batch of 8 queries and scales to nearly 50 seconds at a batch size of 1024.</p>
+
+<hr>
+
+<h2 id="the-efficiency-gap-diffusion-vs-autoregressive-at-deployment">The Efficiency Gap: Diffusion vs. Autoregressive at Deployment</h2>
+
+<p>The 53.9M-parameter diffusion model processes a batch of 8 in 0.07 seconds and a batch of 1024 in 4.21 seconds. Against the autoregressive LLM's 1.46 seconds at batch size 8 and approximately 50 seconds at batch size 1024, that is a consistent 10–20x speedup across the full deployment range.</p>
+
+<div class="performance-callout">
+  <div class="performance-callout__item">
+    <div class="performance-callout__figure">0.07s</div>
+    <div class="performance-callout__desc">Diffusion model latency at batch size 8 (vs. 1.46s for autoregressive LLM)</div>
+  </div>
+  <div class="performance-callout__divider"></div>
+  <div class="performance-callout__item">
+    <div class="performance-callout__figure">4.21s</div>
+    <div class="performance-callout__desc">Diffusion model latency at batch size 1024 (vs. ~50s for autoregressive LLM)</div>
+  </div>
+</div>
+
+<p>The mechanism is non-autoregressive generation in embedding space. Rather than producing sub-queries token-by-token, the diffusion model generates all k retrieval directions simultaneously as a single tensor of shape k × d, where each row corresponds to one retrieval direction. The architecture — a Transformer denoiser with hidden dimension 1024, 6 layers, and 16 heads — is compact enough to substantially reduce deployment memory overhead relative to the LLM it replaces.</p>
+
+<p>The autoregressive LLM's latency profile is dominated by high constant overhead at small batch sizes before scaling linearly. The diffusion model's profile is nearly flat at small batches and grows slowly — the practical consequence is that the speedup is not just a large-batch phenomenon. Even at batch size 8, the gap is more than 20x.</p>
+
+<p>This efficiency advantage is the paper's most deployable result. But it comes with a prerequisite: the diffusion model only works because it was trained on synthetic supervision generated by an RL-optimized fan-out LM. The quality of the distilled model is bounded by the quality of the policy that produced its training data.</p>
+
+<hr>
+
+<h2 id="why-reward-design-is-the-fragile-core-of-the-system">Why Reward Design Is the Fragile Core of the System</h2>
+
+<p>The RL training stage uses Soft-GRPO — a variant of GRPO augmented with forward and reverse KL penalties to stabilize open-ended generation — with a composite set-level reward. The reward specification turns out to be the most consequential engineering decision in the pipeline, and the ablations make the failure modes explicit.</p>
+
+<div class="failure-map">
+  <div class="failure-map__row failure-map__row--primary">
+    <span class="failure-map__pct">Groundedness only</span>
+    <span class="failure-map__label">Policy collapses to nonsensical repeated tokens that minimize embedding distance</span>
+  </div>
+  <div class="failure-map__row">
+    <span class="failure-map__pct">Groundedness + Alignment</span>
+    <span class="failure-map__label">Policy collapses faster — repeats query paraphrases, ignores dispersion</span>
+  </div>
+  <div class="failure-map__row">
+    <span class="failure-map__pct">Full composite reward</span>
+    <span class="failure-map__label">Stable training; diversity and coverage both improve over baselines</span>
+  </div>
+</div>
+
+<p>Training with only a groundedness reward — a nearest-neighbor distance penalty encouraging sub-queries to be close to actual database items — causes the policy to converge to degenerate, nonsensical strings. The paper's example: &quot;line ending line ending line ending.&quot; These strings happen to minimize embedding distance to a specific database item while satisfying the reward without producing anything useful. This is a standard reward hacking failure, but the specific form it takes here — exploitation through repetitive token sequences in embedding space — is worth noting for anyone designing similar systems.</p>
+
+<p>Adding an alignment reward (cosine similarity to the original query) without a diversity term produces a different collapse. The policy learns to simply paraphrase the original query, trivially maximizing alignment while ignoring semantic dispersion. Coverage doesn't improve because all sub-queries point at the same semantic region.</p>
+
+<p>The composite reward — groundedness plus diversity via Vendi Score plus alignment — prevents both failure modes and produces stable training. But this means the system's behavior is highly sensitive to reward weighting. The authors acknowledge this without fully resolving it. The forward and reverse KL coefficients are set to 0.05; the group size for GRPO is 8; 128 samples are generated per query for supervision synthesis. These are the hyperparameters that determine whether training is stable, and they were tuned on specific datasets.</p>
+
+<hr>
+
+<h2 id="the-quality-diversity-tradeoff-rl-doesn-t-eliminate">The Quality–Diversity Tradeoff RL Doesn't Eliminate</h2>
+
+<p>The wide-scope coverage retrieval (WSCR) results reveal a tradeoff the system makes explicit but does not resolve. R4T-FOLM (Qwen) achieves the highest Recall@5K of 20.9 and Hit@5K of 64.6 among all methods — and the lowest Vendi Score of 27.5. The highest-coverage model is also the least diverse.</p>
+
+<div class="stat-callout">
+  <div class="stat-callout__number">20.9 vs. 27.5</div>
+  <div class="stat-callout__text">R4T-FOLM (Qwen) achieves the highest Recall@5K (20.9) but the lowest Vendi Score (27.5) among all methods — the highest-coverage model is also the least diverse.</div>
+</div>
+
+<p>This is consistent with what RL optimization for reference overlap does: it concentrates retrieval around dominant semantic modes, the same modes that appear in the reference set. Coverage improves because the sub-queries converge on the right semantic regions; diversity suffers for the same reason.</p>
+
+<p>The diffusion variants partially escape this. R4T-Diffusion (Gemma) achieves Recall@5K of 15.0 and Vendi Score of 46.2; R4T-Diffusion (Qwen) achieves Recall@5K of 16.5 and Vendi Score of 34.7. The distillation step appears to re-introduce some of the diversity inherent to diffusion-based generation — the model doesn't fully inherit the mode-collapsing behavior of the RL policy it was trained on.</p>
+
+<p>Neither variant dominates on all dimensions simultaneously. The FOLM variant maximizes measurable coverage; the diffusion variant trades some coverage for broader semantic spread and substantially lower latency. The paper frames this as a genuine choice rather than a solved problem — which is accurate, and more useful than claiming otherwise.</p>
+
+<p>One structural caveat: the reference sets in WSCR represent one plausible realization of query intent rather than exhaustive ground truth. Recall metrics are proxies for semantic coverage. A system that scores lower on recall but retrieves genuinely complementary items not in the reference set would look worse by this metric while potentially being more useful.</p>
+
+<hr>
+
+<h2 id="before-deploying-fan-out-at-scale">Before Deploying Fan-Out at Scale</h2>
+
+<p>The paper's practical implication is not that diffusion-based fan-out is ready to drop into any retrieval pipeline. It is that the latency problem of LLM-based fan-out is solvable — but the reward specification problem is not something to defer.</p>
+
+<p>Teams considering this approach should treat reward design as a first-class engineering problem before touching the distillation stage. The ablations show that naive reward combinations produce degenerate outputs, and the failure modes are not obvious from the reward definitions alone. Testing reward components in isolation, on a small dataset, before committing to full RL training is the minimum due diligence.</p>
+
+<p>The coverage-diversity tradeoff should be decided explicitly rather than inherited from default settings. If the deployment context rewards breadth — surfacing items the user didn't know to ask for — the diffusion variant's higher Vendi Scores are the relevant metric. If the context rewards precision against a known reference distribution, the FOLM variant's higher recall is. These are different products.</p>
+
+<p>The music dataset used in evaluation is proprietary, limiting reproducibility on that benchmark. The Polyvore fashion benchmark is public, and the query counts — 43,874 for OAR and 84,704 for WSCR — are large enough to be meaningful. But generalization to other retrieval backbones, modalities, and embedding spaces remains an open question the paper doesn't close.</p>
+
+<div class="key-takeaway">
+  <div class="key-takeaway__label">Key Takeaway</div>
+  <p>R4T's distillation approach genuinely solves the latency problem of LLM-based fan-out, and the reward ablations reveal exactly why naive RL formulations fail — but the quality-diversity tradeoff is not resolved, it is just made explicit.</p>
+  <p>Teams deploying query fan-out at scale can adopt the diffusion variant for a 10–20x latency reduction with competitive quality, but should treat reward specification as a first-class engineering problem: the wrong reward combination produces degenerate outputs, and optimizing for coverage measurably suppresses retrieval diversity.</p>
+</div>
+
+<div class="source-citation">
+  <div class="source-citation__label">Source</div>
+  <p>Jiang, Pengcheng, Li, Judith Yue, Ryu, Moonkyung, Hu, R. Lily, Su, Kun, Wan, Zhong Yi, Hebert, Liam, Peng, Hao, Han, Jiawei, Kuzmin, Dima, Boutilier, Craig (2026). <em>Efficient, Property-Aligned Fan-Out Retrieval via RL-Compiled Diffusion.</em> arXiv:<a href="https://arxiv.org/abs/2603.06397">2603.06397</a></p>
+</div>
+
+
+      </div>
+
+      <aside class="article-sidebar article-sidebar--right">
+        <div class="sidebar-label">In this article</div>
+        <nav>
+          <ul class="toc__list">
+      <li><a href="#the-efficiency-gap-diffusion-vs-autoregressive-at-deployment" class="toc__link">The Efficiency Gap: Diffusion vs. Autoregressive at Deployment</a></li>
+      <li><a href="#why-reward-design-is-the-fragile-core-of-the-system" class="toc__link">Why Reward Design Is the Fragile Core of the System</a></li>
+      <li><a href="#the-quality-diversity-tradeoff-rl-doesn-t-eliminate" class="toc__link">The Quality–Diversity Tradeoff RL Doesn't Eliminate</a></li>
+      <li><a href="#before-deploying-fan-out-at-scale" class="toc__link">Before Deploying Fan-Out at Scale</a></li>
+          </ul>
+        </nav>
+        <div class="share-block">
+          <div class="sidebar-label">Share</div>
+          <div class="share-buttons">
+            <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fblursor.ai%2Fresearch%2Fcitation-failures-geo&text=Diagnosing+Citation+Failures+in+GEO%3A+What+a+New+Paper+From+Virginia+Tech+Actually+Shows"
+               target="_blank" rel="noopener" class="share-btn" title="Share on X" aria-label="Share on X">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+              </svg>
+            </a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fblursor.ai%2Fresearch%2Fcitation-failures-geo"
+               target="_blank" rel="noopener" class="share-btn" title="Share on LinkedIn" aria-label="Share on LinkedIn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+            </a>
+            <button class="share-btn" id="copy-url-btn" title="Copy link" aria-label="Copy link">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <section class="more-articles">
+    <div class="more-articles__inner">
+      <div class="more-articles__header">
+        <span class="more-articles__label">More from Research</span>
+        <a href="/research" class="more-articles__all">All articles &rarr;</a>
+      </div>
+      <div class="more-articles__grid">
+        <a href="/research/rag-ranking-signal-amplification" class="more-card">
+          <div class="more-card__meta">Mar 7, 2026 &middot; 11 min read</div>
+          <h3 class="more-card__title">RAG systems inherit ranking signals from their retriever&thinsp;—&thinsp;and amplify them</h3>
+          <div class="more-card__source">arXiv:2603.03195</div>
+        </a>
+        <a href="/research/brand-mention-llm-recommendation" class="more-card">
+          <div class="more-card__meta">Mar 3, 2026 &middot; 6 min read</div>
+          <h3 class="more-card__title">Brand mention frequency in training data predicts LLM recommendation behavior</h3>
+          <div class="more-card__source">arXiv:2602.18440</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <a href="/" class="site-footer__logo">
+          <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <p class="site-footer__desc">AI research paper digest for non-academic audiences.</p>
+        <span class="site-footer__tagline">Now you have no excuses not to act on it.</span>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Research</div>
+        <ul>
+          <li><a href="/research">All articles</a></li>
+          <li><a href="/digest">Weekly Digest</a></li>
+        </ul>
+      </div>
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Connect</div>
+        <ul>
+          <li><a href="/digest">Newsletter</a></li>
+          <li>
+            <a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener" class="site-footer__x-link">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+            </a>
+            <span class="site-footer__col-sep">|</span>
+            <a href="mailto:contact@blursor.ai">contact@blursor.ai</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="site-footer__bottom">
+      <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
+      <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>
+    </div>
+  </footer>
+
+  <script>
+    // Copy URL button
+    document.getElementById('copy-url-btn').addEventListener('click', function() {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        this.classList.add('copied');
+        this.setAttribute('title', 'Copied!');
+        setTimeout(() => {
+          this.classList.remove('copied');
+          this.setAttribute('title', 'Copy link');
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>
