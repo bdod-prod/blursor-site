@@ -114,7 +114,7 @@
     .tool-main { flex: 1; }
     .tool-hero { max-width: var(--tool-width); margin: 0 auto; padding: var(--space-xl) var(--space-md) var(--space-lg); }
     .tool-hero__label { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-accent); margin-bottom: var(--space-sm); }
-    .tool-hero__title { font-size: clamp(2.25rem, 4vw, 3rem); font-weight: 600; line-height: 1.08; letter-spacing: -0.025em; margin-bottom: var(--space-md); }
+    .tool-hero__title { font-size: 3rem; font-weight: 600; line-height: 1.08; letter-spacing: 0; margin-bottom: var(--space-md); }
     .tool-hero__sub { font-size: 1.0625rem; line-height: 1.7; color: var(--color-text-secondary); max-width: 600px; }
 
     /* ——— Form ——— */
@@ -151,7 +151,7 @@
     .verdict__icon { font-family: var(--font-mono); font-size: 1.5rem; line-height: 1.1; flex: none; }
     .verdict--good .verdict__icon { color: var(--color-text-secondary); }
     .verdict--warn .verdict__icon, .verdict--bad .verdict__icon { color: var(--color-accent); }
-    .verdict__title { font-size: 1.5rem; font-weight: 600; line-height: 1.2; letter-spacing: -0.015em; margin-bottom: 0.4rem; }
+    .verdict__title { font-size: 1.5rem; font-weight: 600; line-height: 1.2; letter-spacing: 0; margin-bottom: 0.4rem; }
     .verdict__why { font-size: 1.0625rem; color: var(--color-text-secondary); line-height: 1.6; }
 
     /* What to fix */
@@ -191,7 +191,7 @@
     .botview__toggle button.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
     .botview__box { border: 1px solid var(--color-border); background: var(--color-surface); padding: var(--space-md); max-height: 460px; overflow-y: auto; }
     .botview__empty { font-style: italic; color: var(--color-text-secondary); font-size: 0.9rem; }
-    .bv-h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; margin: 0.7rem 0 0.3rem; }
+    .bv-h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: 0; margin: 0.7rem 0 0.3rem; }
     .bv-h2 { font-size: 1.02rem; font-weight: 600; margin: 0.65rem 0 0.25rem; }
     .bv-h3 { font-size: 0.92rem; font-weight: 600; margin: 0.5rem 0 0.2rem; }
     .bv-p { font-size: 0.9rem; color: var(--color-text-secondary); margin: 0.25rem 0; line-height: 1.65; }
@@ -226,7 +226,7 @@
     .tool-explain { background: var(--color-bg-warm); border-top: 1px solid var(--color-border); margin-top: var(--space-xl); padding: var(--space-xl) 0; }
     .tool-explain__inner { max-width: var(--tool-width); margin: 0 auto; padding: 0 var(--space-md); }
     .tool-explain__label { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); margin-bottom: var(--space-md); }
-    .tool-explain h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.015em; margin-bottom: var(--space-md); }
+    .tool-explain h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: 0; margin-bottom: var(--space-md); }
     .tool-explain p { font-size: 0.9375rem; line-height: 1.75; color: var(--color-text-secondary); margin-bottom: var(--space-sm); }
     .tool-explain ul { list-style: none; margin: var(--space-sm) 0 var(--space-md); }
     .tool-explain li { font-size: 0.9375rem; line-height: 1.7; color: var(--color-text); padding-left: 1.25rem; position: relative; margin-bottom: 0.6rem; }
@@ -262,6 +262,821 @@
       .bot-table .col-status { display: none; }
       .site-footer__inner { grid-template-columns: 1fr; gap: var(--space-md); }
     }
+
+    :root {
+      --dk: #131110;
+      --dk-raise: #1b1815;
+      --dk-line: rgba(236,231,220,.13);
+      --dk-line-soft: rgba(236,231,220,.07);
+      --dk-text: #ece7dc;
+      --dk-dim: #8d8779;
+      --dk-faint: #5b564c;
+      --dk-red: #e0523c;
+      --dk-amber: #dfa14f;
+      --instrument-width: 1060px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .tool-hero {
+      max-width: var(--tool-width);
+      padding: 4.6rem var(--space-md) 0;
+    }
+    .tool-hero__label {
+      font-size: .7rem;
+      letter-spacing: .14em;
+      color: var(--color-accent);
+      margin-bottom: 1rem;
+    }
+    .tool-hero__title {
+      font-size: 3.3rem;
+      font-weight: 700;
+      line-height: 1.04;
+      letter-spacing: 0;
+      margin-bottom: 1.2rem;
+    }
+    .tool-hero__title em {
+      color: var(--color-accent);
+      font-style: italic;
+      font-weight: 600;
+    }
+    .tool-hero__sub {
+      max-width: 560px;
+      font-size: 1.06rem;
+      line-height: 1.7;
+    }
+
+    .tool-form {
+      max-width: var(--tool-width);
+      margin-top: 2.2rem;
+    }
+    .tool-form__row {
+      display: flex;
+      gap: 0;
+      background: var(--dk);
+      border: 1px solid var(--dk);
+      box-shadow: 0 18px 40px -18px rgba(26,20,12,.45);
+    }
+    .tool-form__prompt {
+      font-family: var(--font-mono);
+      color: var(--dk-red);
+      padding: 1.05rem 0 1.05rem 1.1rem;
+      font-size: .95rem;
+      user-select: none;
+    }
+    .tool-form__input {
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      color: var(--dk-text);
+      padding: 1.05rem .9rem;
+      caret-color: var(--dk-red);
+    }
+    .tool-form__input::placeholder { color: var(--dk-faint); }
+    .tool-form__input:focus { border-color: transparent; }
+    .tool-form__btn {
+      background: var(--color-accent);
+      font-weight: 600;
+      padding: 0 1.7rem;
+    }
+    .tool-form__hint {
+      margin-top: .65rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .tool-form__bots {
+      margin-top: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: .62rem;
+      letter-spacing: .12em;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      word-spacing: .2em;
+    }
+    .tool-form__bots i {
+      font-style: normal;
+      color: var(--color-border);
+    }
+
+    .report-wrap {
+      max-width: var(--instrument-width);
+      margin: 3.2rem auto 0;
+      padding: 0 var(--space-md);
+    }
+    .inst { display: none; }
+    .inst.show { display: block; }
+    .inst__body {
+      position: relative;
+      background: var(--dk);
+      color: var(--dk-text);
+      border: 1px solid #000;
+      box-shadow: 0 30px 80px -30px rgba(26,20,12,.55);
+      overflow: hidden;
+    }
+    .inst__body::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .05;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    }
+    .sweep {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -3px;
+      z-index: 5;
+      height: 3px;
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent, var(--dk-red), transparent);
+      box-shadow: 0 0 18px 2px rgba(224,82,60,.5);
+      opacity: 0;
+    }
+    .inst.develop .sweep { animation: sweep 1.1s cubic-bezier(.6,0,.3,1) 1 forwards; }
+    @keyframes sweep {
+      0% { opacity: 1; top: -3px; }
+      90% { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    .scan {
+      padding: 2.4rem 2.6rem 2.6rem;
+      font-family: var(--font-mono);
+      font-size: .82rem;
+      line-height: 2.05;
+      min-height: 340px;
+    }
+    .scan__head {
+      font-size: .66rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--dk-dim);
+      margin-bottom: 1.4rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .scan__line {
+      color: var(--dk-faint);
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity .3s, transform .3s, color .3s;
+      white-space: pre-wrap;
+    }
+    .scan__line.in { opacity: 1; transform: none; }
+    .scan__line.done { color: var(--dk-dim); }
+    .scan__line .ok { color: var(--dk-text); }
+    .scan__line .bad { color: var(--dk-red); font-weight: 600; }
+    .scan__line .note { color: var(--dk-faint); }
+    .scan__line.pend::after {
+      content: "...";
+      animation: ell 1.1s steps(4) infinite;
+      color: var(--dk-dim);
+    }
+    @keyframes ell {
+      0% { content: ""; }
+      25% { content: "."; }
+      50% { content: ".."; }
+      75% { content: "..."; }
+    }
+
+    .mast, .stat, .iSec, .method, .sources, .shareBar { position: relative; z-index: 1; }
+    .mast {
+      padding: 2.6rem 2.6rem 2.2rem;
+      border-bottom: 1px solid var(--dk-line);
+    }
+    .mast__top {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-family: var(--font-mono);
+      font-size: .66rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--dk-dim);
+      margin-bottom: 1.9rem;
+    }
+    .mast__top b { color: var(--dk-text); font-weight: 500; word-break: break-all; }
+    .mast__mode .dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--dk-red);
+      margin-right: .45rem;
+      vertical-align: 1px;
+      box-shadow: 0 0 8px rgba(224,82,60,.8);
+      animation: pulse 2.2s ease-in-out infinite;
+    }
+    @keyframes pulse { 50% { opacity: .4; } }
+    .mast__verdict {
+      font-family: var(--font-serif);
+      font-size: 3rem;
+      font-weight: 700;
+      line-height: 1.12;
+      letter-spacing: 0;
+      max-width: 820px;
+    }
+    .mast__verdict em { font-style: italic; font-weight: 600; }
+    .mast__verdict.good em { color: var(--dk-text); border-bottom: 3px solid var(--dk-dim); }
+    .mast__verdict.bad em { color: var(--dk-red); }
+    .mast__sub {
+      margin-top: .9rem;
+      font-size: 1.02rem;
+      color: var(--dk-dim);
+      max-width: 640px;
+      line-height: 1.65;
+    }
+
+    .stat {
+      display: flex;
+      gap: 2.6rem;
+      align-items: stretch;
+      padding: 2.2rem 2.6rem;
+      border-bottom: 1px solid var(--dk-line);
+      flex-wrap: wrap;
+    }
+    .stat__num {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: 7rem;
+      line-height: .95;
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat__num.good { color: var(--dk-text); }
+    .stat__num.bad {
+      color: var(--dk-red);
+      text-shadow: 0 0 34px rgba(224,82,60,.35);
+    }
+    .stat__num sup {
+      font-size: .35em;
+      font-weight: 500;
+      letter-spacing: 0;
+      vertical-align: .9em;
+      color: var(--dk-dim);
+      margin-left: .12em;
+    }
+    .stat__side {
+      flex: 1;
+      min-width: 250px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.2rem;
+    }
+    .stat__caption {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: var(--dk-dim);
+      max-width: 460px;
+    }
+    .stat__caption b { color: var(--dk-text); font-weight: 600; }
+    .tally { display: flex; flex-direction: column; gap: .55rem; }
+    .tally__cells { display: flex; gap: 4px; }
+    .tally__cells i {
+      height: 12px;
+      flex: 1;
+      max-width: 34px;
+      background: var(--dk-line-soft);
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform .35s cubic-bezier(.5,1.6,.4,1), background .3s;
+    }
+    .tally.in .tally__cells i { transform: scaleY(1); }
+    .tally__cells i.p { background: #3d3a33; }
+    .tally__cells i.w { background: var(--dk-amber); }
+    .tally__cells i.f { background: var(--dk-red); box-shadow: 0 0 10px rgba(224,82,60,.45); }
+    .tally__cells i.n { background: var(--dk-line-soft); }
+    .tally__label {
+      font-family: var(--font-mono);
+      font-size: .64rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--dk-dim);
+    }
+
+    .iSec {
+      padding: 2.2rem 2.6rem;
+      border-bottom: 1px solid var(--dk-line);
+    }
+    .iSec__k {
+      font-family: var(--font-mono);
+      font-size: .64rem;
+      font-weight: 500;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--dk-red);
+      margin-bottom: .5rem;
+    }
+    .iSec__t {
+      font-size: 1.45rem;
+      font-weight: 600;
+      letter-spacing: 0;
+      margin-bottom: .5rem;
+    }
+    .iSec__d {
+      font-size: .94rem;
+      color: var(--dk-dim);
+      max-width: 700px;
+      line-height: 1.65;
+      margin-bottom: 1.6rem;
+    }
+    .iSec__d b { color: var(--dk-text); font-weight: 500; }
+
+    .proof__ctl {
+      display: flex;
+      gap: .6rem;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .chip {
+      font-family: var(--font-mono);
+      font-size: .64rem;
+      font-weight: 500;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      background: transparent;
+      border: 1px solid var(--dk-line);
+      color: var(--dk-dim);
+      padding: .5rem .9rem;
+      cursor: pointer;
+    }
+    .chip[aria-pressed="true"] {
+      background: var(--dk-text);
+      color: var(--dk);
+      border-color: var(--dk-text);
+    }
+    .chip:disabled {
+      color: var(--dk-faint);
+      cursor: not-allowed;
+    }
+    .proof__search {
+      flex: 1;
+      min-width: 170px;
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      background: transparent;
+      border: 1px solid var(--dk-line);
+      color: var(--dk-text);
+      padding: .52rem .7rem;
+      outline: none;
+    }
+    .proof__search:focus { border-color: var(--dk-red); }
+    .proof__search::placeholder { color: var(--dk-faint); }
+    .proof__hits {
+      font-family: var(--font-mono);
+      font-size: .64rem;
+      color: var(--dk-dim);
+      white-space: nowrap;
+    }
+    .proof__stage {
+      position: relative;
+      height: 440px;
+      border: 1px solid var(--dk-line);
+      user-select: none;
+      overflow: hidden;
+      background: #0d0c0a;
+    }
+    .pane { position: absolute; inset: 0; }
+    .pane__tag {
+      position: absolute;
+      top: .8rem;
+      z-index: 3;
+      font-family: var(--font-mono);
+      font-size: .6rem;
+      font-weight: 600;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      padding: .34rem .6rem;
+    }
+    .pane--human {
+      z-index: 2;
+      background: var(--color-bg-warm);
+    }
+    .pane--human .pane__tag {
+      left: .8rem;
+      background: var(--color-bg);
+      color: var(--color-text);
+    }
+    .pane--ai { z-index: 1; }
+    .pane--ai .pane__tag {
+      right: .8rem;
+      border: 1px solid var(--dk-line);
+      color: var(--dk-dim);
+    }
+    .humanShot {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top left;
+      display: block;
+      background: var(--color-bg-warm);
+    }
+    .shotFallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 2.6rem 1.4rem 1.2rem;
+    }
+    .shotFallback__chrome {
+      background: #dcd7cc;
+      border: 1px solid #c8c3b8;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      padding: .5rem .8rem;
+      display: flex;
+      gap: .4rem;
+      align-items: center;
+    }
+    .shotFallback__chrome i {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #b7b1a5;
+    }
+    .shotFallback__chrome span {
+      font-family: var(--font-mono);
+      font-size: .58rem;
+      color: #8d887c;
+      background: #e9e5db;
+      border-radius: 4px;
+      padding: .14rem .7rem;
+      margin-left: .5rem;
+    }
+    .shotFallback__page {
+      flex: 1;
+      background: #fff;
+      border: 1px solid #c8c3b8;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      display: grid;
+      place-items: center;
+      padding: 1.4rem;
+      text-align: center;
+      color: #7a776e;
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      line-height: 1.7;
+    }
+    .divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      padding: 0;
+      background: var(--dk-red);
+      border: 0;
+      z-index: 4;
+      cursor: ew-resize;
+      box-shadow: 0 0 16px rgba(224,82,60,.55);
+    }
+    .divider:focus-visible { outline: 2px solid var(--dk-text); outline-offset: 8px; }
+    .divider__grip {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--dk);
+      border: 2px solid var(--dk-red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      color: var(--dk-red);
+      letter-spacing: 0;
+    }
+    .proof__foot {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: .8rem;
+      font-family: var(--font-mono);
+      font-size: .66rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--dk-dim);
+    }
+    .proof__foot b { color: var(--dk-text); font-weight: 500; }
+    .proof__foot .bad { color: var(--dk-red); font-weight: 600; }
+
+    .aiTxt {
+      position: absolute;
+      inset: 0;
+      padding: 3rem 1.6rem 1.4rem;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      scrollbar-width: thin;
+      scrollbar-color: #3a362e transparent;
+    }
+    .aiTxt .bh1 { color: var(--dk-text); font-size: 1.02rem; font-weight: 600; margin: .9rem 0 .3rem; }
+    .aiTxt .bh2 { color: var(--dk-text); font-size: .86rem; font-weight: 600; margin: .8rem 0 .25rem; }
+    .aiTxt .bp, .aiTxt .bq { color: var(--dk-dim); font-size: .76rem; line-height: 1.75; margin: .3rem 0; }
+    .aiTxt .bq { font-style: italic; border-left: 1px solid var(--dk-line); padding-left: .7rem; }
+    .aiTxt .bli { color: var(--dk-dim); font-size: .76rem; line-height: 1.7; margin: .16rem 0 .16rem 1.1rem; position: relative; }
+    .aiTxt .bli::before { content: "-"; position: absolute; left: -1rem; color: var(--dk-red); }
+    .aiTxt .bmore, .aiTxt .void { color: var(--dk-faint); font-size: .76rem; margin: .9rem 0 0; }
+    .aiTxt .cursor {
+      display: inline-block;
+      width: .55em;
+      height: 1.05em;
+      background: var(--dk-red);
+      vertical-align: -.15em;
+      animation: blink 1.05s steps(1) infinite;
+      margin-top: .8rem;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    mark { background: rgba(224,82,60,.4); color: inherit; padding: 0 1px; }
+
+    .mx {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+    }
+    .mx th {
+      text-align: left;
+      font-size: .6rem;
+      font-weight: 500;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--dk-dim);
+      padding: .55rem .7rem;
+      border-bottom: 1px solid var(--dk-line);
+    }
+    .mx td {
+      padding: .62rem .7rem;
+      border-bottom: 1px solid var(--dk-line-soft);
+      font-size: .76rem;
+      vertical-align: top;
+    }
+    .mx td.bot { color: var(--dk-text); font-weight: 500; }
+    .mx td.bot span { display: block; font-size: .6rem; color: var(--dk-faint); font-weight: 400; margin-top: .1rem; }
+    .mx .ok { color: var(--dk-dim); }
+    .mx .yes { color: var(--dk-text); }
+    .mx .no { color: var(--dk-red); font-weight: 600; }
+    .mx .na { color: var(--dk-faint); }
+    .mx tr.hot td { background: rgba(224,82,60,.07); }
+    .mx tr:hover td { background: rgba(236,231,220,.03); }
+
+    .ledger-k {
+      font-family: var(--font-mono);
+      font-size: .62rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--dk-dim);
+      margin: 1.4rem 0 .2rem;
+    }
+    .ledger-note {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: .9rem;
+      color: var(--dk-dim);
+      margin: .4rem 0 .8rem;
+      max-width: 680px;
+    }
+    .ledger { border-top: 1px solid var(--dk-line); }
+    .row { border-bottom: 1px solid var(--dk-line-soft); }
+    .row summary {
+      list-style: none;
+      cursor: pointer;
+    }
+    .row summary::-webkit-details-marker { display: none; }
+    .row__head {
+      display: grid;
+      grid-template-columns: 2.4rem 1.4rem 1fr auto;
+      gap: .6rem;
+      align-items: baseline;
+      padding: .85rem .2rem;
+    }
+    .row__num { font-family: var(--font-mono); font-size: .62rem; color: var(--dk-faint); }
+    .row__glyph { font-family: var(--font-mono); font-size: .8rem; }
+    .row.g-pass .row__glyph { color: var(--dk-dim); }
+    .row.g-warn .row__glyph { color: var(--dk-amber); }
+    .row.g-fail .row__glyph { color: var(--dk-red); text-shadow: 0 0 9px rgba(224,82,60,.6); }
+    .row.g-info .row__glyph { color: var(--dk-faint); }
+    .row__label { font-size: 1.02rem; font-weight: 600; color: var(--dk-text); }
+    .row.g-fail .row__label { color: #f4e3de; }
+    .row__cite { font-family: var(--font-mono); font-size: .6rem; color: var(--dk-red); white-space: nowrap; }
+    .row__body { padding: 0 .2rem 1rem 4.4rem; }
+    .row__detail { font-family: var(--font-mono); font-size: .74rem; line-height: 1.7; color: var(--dk-dim); margin-bottom: .5rem; }
+    .row__why { font-size: .9rem; font-style: italic; line-height: 1.65; color: var(--dk-dim); max-width: 620px; }
+    .row summary:hover .row__label { text-decoration: underline; text-decoration-color: var(--dk-line); text-underline-offset: 4px; }
+
+    .method {
+      padding: 1.7rem 2.6rem;
+      border-bottom: 1px solid var(--dk-line);
+      display: flex;
+      gap: 1.4rem;
+      align-items: flex-start;
+    }
+    .method__mark {
+      font-family: var(--font-mono);
+      color: var(--dk-red);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+    .method p {
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      line-height: 1.85;
+      color: var(--dk-dim);
+      max-width: 720px;
+    }
+    .method b { color: var(--dk-text); font-weight: 500; }
+    .sources {
+      padding: 1.6rem 2.6rem;
+      font-family: var(--font-mono);
+      font-size: .66rem;
+      line-height: 2;
+      color: var(--dk-faint);
+      border-bottom: 1px solid var(--dk-line);
+    }
+    .sources b { color: var(--dk-red); font-weight: 500; margin-right: .5rem; }
+    .sources a { color: var(--dk-dim); text-decoration: none; border-bottom: 1px solid var(--dk-line); }
+    .sources a:hover { color: var(--dk-text); }
+    .shareBar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding: 1.5rem 2.6rem;
+    }
+    .shareBar__brand {
+      font-family: var(--font-mono);
+      font-size: .62rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--dk-faint);
+    }
+    .shareBar__btns { display: flex; gap: .6rem; flex-wrap: wrap; }
+    .sbtn {
+      font-family: var(--font-mono);
+      font-size: .64rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      background: transparent;
+      color: var(--dk-dim);
+      border: 1px solid var(--dk-line);
+      padding: .65rem .9rem;
+      cursor: pointer;
+    }
+    .sbtn:hover, .sbtn.copied { color: var(--dk-text); border-color: var(--dk-dim); }
+    .sbtn--hot { background: var(--dk-red); color: #fff; border-color: var(--dk-red); }
+
+    .err {
+      padding: 2.6rem;
+      min-height: 300px;
+    }
+    .err h2 {
+      font-size: 3rem;
+      line-height: 1.12;
+      margin-bottom: .9rem;
+      color: var(--dk-text);
+    }
+    .err__mono {
+      font-family: var(--font-mono);
+      color: var(--dk-red);
+      font-size: .82rem;
+      line-height: 1.8;
+      margin-bottom: 1rem;
+    }
+    .err__plain {
+      color: var(--dk-dim);
+      max-width: 620px;
+      line-height: 1.7;
+    }
+
+    .interp {
+      max-width: var(--tool-width);
+      margin: 0 auto;
+      padding: 3.6rem var(--space-md) 1rem;
+      display: none;
+    }
+    .interp.show { display: block; }
+    .interp__k {
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      font-weight: 500;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--color-accent);
+      margin-bottom: 1rem;
+    }
+    .interp__t {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      margin-bottom: .6rem;
+    }
+    .interp__lede {
+      color: var(--color-text-secondary);
+      font-size: 1.02rem;
+      max-width: 560px;
+      margin-bottom: 2rem;
+    }
+    .fix {
+      display: grid;
+      grid-template-columns: 3.2rem 1fr;
+      gap: 1.1rem;
+      padding: 1.35rem 0;
+      border-top: 1px solid var(--color-border);
+    }
+    .fix:last-of-type { border-bottom: 1px solid var(--color-border); }
+    .fix__n {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-accent);
+      line-height: 1.1;
+    }
+    .fix__t { font-size: 1.12rem; font-weight: 600; margin-bottom: .3rem; }
+    .fix__b { font-size: .95rem; color: var(--color-text-secondary); line-height: 1.7; }
+    .fix__who {
+      margin-top: .55rem;
+      font-family: var(--font-mono);
+      font-size: .64rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+    .fix__who b { color: var(--color-text); font-weight: 500; }
+    .allgood {
+      font-size: 1.02rem;
+      color: var(--color-text-secondary);
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+      padding: 1.3rem 0;
+    }
+
+    @media (max-width: 760px) {
+      .site-header__nav { gap: 1rem; }
+      .tool-hero { padding-top: var(--space-lg); }
+      .tool-form__row { flex-wrap: nowrap; }
+      .tool-form__input { width: auto; flex: 1; }
+      .tool-form__btn { width: auto; padding: 0 .9rem; }
+      .scan, .mast, .stat, .iSec, .method, .sources, .shareBar, .err {
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
+      }
+      .proof__stage {
+        height: auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .pane { position: static; }
+      .pane--human {
+        order: -1;
+        clip-path: none !important;
+        border-bottom: 2px solid var(--dk-red);
+        min-height: 300px;
+      }
+      .pane--ai { min-height: 320px; }
+      .humanShot { height: 300px; }
+      .shotFallback { position: static; min-height: 300px; }
+      .aiTxt { position: static; max-height: 320px; padding-top: 2.6rem; }
+      .divider { display: none; }
+      .proof__foot { display: block; }
+      .row__head { grid-template-columns: 1.3rem 1fr auto; }
+      .row__num { display: none; }
+      .row__body { padding-left: 2rem; }
+      .stat { gap: 1.4rem; }
+      .stat__num { font-size: 4.6rem; }
+      .mast__verdict, .err h2 { font-size: 2.05rem; }
+      .tool-hero__title { font-size: 2.65rem; }
+      .mx { display: block; overflow-x: auto; }
+      .fix { grid-template-columns: 2.5rem 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -291,23 +1106,41 @@
   <main class="tool-main">
 
     <section class="tool-hero">
-      <div class="tool-hero__label">Free Tool · No Signup</div>
-      <h1 class="tool-hero__title">What AI Sees</h1>
-      <p class="tool-hero__sub">More and more people ask AI assistants like ChatGPT for recommendations instead of searching Google. Paste your link to see whether AI can actually read your site — and whether an AI agent could use it too.</p>
+      <div class="tool-hero__label">Free Tool · No Signup · Shows its work</div>
+      <h1 class="tool-hero__title">Your website, <em>as AI sees it.</em></h1>
+      <p class="tool-hero__sub">More and more people ask AI assistants like ChatGPT for recommendations instead of searching Google. Paste your link to see whether AI can actually read your site, what survives with the design stripped away, and whether an AI agent could use it too.</p>
     </section>
 
     <form class="tool-form" id="check-form">
+      <label class="sr-only" for="url-input">Website URL to check</label>
       <div class="tool-form__row">
+        <span class="tool-form__prompt" aria-hidden="true">▸</span>
         <input type="text" inputmode="url" id="url-input" class="tool-form__input" placeholder="example.com  or  https://example.com/page" autocomplete="off" spellcheck="false" required>
-        <button type="submit" class="tool-form__btn" id="check-btn">Check</button>
+        <button type="submit" class="tool-form__btn" id="check-btn" aria-label="Check the page">Develop</button>
       </div>
-      <p class="tool-form__hint">Free, no signup. Takes about 10 seconds on any public page. <a href="#how" id="example-link">Or try an example →</a></p>
+      <p class="tool-form__hint"><span>Free, no signup. About 10 seconds on any public page.</span><a href="#how" id="example-link">Or try an example →</a></p>
+      <p class="tool-form__bots">Tested against <i>·</i> GPTBot <i>·</i> ClaudeBot <i>·</i> PerplexityBot <i>·</i> OAI-SearchBot <i>·</i> Google-Extended <i>·</i> Applebot <i>·</i> CCBot <i>·</i> + more</p>
     </form>
 
     <div class="report-wrap">
-      <div id="status" class="tool-status" hidden></div>
-      <div id="report" class="report" hidden></div>
+      <section class="inst" id="instrument" aria-live="polite" aria-busy="false">
+        <div class="inst__body">
+          <div class="sweep" aria-hidden="true"></div>
+          <div class="scan" id="scan" hidden>
+            <div class="scan__head"><span id="scan-title">Developing</span><span>BLURSOR · WHAT AI SEES</span></div>
+            <div id="scan-lines"></div>
+          </div>
+          <div id="report" class="dark-report" hidden></div>
+        </div>
+      </section>
     </div>
+
+    <section class="interp" id="plain-words" aria-labelledby="plain-title">
+      <div class="interp__k">In plain words</div>
+      <h2 class="interp__t" id="plain-title">What to do about it</h2>
+      <p class="interp__lede" id="plain-lede"></p>
+      <div id="fix-list"></div>
+    </section>
 
     <!-- Why it matters — plain language -->
     <section class="tool-explain" id="how">
@@ -355,7 +1188,7 @@
     </div>
   </footer>
 
-  <script>
+  <script type="application/x-blursor-legacy" data-disabled="darkroom-rewrite">
     (function () {
       var form = document.getElementById('check-form');
       var input = document.getElementById('url-input');
@@ -723,6 +1556,865 @@
       });
 
       // Auto-run from ?url= (shareable permalinks)
+      var params = new URLSearchParams(window.location.search);
+      var initial = params.get('url');
+      if (initial) run(initial);
+    })();
+  </script>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var form = document.getElementById('check-form');
+      var input = document.getElementById('url-input');
+      var btn = document.getElementById('check-btn');
+      var instrument = document.getElementById('instrument');
+      var scanEl = document.getElementById('scan');
+      var scanTitle = document.getElementById('scan-title');
+      var scanLines = document.getElementById('scan-lines');
+      var reportEl = document.getElementById('report');
+      var plainWords = document.getElementById('plain-words');
+      var plainLede = document.getElementById('plain-lede');
+      var fixList = document.getElementById('fix-list');
+      var exampleLink = document.getElementById('example-link');
+      var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var dividerCleanup = null;
+
+      var GLYPH = { pass: '✓', fail: '✕', warn: '!', info: '·' };
+      var CELL = { pass: 'p', warn: 'w', fail: 'f', info: 'n' };
+      var SEV = { fail: 0, warn: 1, pass: 2, info: 3 };
+
+      var PLAIN = {
+        'server-block': { title: 'Your site turns AI bots away at the door.', fix: 'It returns an error to the AI crawlers, so they never even see the page. Ask your host or developer to allow them — or check your firewall / bot-protection settings.', who: 'hosting / firewall settings' },
+        'robots': { title: 'Your site’s rules file tells AI bots to stay out.', fix: 'Your robots.txt blocks the AI crawlers. If you want to show up in AI answers, ask your developer to allow them.', who: 'your web developer' },
+        'cloaking': { title: 'AI bots are shown a different page than people see.', fix: 'Serve everyone the same content — showing bots a thinner page is risky and can misrepresent you.', who: 'your web developer' },
+        'content': { title: 'Most of your page only loads with JavaScript.', fix: 'Most AI can’t run JavaScript, so they see almost nothing. Ask whoever built your site about “server-side rendering” or a static version of your pages.', who: 'your web developer' },
+        'title': { title: 'Your page has no title.', fix: 'AI (and Google) use the title to label your page. Add a clear page title.', who: 'site admin / SEO settings' },
+        'meta': { title: 'No short summary for AI to quote.', fix: 'Add a meta description — a one-sentence summary of the page. Your site builder or SEO plugin can do this.', who: 'site admin / SEO settings' },
+        'headings': { title: 'Your headings aren’t structured cleanly.', fix: 'Use one main heading and clear subheadings. It helps AI (and readers) follow the page.', who: 'your web developer' },
+        'schema': { title: 'Nothing tells AI what the page is about.', fix: 'Add structured data (schema). Most SEO plugins add it automatically, and it helps AI trust and understand your page.', who: 'site admin / SEO plugin' }
+      };
+
+      var PLAIN_AGENT = {
+        'agent-labels': { title: 'Some buttons or links have no label an agent can read.', fix: 'Give every button and link clear text, or an aria-label. Icon-only buttons especially — an agent (and a screen reader) can’t tell what they do.', who: 'your web developer' },
+        'agent-forms': { title: 'Some form fields aren’t labeled.', fix: 'Add a visible label to each field. Without one, an agent has to guess what to type — and often gets it wrong.', who: 'your web developer' },
+        'agent-images': { title: 'Some images have no text description.', fix: 'Add alt text describing each meaningful image. Purely decorative images can stay empty.', who: 'site admin / content editor' },
+        'agent-structure': { title: 'Your page structure could be clearer.', fix: 'Use one main heading and wrap the real content in a “main” region, so an agent can find it past the menus.', who: 'your web developer' },
+        'agent-stability': { title: 'Your page moves around as it loads.', fix: 'Set sizes on images and reserve space for anything that loads late, so content doesn’t jump. Ask whoever built your site about “layout shift” (CLS).', who: 'your web developer' }
+      };
+
+      function el(tag, cls, text) {
+        var n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text != null) n.textContent = text;
+        return n;
+      }
+
+      function clear(node) {
+        while (node.firstChild) node.removeChild(node.firstChild);
+      }
+
+      function fmt(n) {
+        n = Number(n) || 0;
+        return Math.round(n).toLocaleString('en-US');
+      }
+
+      function normalizeUrl(url) {
+        url = (url || '').trim();
+        if (!url) return '';
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        return url;
+      }
+
+      function hostFrom(url) {
+        try { return new URL(url).hostname.replace(/^www\./, ''); }
+        catch (e) { return url || 'this page'; }
+      }
+
+      function prettyTime(iso) {
+        var d = iso ? new Date(iso) : new Date();
+        if (isNaN(d.getTime())) d = new Date();
+        return d.toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+      }
+
+      function byId(list) {
+        var out = {};
+        (list || []).forEach(function (f) { out[f.id] = f; });
+        return out;
+      }
+
+      function orderedFindings(list) {
+        return (list || []).slice().sort(function (a, b) {
+          var ar = SEV[a.status] == null ? 9 : SEV[a.status];
+          var br = SEV[b.status] == null ? 9 : SEV[b.status];
+          return ar - br;
+        });
+      }
+
+      function setBusy(on) {
+        instrument.setAttribute('aria-busy', on ? 'true' : 'false');
+        btn.disabled = on;
+        btn.textContent = on ? 'Developing…' : 'Develop';
+      }
+
+      function run(url) {
+        url = normalizeUrl(url);
+        if (!url) return;
+        input.value = url;
+        setBusy(true);
+        var scan = beginScan(url);
+
+        fetch('/api/check?url=' + encodeURIComponent(url))
+          .then(function (r) {
+            return r.text().then(function (text) {
+              var body = null;
+              try { body = JSON.parse(text); } catch (e) {}
+              return { ok: r.ok, body: body };
+            });
+          })
+          .then(function (res) {
+            if (!res.body || res.body.ok === false) {
+              scan.fail(res.body && res.body.error ? res.body.error : 'Something went wrong.');
+              return;
+            }
+            scan.finish(res.body, function () {
+              renderReport(res.body);
+              try { history.replaceState(null, '', '?url=' + encodeURIComponent(url)); } catch (e) {}
+            });
+          })
+          .catch(function () {
+            scan.fail('Network error — please try again.');
+          })
+          .finally(function () {
+            setBusy(false);
+          });
+      }
+
+      function beginScan(url) {
+        var host = hostFrom(url);
+        var defs = [
+          { id: 'resolve', text: 'resolving ' + host + ' ' },
+          { id: 'robots', text: 'reading robots.txt ' },
+          { id: 'gpt', text: 'knocking as GPTBot ' },
+          { id: 'claude', text: 'knocking as ClaudeBot ' },
+          { id: 'perplexity', text: 'knocking as PerplexityBot ' },
+          { id: 'llms', text: 'checking llms.txt ' },
+          { id: 'render', text: 'rendering in a real Chrome — the slow part ' },
+          { id: 'agent', text: 'probing the live page: labels · layout shift · WebMCP ' },
+          { id: 'compare', text: 'comparing raw HTML against the rendered page ' }
+        ];
+        var durations = reduced ? [0,0,0,0,0,0,0,0,0] : [180,220,260,260,220,260,1050,260,260];
+        var nodes = {};
+        var timers = [];
+        var index = 0;
+        var progressDone = false;
+        var response = null;
+        var callback = null;
+        var failed = false;
+
+        instrument.classList.add('show');
+        instrument.classList.remove('develop');
+        reportEl.hidden = true;
+        scanEl.hidden = false;
+        plainWords.classList.remove('show');
+        scanTitle.textContent = 'Developing — ' + host;
+        clear(scanLines);
+
+        defs.forEach(function (d) {
+          var line = el('div', 'scan__line');
+          line.dataset.id = d.id;
+          line.dataset.base = d.text;
+          line.appendChild(document.createTextNode(d.text));
+          nodes[d.id] = line;
+          scanLines.appendChild(line);
+        });
+
+        function genericDone(line) {
+          markLine(line, 'ok', 'done', '✓');
+        }
+
+        function step() {
+          if (failed) return;
+          if (index > 0) genericDone(scanLines.children[index - 1]);
+          if (index >= defs.length) {
+            progressDone = true;
+            maybeFinish();
+            return;
+          }
+          var line = scanLines.children[index];
+          line.classList.add('in', 'pend');
+          timers.push(setTimeout(step, durations[index]));
+          index++;
+        }
+
+        function maybeFinish() {
+          if (!response || !progressDone || failed) return;
+          backfillScan(nodes, response);
+          timers.push(setTimeout(function () {
+            callback();
+          }, reduced ? 0 : 420));
+        }
+
+        timers.push(setTimeout(step, 40));
+
+        return {
+          finish: function (data, done) {
+            response = data;
+            callback = done;
+            maybeFinish();
+          },
+          fail: function (message) {
+            failed = true;
+            timers.forEach(clearTimeout);
+            var current = scanLines.children[Math.max(0, Math.min(index, scanLines.children.length - 1))];
+            if (current) {
+              current.classList.add('in');
+              markLine(current, 'bad', 'error', '✕');
+            }
+            setTimeout(function () { renderError(url, message); }, reduced ? 0 : 260);
+          }
+        };
+      }
+
+      function markLine(line, kind, result, glyph) {
+        if (!line) return;
+        var text = line.dataset.base || line.textContent;
+        line.classList.remove('pend');
+        line.classList.add('in', 'done');
+        clear(line);
+        line.appendChild(document.createTextNode(text));
+        var span = el('span', kind === 'bad' ? 'bad' : kind === 'note' ? 'note' : 'ok', (glyph || '✓') + ' ' + result);
+        line.appendChild(span);
+      }
+
+      function getBot(data, token) {
+        var bots = data.botAccess || [];
+        for (var i = 0; i < bots.length; i++) if (bots[i].token === token) return bots[i];
+        return null;
+      }
+
+      function backfillScan(nodes, data) {
+        markLine(nodes.resolve, 'ok', 'ok', '✓');
+        var disallowed = (data.botAccess || []).filter(function (b) { return b.robots === 'disallowed'; });
+        var noRobots = (data.botAccess || []).length && (data.botAccess || []).every(function (b) { return b.robots === 'no-robots'; });
+        markLine(nodes.robots, disallowed.length ? 'bad' : 'ok', disallowed.length ? disallowed.length + ' disallowed' : (noRobots ? 'no robots.txt' : 'none block AI'), disallowed.length ? '✕' : '✓');
+        backfillBot(nodes.gpt, getBot(data, 'GPTBot'));
+        backfillBot(nodes.claude, getBot(data, 'ClaudeBot'));
+        backfillBot(nodes.perplexity, getBot(data, 'PerplexityBot'));
+        markLine(nodes.llms, 'ok', data.llms && data.llms.present ? 'found' : 'none', '✓');
+        if (data.renderMode === 'rendered') markLine(nodes.render, 'ok', data.renderStatus === 'cached' ? 'cached render' : 'done', '✓');
+        else markLine(nodes.render, 'note', 'unavailable today', '—');
+        var mode = data.agentic && data.agentic.mode;
+        markLine(nodes.agent, mode === 'measured' ? 'ok' : 'note', agentModeShort(mode), mode === 'measured' ? '✓' : '—');
+        if (data.rendered) {
+          var raw = data.content && data.content.visibleTextChars || 0;
+          var ren = data.rendered.visibleTextChars || 0;
+          var missing = ren > 0 ? Math.max(0, Math.round((1 - Math.min(1, raw / ren)) * 100)) : 0;
+          markLine(nodes.compare, missing >= 50 ? 'bad' : 'ok', missing + '% of text missing', missing >= 50 ? '✕' : '✓');
+        } else {
+          markLine(nodes.compare, 'note', 'estimated from raw HTML', '—');
+        }
+      }
+
+      function backfillBot(line, bot) {
+        if (!bot) return markLine(line, 'note', 'not probed', '—');
+        if (bot.server === 'blocked') return markLine(line, 'bad', (bot.status || 'blocked').toString(), '✕');
+        if (bot.server === 'cloaked') return markLine(line, 'bad', 'cloaked', '✕');
+        if (bot.server === 'error') return markLine(line, 'bad', 'error', '✕');
+        if (bot.server === 'not-probed') return markLine(line, 'note', 'not probed', '—');
+        return markLine(line, 'ok', (bot.status ? bot.status + ' OK' : 'ok'), '✓');
+      }
+
+      function agentModeShort(mode) {
+        if (mode === 'measured') return 'done';
+        if (mode === 'rendered-html') return 'read from rendered HTML';
+        return 'estimated';
+      }
+
+      function renderError(url, message) {
+        scanEl.hidden = true;
+        reportEl.hidden = false;
+        plainWords.classList.remove('show');
+        clear(reportEl);
+        var box = el('div', 'err');
+        box.appendChild(el('div', 'iSec__k', 'Scan stopped'));
+        box.appendChild(el('h2', null, 'We couldn’t develop this page.'));
+        box.appendChild(el('p', 'err__mono', message));
+        box.appendChild(el('p', 'err__plain', 'Paste a normal public web page URL and try again. If the page blocks automated tools, this result is still useful: AI crawlers may hit the same wall.'));
+        reportEl.appendChild(box);
+      }
+
+      function verdictFor(data) {
+        var host = hostFrom(data.url);
+        var ids = byId(data.findings);
+        var blocked = (ids['server-block'] && ids['server-block'].status === 'fail') || (ids.robots && ids.robots.status === 'fail');
+        var contentStatus = ids.content ? ids.content.status : 'pass';
+        if (blocked) {
+          return { tone: 'bad', pre: 'AI assistants ', em: 'are turned away', post: ' from ' + host + '.', sub: 'Your site blocks the bots AI tools use, so they can’t read your pages at all.' };
+        }
+        if (contentStatus === 'fail') {
+          return { tone: 'bad', pre: 'AI assistants ', em: 'can barely read', post: ' ' + host + '.', sub: 'Most of your content only loads with JavaScript, which most AI can’t run — so they see almost nothing.' };
+        }
+        if (contentStatus === 'warn' || ((data.summary && data.summary.fail) || 0) > 0) {
+          return { tone: 'good', pre: 'AI assistants ', em: 'can read', post: ' ' + host + ', with friction.', sub: 'AI can read your site, but parts of it are harder to reach than they should be. The fixes below are the quick ones.' };
+        }
+        return { tone: 'good', pre: 'AI assistants ', em: 'can read', post: ' ' + host + '.', sub: 'When someone asks AI about your topic, your page is readable and ready to be recommended.' };
+      }
+
+      function renderReport(data) {
+        if (dividerCleanup) { dividerCleanup(); dividerCleanup = null; }
+        scanEl.hidden = true;
+        reportEl.hidden = false;
+        clear(reportEl);
+        instrument.classList.add('show');
+        instrument.classList.remove('develop');
+        void instrument.offsetWidth;
+        instrument.classList.add('develop');
+
+        var host = hostFrom(data.url);
+        var verdict = verdictFor(data);
+        var read = orderedFindings(data.findings);
+        var agent = orderedFindings(data.agentic && data.agentic.findings);
+        var footnotes = buildFootnotes(read.concat(agent));
+
+        renderMast(data, verdict);
+        renderStat(data, read.concat(agent));
+        renderProof(data, host);
+        renderMatrix(data);
+        renderLedger(read, agent, footnotes, data.agentic);
+        renderMethod();
+        renderSources(footnotes.list);
+        renderShare();
+        renderPlainWords(data, read, agent);
+      }
+
+      function renderMast(data, verdict) {
+        var mast = el('div', 'mast');
+        var top = el('div', 'mast__top');
+        var left = el('span');
+        left.appendChild(el('b', null, data.url || ''));
+        left.appendChild(document.createTextNode(' · ' + prettyTime(data.checkedAt)));
+        var mode = el('span', 'mast__mode');
+        mode.appendChild(el('span', 'dot'));
+        mode.appendChild(document.createTextNode(data.renderMode === 'rendered' ? 'RENDER-VERIFIED — REAL BROWSER, COMPARED' : 'ESTIMATED — RENDER UNAVAILABLE TODAY'));
+        top.appendChild(left);
+        top.appendChild(mode);
+        mast.appendChild(top);
+
+        var h = el('h2', 'mast__verdict ' + verdict.tone);
+        h.appendChild(document.createTextNode(verdict.pre));
+        h.appendChild(el('em', null, verdict.em));
+        h.appendChild(document.createTextNode(verdict.post));
+        mast.appendChild(h);
+        mast.appendChild(el('p', 'mast__sub', verdict.sub));
+        reportEl.appendChild(mast);
+      }
+
+      function renderStat(data, ledgerFindings) {
+        var ids = byId(data.findings);
+        var raw = data.content && data.content.visibleTextChars || 0;
+        var ren = data.rendered && data.rendered.visibleTextChars || 0;
+        var blocked = (ids['server-block'] && ids['server-block'].status === 'fail') || (ids.robots && ids.robots.status === 'fail');
+        var bad = blocked || (ids.content && ids.content.status === 'fail');
+        var stat = el('div', 'stat');
+        var num = el('div', 'stat__num ' + (bad ? 'bad' : 'good'));
+        var side = el('div', 'stat__side');
+        var cap = el('p', 'stat__caption');
+        var value;
+        var suffix;
+
+        if (data.rendered && ren > 0) {
+          value = Math.min(100, Math.round((raw / ren) * 100));
+          suffix = '%';
+          cap.appendChild(document.createTextNode('of your text survives with JavaScript off. A browser paints '));
+          cap.appendChild(el('b', null, fmt(ren) + ' characters'));
+          cap.appendChild(document.createTextNode('; the raw HTML that most AI reads carries '));
+          cap.appendChild(el('b', null, fmt(raw)));
+          cap.appendChild(document.createTextNode('.'));
+        } else {
+          value = raw;
+          suffix = 'chars';
+          cap.appendChild(document.createTextNode('of readable text was found in the raw HTML. This is an estimate — we couldn’t render today, so the comparison is capped to what most non-JS crawlers receive.'));
+        }
+
+        stat.appendChild(num);
+        side.appendChild(cap);
+        side.appendChild(renderTally(ledgerFindings));
+        stat.appendChild(side);
+        reportEl.appendChild(stat);
+        countUp(num, value, suffix);
+      }
+
+      function renderTally(findings) {
+        var tally = el('div', 'tally');
+        var cells = el('div', 'tally__cells');
+        var counts = { pass: 0, warn: 0, fail: 0, info: 0 };
+        findings.forEach(function (f, i) {
+          counts[f.status] = (counts[f.status] || 0) + 1;
+          var cell = el('i', CELL[f.status] || 'n');
+          cell.style.transitionDelay = (i * 35) + 'ms';
+          cells.appendChild(cell);
+        });
+        var total = findings.length;
+        var label = total + ' checks · ' + (counts.pass || 0) + ' pass · ' + (counts.fail || 0) + ' failing · ' + (counts.warn || 0) + ' worth fixing · ' + (counts.info || 0) + ' informational';
+        tally.setAttribute('aria-label', label);
+        tally.appendChild(cells);
+        tally.appendChild(el('div', 'tally__label', label));
+        setTimeout(function () { tally.classList.add('in'); }, reduced ? 0 : 250);
+        return tally;
+      }
+
+      function countUp(node, target, suffix) {
+        function paint(v) {
+          clear(node);
+          node.appendChild(document.createTextNode(fmt(v)));
+          node.appendChild(el('sup', null, suffix === 'chars' ? ' chars' : suffix));
+        }
+        if (reduced) return paint(target);
+        var start = null;
+        var duration = 1100;
+        function tick(ts) {
+          if (!start) start = ts;
+          var p = Math.min(1, (ts - start) / duration);
+          p = 1 - Math.pow(1 - p, 3);
+          paint(Math.round(target * p));
+          if (p < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      }
+
+      function renderProof(data, host) {
+        var sec = el('div', 'iSec');
+        sec.appendChild(el('div', 'iSec__k', 'The proof'));
+        sec.appendChild(el('h3', 'iSec__t', 'What people see · what AI sees'));
+        var desc = el('p', 'iSec__d');
+        desc.appendChild(document.createTextNode('Left: your page as a browser paints it. Right: the text an AI assistant actually extracts. '));
+        desc.appendChild(el('b', null, 'Drag the red line'));
+        desc.appendChild(document.createTextNode(' to strip the design away — and search for any word to check it survived.'));
+        sec.appendChild(desc);
+
+        var controls = el('div', 'proof__ctl');
+        var rawBtn = el('button', 'chip', 'Most AI (no JavaScript)');
+        rawBtn.type = 'button';
+        rawBtn.setAttribute('aria-pressed', 'true');
+        var renBtn = el('button', 'chip', 'Google & Apple AI (rendered)');
+        renBtn.type = 'button';
+        renBtn.setAttribute('aria-pressed', 'false');
+        if (!(data.rendered && data.rendered.outline)) renBtn.disabled = true;
+        var search = el('input', 'proof__search');
+        search.type = 'search';
+        search.placeholder = 'Find a word — try “pricing”…';
+        search.setAttribute('aria-label', 'Search extracted text');
+        var hits = el('span', 'proof__hits');
+        controls.appendChild(rawBtn);
+        controls.appendChild(renBtn);
+        controls.appendChild(search);
+        controls.appendChild(hits);
+        sec.appendChild(controls);
+
+        var stage = el('div', 'proof__stage');
+        var aiPane = el('div', 'pane pane--ai');
+        aiPane.appendChild(el('span', 'pane__tag', 'What AI reads'));
+        var aiTxt = el('div', 'aiTxt');
+        aiPane.appendChild(aiTxt);
+        var humanPane = el('div', 'pane pane--human');
+        humanPane.appendChild(el('span', 'pane__tag', 'What people see'));
+        renderHumanPane(humanPane, data, host);
+        var divider = el('button', 'divider');
+        divider.type = 'button';
+        divider.setAttribute('role', 'slider');
+        divider.setAttribute('aria-label', 'Adjust comparison divider');
+        divider.setAttribute('aria-valuemin', '6');
+        divider.setAttribute('aria-valuemax', '94');
+        divider.setAttribute('aria-valuenow', '50');
+        divider.appendChild(el('div', 'divider__grip', '⇄'));
+        stage.appendChild(aiPane);
+        stage.appendChild(humanPane);
+        stage.appendChild(divider);
+        sec.appendChild(stage);
+
+        var foot = el('div', 'proof__foot');
+        var left = el('span');
+        var right = el('span');
+        renderProofFoot(left, right, data);
+        foot.appendChild(left);
+        foot.appendChild(right);
+        sec.appendChild(foot);
+        reportEl.appendChild(sec);
+
+        var view = 'raw';
+        function blocks() {
+          if (view === 'ren' && data.rendered && data.rendered.outline) return data.rendered.outline || [];
+          return data.content && data.content.outline || [];
+        }
+        function paintAi() {
+          paintAiText(aiTxt, blocks(), search.value.trim().toLowerCase(), hits, view, data);
+        }
+        rawBtn.addEventListener('click', function () {
+          view = 'raw';
+          rawBtn.setAttribute('aria-pressed', 'true');
+          renBtn.setAttribute('aria-pressed', 'false');
+          paintAi();
+        });
+        renBtn.addEventListener('click', function () {
+          if (renBtn.disabled) return;
+          view = 'ren';
+          renBtn.setAttribute('aria-pressed', 'true');
+          rawBtn.setAttribute('aria-pressed', 'false');
+          paintAi();
+        });
+        search.addEventListener('input', paintAi);
+        paintAi();
+        dividerCleanup = setupDivider(stage, divider, humanPane);
+      }
+
+      function renderHumanPane(parent, data, host) {
+        if (data.screenshot) {
+          var img = el('img', 'humanShot');
+          img.alt = 'Browser screenshot of ' + host;
+          img.src = data.screenshot.indexOf('data:') === 0 ? data.screenshot : 'data:image/jpeg;base64,' + data.screenshot;
+          parent.appendChild(img);
+          return;
+        }
+        var fallback = el('div', 'shotFallback');
+        var chrome = el('div', 'shotFallback__chrome');
+        chrome.appendChild(el('i'));
+        chrome.appendChild(el('i'));
+        chrome.appendChild(el('i'));
+        chrome.appendChild(el('span', null, host));
+        fallback.appendChild(chrome);
+        fallback.appendChild(el('div', 'shotFallback__page', 'We couldn’t photograph your page today — the text comparison below is still exact.'));
+        parent.appendChild(fallback);
+      }
+
+      function renderProofFoot(left, right, data) {
+        var raw = data.content && data.content.visibleTextChars || 0;
+        var ren = data.rendered && data.rendered.visibleTextChars || 0;
+        left.appendChild(document.createTextNode('RAW HTML: '));
+        left.appendChild(el('b', null, fmt(raw) + ' CHARACTERS'));
+        left.appendChild(document.createTextNode(' — WHAT GPTBOT GETS'));
+        if (data.rendered && ren > 0) {
+          var missing = Math.max(0, Math.round((1 - Math.min(1, raw / ren)) * 100));
+          right.appendChild(document.createTextNode('RENDERED: ' + fmt(ren) + ' — '));
+          right.appendChild(el('b', missing >= 50 ? 'bad' : null, missing + '% NEVER REACHES MOST AI'));
+        } else {
+          right.appendChild(document.createTextNode('RENDERED: unavailable today — estimate only'));
+        }
+      }
+
+      function paintAiText(box, blocks, query, hitsEl, view, data) {
+        clear(box);
+        var hits = 0;
+        if (!blocks.length) {
+          box.appendChild(el('div', 'void', view === 'raw'
+            ? '— that’s everything. ' + fmt(data.content && data.content.visibleTextChars || 0) + ' characters, no headings, no products, no prices. —'
+            : 'Nothing could be extracted from the rendered page.'));
+        } else {
+          blocks.forEach(function (b) {
+            var cls = blockClass(b.tag);
+            var d = el('div', cls);
+            if (b.tag === 'more') d.textContent = b.text;
+            else hits += highlightInto(d, b.text || '', query);
+            box.appendChild(d);
+          });
+          if (view === 'raw' && (data.content && data.content.visibleTextChars || 0) < 300) {
+            box.appendChild(el('div', 'void', '— that’s everything. ' + fmt(data.content.visibleTextChars) + ' characters, no headings, no products, no prices. —'));
+          }
+        }
+        box.appendChild(el('span', 'cursor'));
+        hitsEl.textContent = query ? hits + (hits === 1 ? ' match' : ' matches') : '';
+      }
+
+      function blockClass(tag) {
+        if (tag === 'h1') return 'bh1';
+        if (tag === 'h2' || tag === 'h3' || tag === 'h4' || tag === 'h5' || tag === 'h6') return 'bh2';
+        if (tag === 'li') return 'bli';
+        if (tag === 'blockquote') return 'bq';
+        if (tag === 'more') return 'bmore';
+        return 'bp';
+      }
+
+      function highlightInto(parent, text, query) {
+        if (!query) {
+          parent.appendChild(document.createTextNode(text));
+          return 0;
+        }
+        var lower = text.toLowerCase();
+        var from = 0;
+        var idx;
+        var n = 0;
+        while ((idx = lower.indexOf(query, from)) !== -1) {
+          if (idx > from) parent.appendChild(document.createTextNode(text.slice(from, idx)));
+          parent.appendChild(el('mark', null, text.slice(idx, idx + query.length)));
+          from = idx + query.length;
+          n++;
+        }
+        if (from < text.length) parent.appendChild(document.createTextNode(text.slice(from)));
+        return n;
+      }
+
+      function setupDivider(stage, divider, humanPane) {
+        var dragging = false;
+        var frac = .5;
+        function setDivider(next) {
+          frac = Math.max(.06, Math.min(.94, next));
+          var w = stage.clientWidth || 1;
+          var x = w * frac;
+          divider.style.left = (x - 1) + 'px';
+          humanPane.style.clipPath = 'inset(0 ' + (w - x) + 'px 0 0)';
+          divider.setAttribute('aria-valuenow', Math.round(frac * 100).toString());
+        }
+        function dragTo(clientX) {
+          var r = stage.getBoundingClientRect();
+          setDivider((clientX - r.left) / r.width);
+        }
+        function down(e) {
+          dragging = true;
+          try { divider.setPointerCapture(e.pointerId); } catch (err) {}
+          e.preventDefault();
+        }
+        function move(e) { if (dragging) dragTo(e.clientX); }
+        function up() { dragging = false; }
+        function stageDown(e) {
+          if (e.target !== divider && !divider.contains(e.target)) dragTo(e.clientX);
+        }
+        function key(e) {
+          if (e.key === 'ArrowLeft') { setDivider(frac - .04); e.preventDefault(); }
+          if (e.key === 'ArrowRight') { setDivider(frac + .04); e.preventDefault(); }
+          if (e.key === 'Home') { setDivider(.06); e.preventDefault(); }
+          if (e.key === 'End') { setDivider(.94); e.preventDefault(); }
+        }
+        function resize() { setDivider(frac); }
+        divider.addEventListener('pointerdown', down);
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', up);
+        stage.addEventListener('pointerdown', stageDown);
+        divider.addEventListener('keydown', key);
+        window.addEventListener('resize', resize);
+        setDivider(.5);
+        return function () {
+          divider.removeEventListener('pointerdown', down);
+          window.removeEventListener('pointermove', move);
+          window.removeEventListener('pointerup', up);
+          stage.removeEventListener('pointerdown', stageDown);
+          divider.removeEventListener('keydown', key);
+          window.removeEventListener('resize', resize);
+        };
+      }
+
+      function renderMatrix(data) {
+        var sec = el('div', 'iSec');
+        sec.appendChild(el('div', 'iSec__k', 'Who gets in'));
+        sec.appendChild(el('h3', 'iSec__t', 'Access, bot by bot'));
+        sec.appendChild(el('p', 'iSec__d', 'Every AI assistant sends its own crawler. We knock on your door as each one and record what happens.'));
+        var table = el('table', 'mx');
+        var thead = el('thead');
+        var hr = el('tr');
+        ['Crawler', 'robots.txt', 'Server', 'Runs JS'].forEach(function (t) { hr.appendChild(el('th', null, t)); });
+        thead.appendChild(hr);
+        table.appendChild(thead);
+        var tbody = el('tbody');
+        (data.botAccess || []).forEach(function (b) {
+          var tr = el('tr', (b.server === 'blocked' || b.server === 'cloaked' || b.robots === 'disallowed') ? 'hot' : null);
+          var name = el('td', 'bot', b.label || b.token);
+          name.appendChild(el('span', null, b.owner || ''));
+          tr.appendChild(name);
+          tr.appendChild(statusTd(robotText(b.robots), b.robots === 'disallowed' ? 'no' : b.robots === 'allowed' ? 'ok' : 'na'));
+          tr.appendChild(statusTd(serverText(b), (b.server === 'blocked' || b.server === 'cloaked' || b.server === 'error') ? 'no' : b.server === 'ok' ? 'ok' : 'na'));
+          tr.appendChild(statusTd(b.rendersJS ? '✓ yes' : '— no', b.rendersJS ? 'yes' : 'na'));
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        sec.appendChild(table);
+        reportEl.appendChild(sec);
+      }
+
+      function statusTd(text, cls) {
+        var td = el('td');
+        td.appendChild(el('span', cls, text));
+        return td;
+      }
+
+      function robotText(v) {
+        if (v === 'allowed') return '✓ allowed';
+        if (v === 'disallowed') return '✕ disallowed';
+        if (v === 'no-robots') return '— no robots.txt';
+        return '— not probed';
+      }
+
+      function serverText(b) {
+        if (!b || b.server === 'not-probed') return '— not probed';
+        if (b.server === 'blocked') return '✕ ' + (b.status || 'blocked');
+        if (b.server === 'cloaked') return '✕ cloaked';
+        if (b.server === 'error') return '✕ error';
+        if (b.server === 'ok') return '✓ ' + (b.status ? b.status + ' OK' : 'ok');
+        return '— ' + b.server;
+      }
+
+      function buildFootnotes(findings) {
+        var map = {};
+        var list = [];
+        findings.forEach(function (f) {
+          if (!f.source || !f.source.url) return;
+          if (!map[f.source.url]) {
+            map[f.source.url] = list.length + 1;
+            list.push(f.source);
+          }
+        });
+        return { map: map, list: list };
+      }
+
+      function renderLedger(read, agent, footnotes, agentic) {
+        var sec = el('div', 'iSec');
+        sec.appendChild(el('div', 'iSec__k', 'The full readout'));
+        sec.appendChild(el('h3', 'iSec__t', (read.length + agent.length) + ' checks, every claim sourced'));
+        sec.appendChild(el('p', 'iSec__d', 'Nothing hidden, nothing padded. Click a line for the why and the research behind it.'));
+        sec.appendChild(el('div', 'ledger-k', 'Can AI read it?'));
+        sec.appendChild(buildLedger(read, 0, footnotes, true));
+        sec.appendChild(el('div', 'ledger-k', 'Could an AI agent use it?'));
+        sec.appendChild(el('p', 'ledger-note', agentModeText(agentic && agentic.mode)));
+        sec.appendChild(buildLedger(agent, read.length, footnotes, false));
+        reportEl.appendChild(sec);
+      }
+
+      function buildLedger(items, offset, footnotes, openFirstProblem) {
+        var ledger = el('div', 'ledger');
+        items.forEach(function (f, i) {
+          var row = el('details', 'row g-' + (f.status || 'info'));
+          if (openFirstProblem && i === 0 && (f.status === 'fail' || f.status === 'warn')) row.open = true;
+          var summary = el('summary', 'row__head');
+          summary.appendChild(el('span', 'row__num', String(offset + i + 1).padStart(2, '0')));
+          summary.appendChild(el('span', 'row__glyph', GLYPH[f.status] || '·'));
+          summary.appendChild(el('span', 'row__label', f.label || 'Check'));
+          var n = f.source && f.source.url ? footnotes.map[f.source.url] : null;
+          summary.appendChild(el('span', 'row__cite', n ? '[' + n + ']' : ''));
+          row.appendChild(summary);
+          var body = el('div', 'row__body');
+          if (f.detail) body.appendChild(el('p', 'row__detail', f.detail));
+          if (f.why) body.appendChild(el('p', 'row__why', f.why));
+          row.appendChild(body);
+          ledger.appendChild(row);
+        });
+        return ledger;
+      }
+
+      function agentModeText(mode) {
+        if (mode === 'measured') return 'Checked by loading your page in a real browser and looking at it the way an agent would.';
+        if (mode === 'rendered-html') return 'Read from your rendered page.';
+        return 'A rough read from your code — we couldn’t open your site in a browser this time.';
+      }
+
+      function renderMethod() {
+        var method = el('div', 'method');
+        method.appendChild(el('div', 'method__mark', '§'));
+        var p = el('p');
+        p.appendChild(el('b', null, 'How we test — and where we could be wrong. '));
+        p.appendChild(document.createTextNode('We fetch your page with each bot’s real user-agent string, from our servers. Sites that verify crawler IP addresses may treat the genuine bot differently than our probe. No tool on the internet can fully see around that — including this one. We’d rather tell you than pretend.'));
+        method.appendChild(p);
+        reportEl.appendChild(method);
+      }
+
+      function renderSources(sources) {
+        var src = el('div', 'sources');
+        sources.forEach(function (s, i) {
+          var line = el('div');
+          line.appendChild(el('b', null, '[' + (i + 1) + ']'));
+          var a = el('a', null, s.label || s.url);
+          a.href = s.url;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          line.appendChild(a);
+          src.appendChild(line);
+        });
+        reportEl.appendChild(src);
+      }
+
+      function renderShare() {
+        var share = el('div', 'shareBar');
+        share.appendChild(el('span', 'shareBar__brand', 'Developed by BLURSOR · What AI Sees · blursor.ai'));
+        var btns = el('div', 'shareBar__btns');
+        var copy = el('button', 'sbtn', 'Copy report link');
+        copy.type = 'button';
+        copy.addEventListener('click', function () { copyLink(copy); });
+        var again = el('button', 'sbtn sbtn--hot', 'Check another site');
+        again.type = 'button';
+        again.addEventListener('click', function () {
+          input.focus();
+          input.select();
+          window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+        });
+        btns.appendChild(copy);
+        btns.appendChild(again);
+        share.appendChild(btns);
+        reportEl.appendChild(share);
+      }
+
+      function copyLink(button) {
+        function done() {
+          button.classList.add('copied');
+          button.textContent = 'Copied!';
+          setTimeout(function () {
+            button.classList.remove('copied');
+            button.textContent = 'Copy report link';
+          }, 1600);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(window.location.href).then(done).catch(done);
+        } else {
+          var t = el('textarea');
+          t.value = window.location.href;
+          document.body.appendChild(t);
+          t.select();
+          try { document.execCommand('copy'); } catch (e) {}
+          document.body.removeChild(t);
+          done();
+        }
+      }
+
+      function renderPlainWords(data, read, agent) {
+        clear(fixList);
+        var issues = [];
+        read.forEach(function (f) {
+          if ((f.status === 'fail' || f.status === 'warn') && PLAIN[f.id]) issues.push({ status: f.status, info: PLAIN[f.id] });
+        });
+        agent.forEach(function (f) {
+          if ((f.status === 'fail' || f.status === 'warn') && PLAIN_AGENT[f.id]) issues.push({ status: f.status, info: PLAIN_AGENT[f.id] });
+        });
+        issues.sort(function (a, b) { return (SEV[a.status] || 9) - (SEV[b.status] || 9); });
+        issues = issues.slice(0, 3);
+        if (!issues.length) {
+          plainLede.textContent = 'Nothing urgent to fix. Your page is readable to AI, and the agent-readiness checks did not find a serious usability blocker.';
+          fixList.appendChild(el('p', 'allgood', 'Keep publishing useful, clearly structured content — the machinery is not getting in the way.'));
+        } else {
+          plainLede.textContent = issues.length === 1 ? 'One fix stands out.' : 'Start with these fixes, in order. The first ones change the most.';
+          issues.forEach(function (it, i) {
+            var row = el('div', 'fix');
+            row.appendChild(el('div', 'fix__n', String(i + 1).padStart(2, '0')));
+            var body = el('div');
+            body.appendChild(el('div', 'fix__t', it.info.title));
+            body.appendChild(el('div', 'fix__b', it.info.fix));
+            var who = el('div', 'fix__who');
+            who.appendChild(document.createTextNode('Send this to: '));
+            who.appendChild(el('b', null, it.info.who));
+            body.appendChild(who);
+            row.appendChild(body);
+            fixList.appendChild(row);
+          });
+        }
+        plainWords.classList.add('show');
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        run(input.value);
+      });
+
+      exampleLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        run('https://react.dev');
+      });
+
       var params = new URLSearchParams(window.location.search);
       var initial = params.get('url');
       if (initial) run(initial);

@@ -234,6 +234,7 @@ export async function onRequestGet({ request, env }) {
       botAccess,
       content: rawPage,
       rendered: renderedPage ? { visibleTextChars: renderedPage.visibleTextChars, headings: renderedPage.headings, hasJsonLd: renderedPage.hasJsonLd, outline: renderedPage.outline } : null,
+      screenshot: render.screenshot || null,
       llms,
       findings,
       agentic,
@@ -246,7 +247,7 @@ export async function onRequestGet({ request, env }) {
 // --- Browser Rendering (Cloudflare REST API) --------------------------------
 
 async function renderViaCloudflare(url, env) {
-  if (!env || !env.CF_ACCOUNT_ID || !env.CF_BROWSER_TOKEN) return { html: null, agentic: null, status: "no-credentials" };
+  if (!env || !env.CF_ACCOUNT_ID || !env.CF_BROWSER_TOKEN) return { html: null, screenshot: null, agentic: null, status: "no-credentials" };
 
   // Edge-cache renders by URL so repeat checks don't burn the daily budget. The
   // agent probe writes its results into the HTML (a JSON <script> node), so
@@ -254,12 +255,20 @@ async function renderViaCloudflare(url, env) {
   let cache = null, cacheKey = null;
   try {
     cache = caches.default;
-    cacheKey = new Request("https://render-cache.blursor.ai/v3/" + encodeURIComponent(url));
+    cacheKey = new Request("https://render-cache.blursor.ai/v4/" + encodeURIComponent(url));
     const hit = await cache.match(cacheKey);
-    if (hit) { const t = await hit.text(); if (t) return { html: t, agentic: extractInjected(t), status: "cached" }; }
+    if (hit) {
+      const t = await hit.text();
+      if (t) {
+        const cached = JSON.parse(t);
+        const html = cached && typeof cached.html === "string" ? cached.html : null;
+        const screenshot = cached && typeof cached.screenshot === "string" ? cached.screenshot : null;
+        if (html) return { html, screenshot, agentic: extractInjected(html), status: "cached" };
+      }
+    }
   } catch { /* cache optional */ }
 
-  const endpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/browser-rendering/content`;
+  const endpoint = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/browser-rendering/snapshot`;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), RENDER_TIMEOUT_MS);
   try {
@@ -268,20 +277,29 @@ async function renderViaCloudflare(url, env) {
     // never regress just because the probe params were unhappy.
     let out = await postContent(endpoint, env, url, true, ctrl);
     if (!out.html && out.status !== "quota-exceeded") out = await postContent(endpoint, env, url, false, ctrl);
-    if (!out.html) return { html: null, agentic: null, status: out.status };
+    if (!out.html) return { html: null, screenshot: null, agentic: null, status: out.status };
     if (cache && cacheKey) {
-      try { await cache.put(cacheKey, new Response(out.html, { headers: { "Cache-Control": `public, max-age=${RENDER_CACHE_TTL}` } })); } catch {}
+      try {
+        await cache.put(cacheKey, new Response(JSON.stringify({ html: out.html, screenshot: out.screenshot || null }), {
+          headers: { "Cache-Control": `public, max-age=${RENDER_CACHE_TTL}` },
+        }));
+      } catch {}
     }
-    return { html: out.html, agentic: extractInjected(out.html), status: out.status };
+    return { html: out.html, screenshot: out.screenshot || null, agentic: extractInjected(out.html), status: out.status };
   } catch (e) {
-    return { html: null, agentic: null, status: e.name === "AbortError" ? "timeout" : "error" };
+    return { html: null, screenshot: null, agentic: null, status: e.name === "AbortError" ? "timeout" : "error" };
   } finally {
     clearTimeout(timer);
   }
 }
 
 async function postContent(endpoint, env, url, withProbe, ctrl) {
-  const body = { url, gotoOptions: { waitUntil: "networkidle0", timeout: 15000 } };
+  const body = {
+    url,
+    gotoOptions: { waitUntil: "networkidle0", timeout: 15000 },
+    viewport: { width: 1100, height: 1400 },
+    screenshotOptions: { type: "jpeg", quality: 70 },
+  };
   if (withProbe) {
     // Inject the agent probe, then let late JS register WebMCP tools / layout
     // settle before the HTML is captured.
@@ -297,8 +315,11 @@ async function postContent(endpoint, env, url, withProbe, ctrl) {
   if (res.status === 429) return { html: null, status: "quota-exceeded" };
   if (!res.ok) return { html: null, status: `error-${res.status}` };
   const data = await res.json().catch(() => null);
-  const html = data && data.success && typeof data.result === "string" ? data.result : null;
-  return { html, status: html ? (withProbe ? "rendered" : "rendered-noprobe") : "empty" };
+  const result = data && data.success ? data.result : null;
+  const html = typeof result === "string" ? result : (result && typeof result.content === "string" ? result.content : null);
+  let screenshot = null;
+  try { screenshot = result && typeof result.screenshot === "string" ? result.screenshot : null; } catch {}
+  return { html, screenshot, status: html ? (withProbe ? "rendered" : "rendered-noprobe") : "empty" };
 }
 
 // Read the agent-probe results the injected script wrote into the page. The JSON
