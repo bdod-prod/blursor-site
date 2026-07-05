@@ -41,9 +41,18 @@ const SRC = {
   vercel:    { label: "Vercel AI-crawler study (2024)",         url: "https://vercel.com/blog/the-rise-of-the-ai-crawler" },
   seranking: { label: "SE Ranking, 300k-domain llms.txt study", url: "https://seranking.com/blog/llms-txt/" },
   geo:       { label: "GEO paper (Princeton et al., KDD '24)",  url: "https://arxiv.org/abs/2311.09735" },
+  googleTitle: { label: "Google Search Central - title links",  url: "https://developers.google.com/search/docs/appearance/title-link" },
+  googleMeta:  { label: "Google Search Central - snippets",     url: "https://developers.google.com/search/docs/appearance/snippet" },
+  googleSchema:{ label: "Google Search Central - structured data", url: "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data" },
+  foundation:{ label: "AirOps, industry study (2025)",          url: "https://www.airops.com/report/structuring-content-for-llms" },
+  freshness: { label: "Semrush via ConvertMate (secondary source, 2026)", url: "https://www.omnibound.ai/blog/generative-engine-optimization-statistics" },
+  position:  { label: "Kevin Indig citation-position analysis (secondary source, 2026)", url: "https://ahrefs.com/blog/how-to-rank-on-chatgpt/" },
   lighthouse:{ label: "Google Lighthouse — Agentic Browsing",   url: "https://developer.chrome.com/docs/lighthouse/agentic-browsing/scoring" },
   webmcp:    { label: "WebMCP (W3C Community Group draft)",      url: "https://github.com/webmachinelearning/webmcp" },
 };
+
+const METHOD_NOTE =
+  "We fetch with each bot's published user-agent from our servers. Sites that verify crawler IPs may treat the genuine bot differently. No external tool can fully see around that \u2014 including this one.";
 
 const FETCH_TIMEOUT_MS = 9000;
 const RENDER_TIMEOUT_MS = 25000;
@@ -219,6 +228,7 @@ export async function onRequestGet({ request, env }) {
 
     const findings = buildFindings({ botAccess, rawPage, renderedPage, llms });
     const summary = findings.reduce((a, f) => ((a[f.status] = (a[f.status] || 0) + 1), a), { pass: 0, warn: 0, fail: 0 });
+    const citeability = buildCiteability({ rawHtml, rawPage, renderedPage, target });
 
     // The second half: can an AI AGENT use the page (not just read it)?
     const agentic = analyzeAgentic({ injected: render.agentic, renderedHtml: render.html, rawHtml, llms });
@@ -236,7 +246,9 @@ export async function onRequestGet({ request, env }) {
       rendered: renderedPage ? { visibleTextChars: renderedPage.visibleTextChars, headings: renderedPage.headings, hasJsonLd: renderedPage.hasJsonLd, outline: renderedPage.outline } : null,
       screenshot: render.screenshot || null,
       llms,
+      method: { note: METHOD_NOTE },
       findings,
+      citeability,
       agentic,
     });
   } catch (e) {
@@ -509,6 +521,213 @@ function extractOutline(html) {
     if (blocks.length >= 150 || total > 15000) { blocks.push({ tag: "more", text: "…(truncated — showing the first part)" }); break; }
   }
   return blocks;
+}
+
+function buildCiteability({ rawHtml, rawPage, renderedPage, target }) {
+  const blocks = extractCiteBlocks(rawHtml);
+  if (blocks.length < 5) {
+    const renderedBlocks = renderedPage && renderedPage.outline ? renderedPage.outline.length : 0;
+    const detail = renderedBlocks >= 5
+      ? `Raw HTML has ${blocks.length} readable content block${blocks.length === 1 ? "" : "s"} after page chrome is skipped. A rendered browser shows ${renderedBlocks}, but most AI crawlers judge the raw version.`
+      : `Raw HTML has ${blocks.length} readable content block${blocks.length === 1 ? "" : "s"} after page chrome is skipped.`;
+    const findings = [finding("cite-thin", "Too short to judge for citations", "info", detail,
+      "These checks matter most for articles, guides, and product pages - not every short homepage needs quotes, stats, and source links.", null)];
+    return { summary: summarize(findings), findings };
+  }
+
+  const findings = [];
+  const quotes = countQuoteSignals(blocks);
+  findings.push(finding("cite-quotes", quotes.count ? "Direct quotations present" : "No direct quotations found", quotes.count ? "pass" : "warn",
+    quotes.count
+      ? `${quotes.count} direct quote signal${quotes.count === 1 ? "" : "s"} found in the raw page content (${quotes.blockquotes} blockquote${quotes.blockquotes === 1 ? "" : "s"}, ${quotes.inlineQuotes} quoted passage${quotes.inlineQuotes === 1 ? "" : "s"}).`
+      : "No blockquotes or quoted passages of 25+ characters found in the raw page content.",
+    "Peer-reviewed: the GEO paper found quotation addition was its strongest tested generative-engine visibility method, with about a 28-40% lift.", SRC.geo));
+
+  const stats = countStatSignals(blocks);
+  findings.push(finding("cite-stats", stats.count >= 2 ? "Statistics present" : stats.count === 1 ? "Only one statistic found" : "No statistics found",
+    stats.count >= 2 ? "pass" : stats.count === 1 ? "info" : "warn",
+    stats.count
+      ? `${stats.count} statistic-like signal${stats.count === 1 ? "" : "s"} found in paragraph/list text${stats.examples.length ? `, including ${stats.examples.join(", ")}.` : "."}`
+      : "No percentages, currency figures, ranges, multipliers, or 'N of M' patterns found in paragraph/list text.",
+    "Peer-reviewed: the GEO paper found statistics addition was one of the strongest tested ways to improve generative-engine visibility.", SRC.geo));
+
+  const links = countExternalContentLinks(rawHtml, target.href);
+  findings.push(finding("cite-sources", links.count >= 2 ? "Cites outside sources" : links.count === 1 ? "Only one outside source link" : "No outside source links",
+    links.count >= 2 ? "pass" : links.count === 1 ? "info" : "warn",
+    links.count
+      ? `${links.count} external content link${links.count === 1 ? "" : "s"} found across ${links.domains.length} outside domain${links.domains.length === 1 ? "" : "s"}${links.domains.length ? ` (${links.domains.slice(0, 3).join(", ")}${links.domains.length > 3 ? ", ..." : ""}).` : "."}`
+      : "No outbound links to external domains found inside paragraph/list content.",
+    "Peer-reviewed: the GEO paper found source citations were one of its top methods, especially for lower-ranked pages.", SRC.geo));
+
+  const fresh = findFreshnessDate(rawHtml);
+  if (!fresh.date) {
+    findings.push(finding("cite-freshness", "No clear content date found", "info",
+      "No article meta date, JSON-LD date, time[datetime], or visible 'Updated ...' date was parseable in the raw HTML.",
+      "Secondary source: Semrush data cited via ConvertMate says AI Overview citations skew toward pages updated within the last year.", SRC.freshness));
+  } else {
+    const age = ageMonths(fresh.date);
+    const status = age < 12 ? "pass" : "warn";
+    findings.push(finding("cite-freshness", status === "pass" ? "Content date is fresh" : "Content date looks older", status,
+      `${fresh.kind}: ${fresh.date.toISOString().slice(0, 10)} (${age < 1 ? "less than 1 month" : `${Math.round(age)} months`} old).`,
+      "Secondary source: Semrush data cited via ConvertMate says AI Overview citations skew toward pages updated within the last year.", SRC.freshness));
+  }
+
+  const position = answerPosition(blocks);
+  findings.push(finding("cite-position", position.status === "pass" ? "Answer appears near the top" : position.status === "warn" ? "Main answer starts late" : "No clear answer opening found",
+    position.status,
+    position.detail,
+    "Secondary source: citation-position research attributed to SparkToro/Kevin Indig says many AI citations come from the first 30% of a page.", SRC.position));
+
+  return { summary: summarize(findings), findings };
+}
+
+function summarize(findings) {
+  return findings.reduce((a, f) => ((a[f.status] = (a[f.status] || 0) + 1), a), { pass: 0, warn: 0, fail: 0, info: 0 });
+}
+
+function extractCiteBlocks(html) {
+  const clean = stripChrome(html || "");
+  const blocks = [];
+  const re = /<(h[1-6]|p|li|blockquote)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+  let m, guard = 0;
+  while ((m = re.exec(clean)) !== null && guard++ < 1000) {
+    const tag = m[1].toLowerCase();
+    const inner = m[2] || "";
+    const text = decode(inner.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+    if (text.length < 8) continue;
+    blocks.push({ tag, text, html: inner });
+  }
+  return blocks;
+}
+
+function stripChrome(html) {
+  return (html || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<(nav|footer|header|aside|form)\b[\s\S]*?<\/\1>/gi, " ");
+}
+
+function countQuoteSignals(blocks) {
+  const blockquotes = blocks.filter((b) => b.tag === "blockquote" && b.text.length >= 25).length;
+  const text = blocks.map((b) => b.text).join(" ");
+  const straight = [...text.matchAll(/"([^"]{25,})"/g)].length;
+  const curly = [...text.matchAll(/\u201c([^\u201d]{25,})\u201d/g)].length;
+  return { count: blockquotes + straight + curly, blockquotes, inlineQuotes: straight + curly };
+}
+
+function countStatSignals(blocks) {
+  const text = blocks.filter((b) => b.tag === "p" || b.tag === "li" || b.tag === "blockquote").map((b) => b.text).join(" ");
+  const re = /(?:[$€£]\s?\d[\d,]*(?:\.\d+)?(?:\s?(?:k|m|bn|million|billion))?|\b\d+(?:[.,]\d+)?\s?(?:%|per cent)\b|\b\d+(?:[.,]\d+)?\s?(?:x|\u00d7)\b|\b\d+(?:[.,]\d+)?\s?(?:-|to|–)\s?\d+(?:[.,]\d+)?\b|\b\d+\s+of\s+\d+\b)/gi;
+  const matches = [...text.matchAll(re)].map((m) => m[0].replace(/\s+/g, " ").trim());
+  return { count: matches.length, examples: [...new Set(matches)].slice(0, 3) };
+}
+
+function countExternalContentLinks(html, baseUrl) {
+  const base = new URL(baseUrl);
+  const baseHost = normHost(base.hostname);
+  const blocks = extractCiteBlocks(html);
+  const links = new Set();
+  const domains = new Set();
+  for (const block of blocks.filter((b) => b.tag === "p" || b.tag === "li" || b.tag === "blockquote")) {
+    const re = /<a\b[^>]*\shref\s*=\s*["']([^"']+)["'][^>]*>/gi;
+    let m, guard = 0;
+    while ((m = re.exec(block.html)) !== null && guard++ < 200) {
+      const href = decode(m[1].trim());
+      if (!href || /^(#|mailto:|tel:|javascript:)/i.test(href)) continue;
+      let u;
+      try { u = new URL(href, base); } catch { continue; }
+      if (!/^https?:$/i.test(u.protocol)) continue;
+      const host = normHost(u.hostname);
+      if (!host || host === baseHost) continue;
+      links.add(u.href.split("#")[0]);
+      domains.add(host);
+    }
+  }
+  return { count: links.size, domains: [...domains] };
+}
+
+function normHost(host) {
+  return String(host || "").toLowerCase().replace(/^www\./, "");
+}
+
+function findFreshnessDate(html) {
+  const metas = html.match(/<meta\b[^>]*>/gi) || [];
+  const wanted = ["article:modified_time", "article:published_time"];
+  for (const key of wanted) {
+    for (const tag of metas) {
+      const prop = (attr(tag, "property") || attr(tag, "name") || "").toLowerCase();
+      if (prop === key) {
+        const d = parseDateCandidate(attr(tag, "content"));
+        if (d) return { date: d, kind: key };
+      }
+    }
+  }
+
+  const jsonLdBlocks = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
+  for (const field of ["dateModified", "datePublished"]) {
+    for (const block of jsonLdBlocks) {
+      const inner = block.replace(/^[\s\S]*?>/, "").replace(/<\/script>$/i, "");
+      const m = inner.match(new RegExp(`"${field}"\\s*:\\s*"([^"]+)"`, "i"));
+      const d = m ? parseDateCandidate(decode(m[1])) : null;
+      if (d) return { date: d, kind: `JSON-LD ${field}` };
+    }
+  }
+
+  const timeRe = /<time\b[^>]*\sdatetime\s*=\s*["']([^"']+)["'][^>]*>/gi;
+  let tm;
+  while ((tm = timeRe.exec(html)) !== null) {
+    const d = parseDateCandidate(tm[1]);
+    if (d) return { date: d, kind: "time[datetime]" };
+  }
+
+  const text = decode(stripChrome(html).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+  const visible = text.match(/\b(?:Updated|Last updated|Published|Reviewed)\s*(?:on|:)?\s*([A-Z][a-z]+\.?\s+\d{1,2},?\s+\d{4}|\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4})/i);
+  const d = visible ? parseDateCandidate(visible[1]) : null;
+  return d ? { date: d, kind: "visible updated/published date" } : { date: null, kind: null };
+}
+
+function parseDateCandidate(value) {
+  if (!value) return null;
+  const d = new Date(String(value).trim());
+  if (Number.isNaN(d.getTime())) return null;
+  if (d.getFullYear() < 1990 || d.getFullYear() > 2100) return null;
+  return d;
+}
+
+function ageMonths(date) {
+  const ms = Math.max(0, Date.now() - date.getTime());
+  return ms / (1000 * 60 * 60 * 24 * 30.4375);
+}
+
+function answerPosition(blocks) {
+  const total = blocks.length;
+  const earlyCount = Math.max(1, Math.ceil(total * 0.3));
+  const totalChars = blocks.reduce((n, b) => n + b.text.length, 0) || 1;
+  const earlyChars = blocks.slice(0, earlyCount).reduce((n, b) => n + b.text.length, 0);
+  const earlyShare = Math.round((earlyChars / totalChars) * 100);
+  let pairIndex = -1;
+  for (let i = 0; i < total; i++) {
+    if (!/^h[1-6]$/.test(blocks[i].tag)) continue;
+    for (let j = i + 1; j < Math.min(total, i + 5); j++) {
+      if ((blocks[j].tag === "p" || blocks[j].tag === "li" || blocks[j].tag === "blockquote") && blocks[j].text.length >= 40) {
+        pairIndex = i;
+        break;
+      }
+      if (/^h[1-6]$/.test(blocks[j].tag)) break;
+    }
+    if (pairIndex >= 0) break;
+  }
+  if (pairIndex < 0) {
+    return { status: "info", detail: `${total} content blocks found, but no clear heading-plus-answer opening was detected. The first 30% holds ${earlyShare}% of extracted text.` };
+  }
+  const firstBlock = pairIndex + 1;
+  const status = pairIndex < earlyCount ? "pass" : "warn";
+  return {
+    status,
+    detail: `The first heading-plus-body pair starts at block ${firstBlock} of ${total}. The first 30% of blocks holds ${earlyShare}% of extracted text.`,
+  };
 }
 
 function detectFramework(html) {
@@ -829,7 +1048,7 @@ function buildFindings({ botAccess, rawPage, renderedPage, llms }) {
   f.push(contentFinding(rawPage, renderedPage, botAccess));
 
   // Citeability basics — judged on the RAW HTML (what most AI crawlers get).
-  if (!rawPage.title) f.push(finding("title", "Missing <title>", "fail", "No title tag in the raw HTML.", "The title is the first thing models use to label and attribute your page.", SRC.geo));
+  if (!rawPage.title) f.push(finding("title", "Missing <title>", "fail", "No title tag in the raw HTML.", "A clear title helps models label and summarize this page.", SRC.googleTitle));
   else f.push(finding("title", "Has a title", "pass", `“${truncate(rawPage.title, 80)}”`, "Gives the model a clear label for citation.", SRC.geo));
 
   if (!rawPage.metaDescription) f.push(finding("meta", "No meta description", "warn", "No meta description in the raw HTML.", "A clear summary helps models quote you accurately.", SRC.geo));
@@ -849,7 +1068,28 @@ function buildFindings({ botAccess, rawPage, renderedPage, llms }) {
       "Research shows llms.txt doesn't drive AI citations. Skipping it costs you nothing; focus on the checks above.", SRC.seranking));
   }
 
+  applyHonestyFixes(f);
   return f;
+}
+
+function applyHonestyFixes(findings) {
+  for (const item of findings) {
+    if (item.id === "title") {
+      item.why = "A clear title helps models label and summarize this page.";
+      item.source = SRC.googleTitle;
+    } else if (item.id === "meta") {
+      item.why = "A short description helps search systems and models summarize this page without guessing.";
+      item.source = SRC.googleMeta;
+    } else if (item.id === "headings") {
+      item.why = item.status === "pass"
+        ? "Industry study, not peer-reviewed: pages cited by ChatGPT often use a strict H1 to H2 to H3 hierarchy."
+        : "Industry study, not peer-reviewed: pages cited by ChatGPT often use one H1 and a clean hierarchy.";
+      item.source = SRC.foundation;
+    } else if (item.id === "schema") {
+      item.why = "Structured data helps eligible systems understand what this page is about; it is helpful context, not a citation guarantee.";
+      item.source = SRC.googleSchema;
+    }
+  }
 }
 
 function contentFinding(rawPage, renderedPage, botAccess) {
@@ -898,8 +1138,9 @@ function truncate(s, n) {
 }
 
 function json(obj, status = 200) {
+  const cache = status >= 400 || (obj && obj.ok === false) ? "no-store" : "public, max-age=300";
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=300", "Access-Control-Allow-Origin": "*" },
+    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": cache, "Access-Control-Allow-Origin": "*" },
   });
 }

@@ -1596,6 +1596,14 @@
         'schema': { title: 'Nothing tells AI what the page is about.', fix: 'Add structured data (schema). Most SEO plugins add it automatically, and it helps AI trust and understand your page.', who: 'site admin / SEO plugin' }
       };
 
+      var PLAIN_CITE = {
+        'cite-quotes': { title: 'Add a quote or two worth quoting.', fix: 'Use a clear customer, expert, or source quote in the body of the page. The peer-reviewed GEO paper found quote additions produced one of the strongest AI-visibility lifts.', who: 'whoever writes your pages' },
+        'cite-stats': { title: 'Add a statistic or two.', fix: 'Pages with concrete numbers are easier for AI to cite. The peer-reviewed GEO paper found statistics were one of the strongest visibility lifts, roughly in the 30-40% range.', who: 'whoever writes your pages' },
+        'cite-sources': { title: 'Link to the sources behind your claims.', fix: 'Add a couple of credible external source links inside the content, not just in the footer. The GEO paper found source citations were a top visibility method.', who: 'whoever writes your pages' },
+        'cite-freshness': { title: 'Show when the page was updated.', fix: 'Add a visible updated date or article date. Freshness research here is a secondary source, but AI citations skew toward newer pages.', who: 'whoever writes your pages' },
+        'cite-position': { title: 'Put the answer near the top.', fix: 'Open with the direct answer before background. Secondary citation-position research suggests AI often pulls from the first 30% of a page.', who: 'whoever writes your pages' }
+      };
+
       var PLAIN_AGENT = {
         'agent-labels': { title: 'Some buttons or links have no label an agent can read.', fix: 'Give every button and link clear text, or an aria-label. Icon-only buttons especially — an agent (and a screen reader) can’t tell what they do.', who: 'your web developer' },
         'agent-forms': { title: 'Some form fields aren’t labeled.', fix: 'Add a visible label to each field. Without one, an agent has to guess what to type — and often gets it wrong.', who: 'your web developer' },
@@ -1862,6 +1870,20 @@
         return { tone: 'good', pre: 'AI assistants ', em: 'can read', post: ' ' + host + '.', sub: 'When someone asks AI about your topic, your page is readable and ready to be recommended.' };
       }
 
+      function pageOnlyVerdict(verdict) {
+        if (!verdict) return verdict;
+        if (verdict.em === 'are turned away') {
+          verdict.sub = 'The bots AI tools use are blocked on this page, so they cannot read it at all.';
+        } else if (verdict.em === 'can barely read') {
+          verdict.sub = 'Most of the content on this page only loads with JavaScript, which most AI cannot run - so they see almost nothing.';
+        } else if (verdict.post && verdict.post.indexOf('with friction') !== -1) {
+          verdict.sub = 'AI can read this page, but parts of it are harder to reach than they should be. The fixes below are the quick ones.';
+        } else {
+          verdict.sub = 'When someone asks AI about this topic, this page is readable and ready to be recommended.';
+        }
+        return verdict;
+      }
+
       function renderReport(data) {
         if (dividerCleanup) { dividerCleanup(); dividerCleanup = null; }
         scanEl.hidden = true;
@@ -1873,20 +1895,22 @@
         instrument.classList.add('develop');
 
         var host = hostFrom(data.url);
-        var verdict = verdictFor(data);
+        var verdict = pageOnlyVerdict(verdictFor(data));
         var read = orderedFindings(data.findings);
+        var cite = orderedFindings(data.citeability && data.citeability.findings);
         var agent = orderedFindings(data.agentic && data.agentic.findings);
-        var footnotes = buildFootnotes(read.concat(agent));
+        var allFindings = read.concat(cite, agent);
+        var footnotes = buildFootnotes(allFindings);
 
         renderMast(data, verdict);
-        renderStat(data, read.concat(agent));
+        renderStat(data, allFindings);
         renderProof(data, host);
         renderMatrix(data);
-        renderLedger(read, agent, footnotes, data.agentic);
-        renderMethod();
+        renderLedger(read, cite, agent, footnotes, data.agentic);
+        renderMethod(data);
         renderSources(footnotes.list);
         renderShare();
-        renderPlainWords(data, read, agent);
+        renderPlainWords(data, read, cite, agent);
       }
 
       function renderMast(data, verdict) {
@@ -2265,16 +2289,20 @@
         return { map: map, list: list };
       }
 
-      function renderLedger(read, agent, footnotes, agentic) {
+      function renderLedger(read, cite, agent, footnotes, agentic) {
         var sec = el('div', 'iSec');
+        var total = read.length + cite.length + agent.length;
         sec.appendChild(el('div', 'iSec__k', 'The full readout'));
-        sec.appendChild(el('h3', 'iSec__t', (read.length + agent.length) + ' checks, every claim sourced'));
+        sec.appendChild(el('h3', 'iSec__t', total + ' checks, every claim sourced'));
         sec.appendChild(el('p', 'iSec__d', 'Nothing hidden, nothing padded. Click a line for the why and the research behind it.'));
         sec.appendChild(el('div', 'ledger-k', 'Can AI read it?'));
         sec.appendChild(buildLedger(read, 0, footnotes, true));
+        sec.appendChild(el('div', 'ledger-k', 'Would AI cite it?'));
+        sec.appendChild(el('p', 'ledger-note', 'Read from the raw HTML most AI crawlers receive. These are citation opportunities, not pass/fail grades.'));
+        sec.appendChild(buildLedger(cite, read.length, footnotes, false));
         sec.appendChild(el('div', 'ledger-k', 'Could an AI agent use it?'));
         sec.appendChild(el('p', 'ledger-note', agentModeText(agentic && agentic.mode)));
-        sec.appendChild(buildLedger(agent, read.length, footnotes, false));
+        sec.appendChild(buildLedger(agent, read.length + cite.length, footnotes, false));
         reportEl.appendChild(sec);
       }
 
@@ -2305,12 +2333,13 @@
         return 'A rough read from your code — we couldn’t open your site in a browser this time.';
       }
 
-      function renderMethod() {
+      function renderMethod(data) {
         var method = el('div', 'method');
         method.appendChild(el('div', 'method__mark', '§'));
         var p = el('p');
         p.appendChild(el('b', null, 'How we test — and where we could be wrong. '));
         p.appendChild(document.createTextNode('We fetch your page with each bot’s real user-agent string, from our servers. Sites that verify crawler IP addresses may treat the genuine bot differently than our probe. No tool on the internet can fully see around that — including this one. We’d rather tell you than pretend.'));
+        if (p.lastChild) p.lastChild.nodeValue = (data && data.method && data.method.note) || "We fetch with each bot's published user-agent from our servers. Sites that verify crawler IPs may treat the genuine bot differently. No external tool can fully see around that - including this one.";
         method.appendChild(p);
         reportEl.appendChild(method);
       }
@@ -2372,17 +2401,19 @@
         }
       }
 
-      function renderPlainWords(data, read, agent) {
+      function renderPlainWords(data, read, cite, agent) {
         clear(fixList);
         var issues = [];
         read.forEach(function (f) {
           if ((f.status === 'fail' || f.status === 'warn') && PLAIN[f.id]) issues.push({ status: f.status, info: PLAIN[f.id] });
         });
+        cite.forEach(function (f) {
+          if (f.status === 'warn' && PLAIN_CITE[f.id]) issues.push({ status: f.status, info: PLAIN_CITE[f.id] });
+        });
         agent.forEach(function (f) {
           if ((f.status === 'fail' || f.status === 'warn') && PLAIN_AGENT[f.id]) issues.push({ status: f.status, info: PLAIN_AGENT[f.id] });
         });
         issues.sort(function (a, b) { return (SEV[a.status] || 9) - (SEV[b.status] || 9); });
-        issues = issues.slice(0, 3);
         if (!issues.length) {
           plainLede.textContent = 'Nothing urgent to fix. Your page is readable to AI, and the agent-readiness checks did not find a serious usability blocker.';
           fixList.appendChild(el('p', 'allgood', 'Keep publishing useful, clearly structured content — the machinery is not getting in the way.'));
