@@ -327,6 +327,11 @@
       border: 1px solid var(--dk);
       box-shadow: 0 18px 40px -18px rgba(26,20,12,.45);
     }
+    .tool-form__row--vs {
+      margin-top: .55rem;
+      box-shadow: none;
+      border-color: var(--dk-line);
+    }
     .tool-form__prompt {
       font-family: var(--font-mono);
       color: var(--dk-red);
@@ -349,6 +354,19 @@
       font-weight: 600;
       padding: 0 1.7rem;
     }
+    .tool-form__compare {
+      margin-top: .85rem;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .tool-form__compare:hover { text-decoration: underline; text-underline-offset: 4px; }
     .tool-form__hint {
       margin-top: .65rem;
       display: flex;
@@ -569,6 +587,75 @@
       letter-spacing: .14em;
       text-transform: uppercase;
       color: var(--dk-dim);
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 1px;
+      background: var(--dk-line);
+      border-bottom: 1px solid var(--dk-line);
+    }
+    .compareCard {
+      background: var(--dk);
+      padding: 2.1rem 2.2rem;
+      min-width: 0;
+    }
+    .compareCard__k {
+      font-family: var(--font-mono);
+      font-size: .62rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--dk-faint);
+      margin-bottom: .75rem;
+    }
+    .compareCard__host {
+      font-family: var(--font-mono);
+      font-size: .74rem;
+      color: var(--dk-dim);
+      word-break: break-all;
+      margin-bottom: 1.1rem;
+    }
+    .compareCard__verdict {
+      font-size: 1.58rem;
+      line-height: 1.22;
+      font-weight: 700;
+      letter-spacing: 0;
+      color: var(--dk-text);
+      margin-bottom: 1rem;
+    }
+    .compareCard__verdict.bad { color: #f4e3de; }
+    .compareCard__stat {
+      font-family: var(--font-mono);
+      font-size: 4.2rem;
+      line-height: .95;
+      color: var(--dk-text);
+      font-variant-numeric: tabular-nums;
+      margin-bottom: .45rem;
+    }
+    .compareCard__stat.bad { color: var(--dk-red); text-shadow: 0 0 24px rgba(224,82,60,.32); }
+    .compareCard__stat sup { font-size: .34em; color: var(--dk-dim); vertical-align: .9em; }
+    .compareCard__caption {
+      color: var(--dk-dim);
+      font-size: .86rem;
+      line-height: 1.55;
+      margin-bottom: 1rem;
+    }
+    .compareNote {
+      border-bottom: 1px solid var(--dk-line);
+      padding: 1rem 2.6rem;
+      font-family: var(--font-mono);
+      color: var(--dk-dim);
+      font-size: .72rem;
+      line-height: 1.7;
+    }
+    .compareNote b { color: var(--dk-red); font-weight: 500; }
+    .diffEmpty {
+      border-top: 1px solid var(--dk-line);
+      padding: 1.1rem .2rem 0;
+      color: var(--dk-dim);
+      font-size: .92rem;
+      line-height: 1.65;
     }
 
     .iSec {
@@ -839,6 +926,33 @@
     .mx .na { color: var(--dk-faint); }
     .mx tr.hot td { background: rgba(224,82,60,.07); }
     .mx tr:hover td { background: rgba(236,231,220,.03); }
+    .mx .mxg td {
+      padding-top: 1rem;
+      padding-bottom: .35rem;
+      border-bottom: 1px solid var(--dk-line);
+      color: var(--dk-red);
+      font-family: var(--font-mono);
+      font-size: .58rem;
+      font-weight: 600;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      background: transparent;
+    }
+    .mx .mxhide { display: table-row; }
+    .mxMore {
+      display: none;
+      margin-top: .9rem;
+      border: 1px solid var(--dk-line);
+      background: transparent;
+      color: var(--dk-dim);
+      font-family: var(--font-mono);
+      font-size: .66rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: .7rem .85rem;
+      cursor: pointer;
+    }
+    .mxMore:hover { color: var(--dk-text); border-color: var(--dk-dim); }
 
     .ledger-k {
       font-family: var(--font-mono);
@@ -1068,6 +1182,12 @@
       .mast__verdict, .err h2 { font-size: 2.05rem; }
       .tool-hero__title { font-size: 2.65rem; }
       .mx { display: block; overflow-x: auto; }
+      .mx .mxhide { display: none; }
+      .mx.expanded .mxhide { display: table-row; }
+      .mxMore { display: inline-block; }
+      .compare { grid-template-columns: 1fr; }
+      .compareCard { padding: 1.6rem 1.2rem; }
+      .compareNote { padding-left: 1.2rem; padding-right: 1.2rem; }
       .fix { grid-template-columns: 2.5rem 1fr; }
     }
 
@@ -1117,6 +1237,12 @@
         <span class="tool-form__prompt" aria-hidden="true">▸</span>
         <input type="text" inputmode="url" id="url-input" class="tool-form__input" placeholder="example.com  or  https://example.com/page" autocomplete="off" spellcheck="false" required>
         <button type="submit" class="tool-form__btn" id="check-btn" aria-label="Check the page">Develop</button>
+      </div>
+      <button type="button" class="tool-form__compare" id="compare-toggle" aria-expanded="false">Compare with a competitor -&gt;</button>
+      <label class="sr-only" for="vs-input">Competitor URL to compare</label>
+      <div class="tool-form__row tool-form__row--vs" id="compare-row" hidden>
+        <span class="tool-form__prompt" aria-hidden="true">vs</span>
+        <input type="text" inputmode="url" id="vs-input" class="tool-form__input" placeholder="competitor.com  or  https://competitor.com/page" autocomplete="off" spellcheck="false">
       </div>
       <p class="tool-form__hint"><span>Free, no signup. About 10 seconds on any public page.</span><a href="#how" id="example-link">Or try an example →</a></p>
       <p class="tool-form__bots">Tested against <i>·</i> GPTBot <i>·</i> ClaudeBot <i>·</i> PerplexityBot <i>·</i> OAI-SearchBot <i>·</i> Google-Extended <i>·</i> Applebot <i>·</i> CCBot <i>·</i> + more</p>
@@ -1568,6 +1694,9 @@
 
       var form = document.getElementById('check-form');
       var input = document.getElementById('url-input');
+      var vsInput = document.getElementById('vs-input');
+      var compareToggle = document.getElementById('compare-toggle');
+      var compareRow = document.getElementById('compare-row');
       var btn = document.getElementById('check-btn');
       var instrument = document.getElementById('instrument');
       var scanEl = document.getElementById('scan');
@@ -1590,6 +1719,7 @@
         'robots': { title: 'Your site’s rules file tells AI bots to stay out.', fix: 'Your robots.txt blocks the AI crawlers. If you want to show up in AI answers, ask your developer to allow them.', who: 'your web developer' },
         'cloaking': { title: 'AI bots are shown a different page than people see.', fix: 'Serve everyone the same content — showing bots a thinner page is risky and can misrepresent you.', who: 'your web developer' },
         'content': { title: 'Most of your page only loads with JavaScript.', fix: 'Most AI can’t run JavaScript, so they see almost nothing. Ask whoever built your site about “server-side rendering” or a static version of your pages.', who: 'your web developer' },
+        'meta-robots': { title: 'Your page asks search systems not to index it.', fix: 'Check whether the noindex tag or X-Robots-Tag header is intentional. If you want this page to appear in search and AI answers, remove the noindex rule.', who: 'site admin / SEO settings' },
         'title': { title: 'Your page has no title.', fix: 'AI (and Google) use the title to label your page. Add a clear page title.', who: 'site admin / SEO settings' },
         'meta': { title: 'No short summary for AI to quote.', fix: 'Add a meta description — a one-sentence summary of the page. Your site builder or SEO plugin can do this.', who: 'site admin / SEO settings' },
         'headings': { title: 'Your headings aren’t structured cleanly.', fix: 'Use one main heading and clear subheadings. It helps AI (and readers) follow the page.', who: 'your web developer' },
@@ -1640,6 +1770,31 @@
         catch (e) { return url || 'this page'; }
       }
 
+      function showCompare(on) {
+        if (!compareRow || !compareToggle) return;
+        compareRow.hidden = !on;
+        compareToggle.setAttribute('aria-expanded', on ? 'true' : 'false');
+      }
+
+      function fetchCheck(url) {
+        return fetch('/api/check?url=' + encodeURIComponent(url))
+          .then(function (r) {
+            return r.text().then(function (text) {
+              var body = null;
+              try { body = JSON.parse(text); } catch (e) {}
+              return { ok: r.ok, body: body };
+            });
+          });
+      }
+
+      function replaceShareUrl(url, vs) {
+        try {
+          var next = '?url=' + encodeURIComponent(url);
+          if (vs) next += '&vs=' + encodeURIComponent(vs);
+          history.replaceState(null, '', next);
+        } catch (e) {}
+      }
+
       function prettyTime(iso) {
         var d = iso ? new Date(iso) : new Date();
         if (isNaN(d.getTime())) d = new Date();
@@ -1669,18 +1824,13 @@
       function run(url) {
         url = normalizeUrl(url);
         if (!url) return;
+        var vs = compareRow && !compareRow.hidden && vsInput ? normalizeUrl(vsInput.value) : '';
+        if (vs) return runCompare(url, vs);
         input.value = url;
         setBusy(true);
         var scan = beginScan(url);
 
-        fetch('/api/check?url=' + encodeURIComponent(url))
-          .then(function (r) {
-            return r.text().then(function (text) {
-              var body = null;
-              try { body = JSON.parse(text); } catch (e) {}
-              return { ok: r.ok, body: body };
-            });
-          })
+        fetchCheck(url)
           .then(function (res) {
             if (!res.body || res.body.ok === false) {
               scan.fail(res.body && res.body.error ? res.body.error : 'Something went wrong.');
@@ -1688,11 +1838,58 @@
             }
             scan.finish(res.body, function () {
               renderReport(res.body);
-              try { history.replaceState(null, '', '?url=' + encodeURIComponent(url)); } catch (e) {}
+              replaceShareUrl(url);
             });
           })
           .catch(function () {
             scan.fail('Network error — please try again.');
+          })
+          .finally(function () {
+            setBusy(false);
+          });
+      }
+
+      function runCompare(url, vs) {
+        url = normalizeUrl(url);
+        vs = normalizeUrl(vs);
+        if (!url || !vs) return;
+        input.value = url;
+        if (vsInput) vsInput.value = vs;
+        showCompare(true);
+        setBusy(true);
+        var scan = beginScan(url + ' vs ' + vs);
+        var first;
+
+        fetchCheck(url)
+          .then(function (res) {
+            first = res;
+            return fetchCheck(vs);
+          })
+          .then(function (second) {
+            var firstBad = !first.body || first.body.ok === false;
+            var secondBad = !second.body || second.body.ok === false;
+            if (firstBad && secondBad) {
+              scan.fail((first.body && first.body.error) || (second.body && second.body.error) || 'Both pages failed.');
+              return;
+            }
+            if (firstBad || secondBad) {
+              var good = firstBad ? second.body : first.body;
+              var failedUrl = firstBad ? url : vs;
+              var message = firstBad ? (first.body && first.body.error) : (second.body && second.body.error);
+              scan.finish(good, function () {
+                renderReport(good);
+                renderCompareNote(failedUrl, message || 'That page could not be checked.');
+                replaceShareUrl(url, vs);
+              });
+              return;
+            }
+            scan.finish(first.body, function () {
+              renderCompare(first.body, second.body);
+              replaceShareUrl(url, vs);
+            });
+          })
+          .catch(function () {
+            scan.fail('Network error - please try again.');
           })
           .finally(function () {
             setBusy(false);
@@ -1911,6 +2108,140 @@
         renderSources(footnotes.list);
         renderShare();
         renderPlainWords(data, read, cite, agent);
+      }
+
+      function renderCompare(a, b) {
+        if (dividerCleanup) { dividerCleanup(); dividerCleanup = null; }
+        scanEl.hidden = true;
+        reportEl.hidden = false;
+        clear(reportEl);
+        plainWords.classList.remove('show');
+        instrument.classList.add('show');
+        instrument.classList.remove('develop');
+        void instrument.offsetWidth;
+        instrument.classList.add('develop');
+
+        var allA = allFindingsFor(a);
+        var allB = allFindingsFor(b);
+        var pair = el('div', 'compare');
+        pair.appendChild(renderCompareCard(a, 'Your page', allA));
+        pair.appendChild(renderCompareCard(b, 'Compared page', allB));
+        reportEl.appendChild(pair);
+
+        var diffs = compareDiffs(a, b);
+        var footnotes = buildFootnotes(diffs);
+        var sec = el('div', 'iSec');
+        sec.appendChild(el('div', 'iSec__k', 'Compare mode'));
+        sec.appendChild(el('h3', 'iSec__t', 'Differences only'));
+        sec.appendChild(el('p', 'iSec__d', hostFrom(a.url) + ' vs ' + hostFrom(b.url) + '. Same-status checks are hidden so the useful gaps stay visible.'));
+        if (diffs.length) sec.appendChild(buildLedger(diffs, 0, footnotes, true));
+        else sec.appendChild(el('p', 'diffEmpty', 'No pass/warn/fail differences found across the checks we ran. The pages may still differ in content, but their crawlability signals are similar.'));
+        reportEl.appendChild(sec);
+
+        renderMethod(a);
+        renderSources(footnotes.list);
+        renderShare();
+      }
+
+      function allFindingsFor(data) {
+        var read = orderedFindings(data.findings);
+        var cite = orderedFindings(data.citeability && data.citeability.findings);
+        var agent = orderedFindings(data.agentic && data.agentic.findings);
+        return read.concat(cite, agent);
+      }
+
+      function renderCompareCard(data, label, findings) {
+        var verdict = pageOnlyVerdict(verdictFor(data));
+        var stat = statFor(data);
+        var card = el('div', 'compareCard');
+        card.appendChild(el('div', 'compareCard__k', label));
+        card.appendChild(el('div', 'compareCard__host', hostFrom(data.url)));
+        card.appendChild(el('div', 'compareCard__verdict ' + (verdict.tone === 'bad' ? 'bad' : 'good'), verdict.pre + verdict.em + verdict.post));
+        var num = el('div', 'compareCard__stat ' + (stat.bad ? 'bad' : 'good'));
+        card.appendChild(num);
+        card.appendChild(el('p', 'compareCard__caption', stat.caption));
+        card.appendChild(renderTally(findings));
+        setTimeout(function () { countUp(num, stat.value, stat.suffix); }, 0);
+        return card;
+      }
+
+      function statFor(data) {
+        var ids = byId(data.findings);
+        var raw = data.content && data.content.visibleTextChars || 0;
+        var ren = data.rendered && data.rendered.visibleTextChars || 0;
+        var blocked = (ids['server-block'] && ids['server-block'].status === 'fail') || (ids.robots && ids.robots.status === 'fail');
+        var bad = blocked || (ids.content && ids.content.status === 'fail');
+        if (data.rendered && ren > 0) {
+          return {
+            value: Math.min(100, Math.round((raw / ren) * 100)),
+            suffix: '%',
+            bad: bad,
+            caption: 'raw-text survival with JavaScript off; browser text ' + fmt(ren) + ', raw crawler text ' + fmt(raw) + '.'
+          };
+        }
+        return { value: raw, suffix: 'chars', bad: bad, caption: 'readable raw HTML text; render was unavailable for this page.' };
+      }
+
+      function compareDiffs(a, b) {
+        var hostA = hostFrom(a.url);
+        var hostB = hostFrom(b.url);
+        var mapA = byId(allFindingsFor(a));
+        var mapB = byId(allFindingsFor(b));
+        var seen = {};
+        Object.keys(mapA).concat(Object.keys(mapB)).forEach(function (id) { seen[id] = true; });
+        return Object.keys(seen).sort().map(function (id) {
+          var fa = mapA[id];
+          var fb = mapB[id];
+          var sa = fa && fa.status || 'info';
+          var sb = fb && fb.status || 'info';
+          if (sa === sb) return null;
+          var rankA = statusRank(sa);
+          var rankB = statusRank(sb);
+          var base = (fa && fa.label) || (fb && fb.label) || id;
+          var leader = rankA === rankB ? 'Different signals for ' : (rankA > rankB ? hostA + ' is stronger on ' : hostB + ' is stronger on ');
+          var detail = hostA + ': ' + statusPhrase(sa) + detailTail(fa) + '; ' + hostB + ': ' + statusPhrase(sb) + detailTail(fb) + '.';
+          return {
+            id: 'diff-' + id,
+            label: leader + base,
+            status: rankA > rankB ? sa : sb,
+            detail: detail,
+            why: 'Compare mode hides matching checks and shows only the signals that separate the two pages.',
+            source: (fa && fa.source) || (fb && fb.source) || null
+          };
+        }).filter(Boolean).sort(function (x, y) {
+          return (SEV[x.status] == null ? 9 : SEV[x.status]) - (SEV[y.status] == null ? 9 : SEV[y.status]);
+        });
+      }
+
+      function statusRank(status) {
+        if (status === 'pass') return 3;
+        if (status === 'info') return 2;
+        if (status === 'warn') return 1;
+        if (status === 'fail') return 0;
+        return 2;
+      }
+
+      function statusPhrase(status) {
+        if (status === 'pass') return 'passes';
+        if (status === 'warn') return 'warns';
+        if (status === 'fail') return 'fails';
+        return 'info';
+      }
+
+      function detailTail(finding) {
+        return finding && finding.detail ? ' (' + truncateText(finding.detail, 90) + ')' : '';
+      }
+
+      function truncateText(text, limit) {
+        text = String(text || '').replace(/\s+/g, ' ').trim();
+        return text.length > limit ? text.slice(0, limit - 1) + '...' : text;
+      }
+
+      function renderCompareNote(failedUrl, message) {
+        var note = el('div', 'compareNote');
+        note.appendChild(el('b', null, hostFrom(failedUrl) + ' did not finish. '));
+        note.appendChild(document.createTextNode(message));
+        reportEl.insertBefore(note, reportEl.firstChild);
       }
 
       function renderMast(data, verdict) {
@@ -2228,6 +2559,8 @@
       }
 
       function renderMatrix(data) {
+        renderGroupedMatrix(data);
+        return;
         var sec = el('div', 'iSec');
         sec.appendChild(el('div', 'iSec__k', 'Who gets in'));
         sec.appendChild(el('h3', 'iSec__t', 'Access, bot by bot'));
@@ -2252,6 +2585,72 @@
         table.appendChild(tbody);
         sec.appendChild(table);
         reportEl.appendChild(sec);
+      }
+
+      function renderGroupedMatrix(data) {
+        var sec = el('div', 'iSec');
+        sec.appendChild(el('div', 'iSec__k', 'Who gets in'));
+        sec.appendChild(el('h3', 'iSec__t', 'Access, bot by bot'));
+        sec.appendChild(el('p', 'iSec__d', 'Every AI assistant sends its own crawler. We knock on your door as each one and record what happens.'));
+        var table = el('table', 'mx');
+        var thead = el('thead');
+        var hr = el('tr');
+        ['Crawler', 'robots.txt', 'Server', 'Runs JS'].forEach(function (t) { hr.appendChild(el('th', null, t)); });
+        thead.appendChild(hr);
+        table.appendChild(thead);
+        var tbody = el('tbody');
+        var groups = groupBots(data.botAccess || []);
+        var botIndex = 0;
+        var hidden = 0;
+        groups.forEach(function (g) {
+          var groupHidden = botIndex >= 8;
+          var gh = el('tr', 'mxg' + (groupHidden ? ' mxhide' : ''));
+          var gt = el('td', null, g.name);
+          gt.colSpan = 4;
+          gh.appendChild(gt);
+          tbody.appendChild(gh);
+          g.bots.forEach(function (b) {
+            var rowHidden = botIndex >= 8;
+            if (rowHidden) hidden++;
+            var cls = (b.server === 'blocked' || b.server === 'cloaked' || b.robots === 'disallowed') ? 'hot' : '';
+            if (rowHidden) cls += (cls ? ' ' : '') + 'mxhide';
+            var tr = el('tr', cls || null);
+            var name = el('td', 'bot', b.label || b.token);
+            name.appendChild(el('span', null, b.owner || ''));
+            tr.appendChild(name);
+            tr.appendChild(statusTd(robotText(b.robots), b.robots === 'disallowed' ? 'no' : b.robots === 'allowed' ? 'ok' : 'na'));
+            tr.appendChild(statusTd(serverText(b), (b.server === 'blocked' || b.server === 'cloaked' || b.server === 'error') ? 'no' : b.server === 'ok' ? 'ok' : 'na'));
+            tr.appendChild(statusTd(b.rendersJS ? 'yes' : 'no', b.rendersJS ? 'yes' : 'na'));
+            tbody.appendChild(tr);
+            botIndex++;
+          });
+        });
+        table.appendChild(tbody);
+        sec.appendChild(table);
+        if (hidden > 0) {
+          var more = el('button', 'mxMore', '+' + hidden + ' more bots');
+          more.type = 'button';
+          more.addEventListener('click', function () {
+            table.classList.add('expanded');
+            more.hidden = true;
+          });
+          sec.appendChild(more);
+        }
+        reportEl.appendChild(sec);
+      }
+
+      function groupBots(bots) {
+        var out = [];
+        var map = {};
+        bots.forEach(function (b) {
+          var key = b.group || b.owner || 'Other';
+          if (!map[key]) {
+            map[key] = { name: key, bots: [] };
+            out.push(map[key]);
+          }
+          map[key].bots.push(b);
+        });
+        return out;
       }
 
       function statusTd(text, cls) {
@@ -2441,14 +2840,35 @@
         run(input.value);
       });
 
+      if (compareToggle) {
+        compareToggle.addEventListener('click', function () {
+          var next = compareRow ? compareRow.hidden : true;
+          showCompare(next);
+          if (next && vsInput) vsInput.focus();
+        });
+      }
+
       exampleLink.addEventListener('click', function (e) {
         e.preventDefault();
-        run('https://react.dev');
+        if (compareRow && !compareRow.hidden && vsInput) {
+          input.value = 'https://react.dev';
+          vsInput.value = 'https://nytimes.com';
+          run(input.value);
+        } else {
+          run('https://react.dev');
+        }
       });
 
       var params = new URLSearchParams(window.location.search);
       var initial = params.get('url');
-      if (initial) run(initial);
+      var initialVs = params.get('vs');
+      if (initialVs) {
+        showCompare(true);
+        if (vsInput) vsInput.value = normalizeUrl(initialVs);
+        if (initial) runCompare(initial, initialVs);
+      } else if (initial) {
+        run(initial);
+      }
     })();
   </script>
 

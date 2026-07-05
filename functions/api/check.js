@@ -25,17 +25,25 @@ const BROWSER_UA =
 // standalone AI crawlers take raw HTML and DON'T run JS; Gemini (Google-Extended,
 // via Googlebot's renderer) and Applebot DO render.
 const AI_BOTS = [
-  { token: "GPTBot",          label: "GPTBot",          owner: "OpenAI (training)",       rendersJS: false, ua: "Mozilla/5.0 (compatible; GPTBot/1.3; +https://openai.com/gptbot)" },
-  { token: "OAI-SearchBot",   label: "OAI-SearchBot",   owner: "OpenAI (ChatGPT search)", rendersJS: false, ua: "Mozilla/5.0 (compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot)" },
-  { token: "ChatGPT-User",    label: "ChatGPT-User",    owner: "OpenAI (live fetch)",     rendersJS: false, ua: "Mozilla/5.0 (compatible; ChatGPT-User/1.0; +https://openai.com/bot)" },
-  { token: "ClaudeBot",       label: "ClaudeBot",       owner: "Anthropic",               rendersJS: false, ua: "Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)" },
-  { token: "PerplexityBot",   label: "PerplexityBot",   owner: "Perplexity",              rendersJS: false, ua: "Mozilla/5.0 (compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)" },
-  { token: "CCBot",           label: "CCBot",           owner: "Common Crawl",            rendersJS: false, ua: "CCBot/2.0 (https://commoncrawl.org/faq/)" },
-  { token: "Google-Extended", label: "Google-Extended", owner: "Google Gemini (renders via Googlebot)", rendersJS: true, ua: null },
-  { token: "Applebot",        label: "Applebot",        owner: "Apple (search; feeds Apple Intelligence)", rendersJS: true, ua: "Mozilla/5.0 (compatible; Applebot/0.1; +http://www.apple.com/go/applebot)" },
+  { token: "GPTBot",             label: "GPTBot",             group: "OpenAI",      owner: "OpenAI (training)",        rendersJS: false, ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.3; +https://openai.com/gptbot", source: "https://developers.openai.com/api/docs/bots" },
+  { token: "OAI-SearchBot",      label: "OAI-SearchBot",      group: "OpenAI",      owner: "OpenAI (ChatGPT search)",  rendersJS: false, ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.3; +https://openai.com/searchbot", source: "https://developers.openai.com/api/docs/bots" },
+  { token: "ChatGPT-User",       label: "ChatGPT-User",       group: "OpenAI",      owner: "OpenAI (live fetch)",      rendersJS: false, ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot", source: "https://developers.openai.com/api/docs/bots" },
+  { token: "ClaudeBot",          label: "ClaudeBot",          group: "Anthropic",   owner: "Anthropic (training)",     rendersJS: false, ua: "ClaudeBot", source: "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler" },
+  { token: "Claude-SearchBot",   label: "Claude-SearchBot",   group: "Anthropic",   owner: "Anthropic (search)",       rendersJS: false, ua: "Claude-SearchBot", source: "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler" },
+  { token: "Claude-User",        label: "Claude-User",        group: "Anthropic",   owner: "Anthropic (user fetch)",   rendersJS: false, ua: "Claude-User", source: "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler" },
+  { token: "PerplexityBot",      label: "PerplexityBot",      group: "Perplexity",  owner: "Perplexity (search)",      rendersJS: false, ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)", source: "https://docs.perplexity.ai/docs/resources/perplexity-crawlers" },
+  { token: "Perplexity-User",    label: "Perplexity-User",    group: "Perplexity",  owner: "Perplexity (user fetch)",  rendersJS: false, ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Perplexity-User/1.0; +https://perplexity.ai/perplexity-user)", source: "https://docs.perplexity.ai/docs/resources/perplexity-crawlers" },
+  { token: "CCBot",              label: "CCBot",              group: "Common Crawl", owner: "Common Crawl",            rendersJS: false, ua: "CCBot/2.0 (https://commoncrawl.org/faq/)", source: "https://commoncrawl.org/ccbot" },
+  { token: "Google-Extended",    label: "Google-Extended",    group: "Google",      owner: "Google Gemini control token", rendersJS: true, ua: null, source: "https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers" },
+  { token: "Applebot",           label: "Applebot",           group: "Apple",       owner: "Apple (search; feeds Apple Intelligence)", rendersJS: true, ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15 (Applebot/0.1; +http://www.apple.com/go/applebot)", source: "https://support.apple.com/en-us/119829" },
+  { token: "Meta-ExternalAgent", label: "Meta-ExternalAgent", group: "Meta",        owner: "Meta AI (training)",       rendersJS: false, ua: "meta-externalagent/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler)", source: "https://developers.facebook.com/docs/sharing/webmasters/web-crawlers" },
+  { token: "Amazonbot",          label: "Amazonbot",          group: "Amazon",      owner: "Amazon (Alexa/Rufus)",     rendersJS: false, ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amazonbot/0.1; +https://developer.amazon.com/support/amazonbot) Chrome/119.0.6045.214 Safari/537.36", source: "https://developer.amazon.com/amazonbot" },
+  { token: "Bytespider",         label: "Bytespider",         group: "ByteDance",   owner: "ByteDance / TikTok (training)", rendersJS: false, ua: "Bytespider", source: "https://zhanzhang.toutiao.com/docs/intro/26899" },
+  { token: "DuckAssistBot",      label: "DuckAssistBot",      group: "DuckDuckGo",  owner: "DuckDuckGo AI answers",   rendersJS: false, ua: "DuckAssistBot/1.2; (+http://duckduckgo.com/duckassistbot.html)", source: "https://duckduckgo.com/duckduckgo-help-pages/results/duckassistbot" },
+  { token: "MistralAI-User",     label: "MistralAI-User",     group: "Mistral",     owner: "Mistral (user fetch)",     rendersJS: false, ua: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; MistralAI-User/1.0; +https://docs.mistral.ai/robots)", source: "https://docs.mistral.ai/robots" },
 ];
 
-const PROBE_TOKENS = ["GPTBot", "ClaudeBot", "PerplexityBot"];
+const PROBE_TOKENS = ["GPTBot", "ClaudeBot", "PerplexityBot", "Claude-SearchBot", "Meta-ExternalAgent", "Amazonbot"];
 
 const SRC = {
   vercel:    { label: "Vercel AI-crawler study (2024)",         url: "https://vercel.com/blog/the-rise-of-the-ai-crawler" },
@@ -48,6 +56,8 @@ const SRC = {
   freshness: { label: "Semrush via ConvertMate (secondary source, 2026)", url: "https://www.omnibound.ai/blog/generative-engine-optimization-statistics" },
   position:  { label: "Kevin Indig citation-position analysis (secondary source, 2026)", url: "https://ahrefs.com/blog/how-to-rank-on-chatgpt/" },
   lighthouse:{ label: "Google Lighthouse — Agentic Browsing",   url: "https://developer.chrome.com/docs/lighthouse/agentic-browsing/scoring" },
+  robotMeta: { label: "Google Search Central - robots meta and X-Robots-Tag", url: "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag" },
+  contentSignals: { label: "Content Signals specification", url: "https://contentsignals.org/" },
   webmcp:    { label: "WebMCP (W3C Community Group draft)",      url: "https://github.com/webmachinelearning/webmcp" },
 };
 
@@ -187,14 +197,15 @@ export async function onRequestGet({ request, env }) {
       return json({ ok: false, error: `That link isn't a web page (it's ${baseline.contentType.split(";")[0].trim()}). Paste a normal page URL instead.` }, 415);
     }
 
-    const robotsRules = robotsRes.ok ? parseRobots(robotsRes.body) : null;
+    const robotsRules = robotsRes.ok && robotsRes.status < 400 ? parseRobots(robotsRes.body) : null;
+    const contentSignals = robotsRes.ok && robotsRes.status < 400 ? parseContentSignals(robotsRes.body) : [];
     const path = target.pathname || "/";
 
     const probeByToken = {};
     PROBE_TOKENS.forEach((t, i) => (probeByToken[t] = probes[i]));
 
     const botAccess = AI_BOTS.map((bot) => {
-      const robots = robotsRules === null ? "no-robots" : isAllowed(robotsRules, bot.token, path) ? "allowed" : "disallowed";
+      const robots = robotsRules === null ? "no-robots" : isAllowed(robotsRules, bot, path) ? "allowed" : "disallowed";
       let server = "not-probed";
       const probe = probeByToken[bot.token];
       if (probe) {
@@ -203,12 +214,13 @@ export async function onRequestGet({ request, env }) {
         else if (baseline.ok && probe.ok && cloaked(baseline, probe)) server = "cloaked";
         else server = "ok";
       }
-      return { token: bot.token, label: bot.label, owner: bot.owner, rendersJS: bot.rendersJS, robots, server, status: probe ? probe.status : null };
+      return { token: bot.token, label: bot.label, group: bot.group, owner: bot.owner, rendersJS: bot.rendersJS, robots, server, status: probe ? probe.status : null, source: bot.source || null };
     });
 
     // Raw HTML = what a non-JS crawler receives.
     const rawHtml = baseline.ok ? baseline.body : (probes.find((p) => p.ok)?.body || "");
     const rawPage = analyzeHtml(rawHtml);
+    const indexSignals = parseIndexSignals(rawHtml, baseline.headers || {}, AI_BOTS);
 
     // Rendered HTML (post-JS) via Cloudflare Browser Rendering, if configured.
     const render = await renderViaCloudflare(target.href, env);
@@ -226,7 +238,7 @@ export async function onRequestGet({ request, env }) {
     const llms = { present: llmsRes.ok && llmsRes.status === 200, looksValid: false };
     if (llms.present) llms.looksValid = /^\s*#\s+/.test(llmsRes.body) && /\n\s*##\s+/.test(llmsRes.body);
 
-    const findings = buildFindings({ botAccess, rawPage, renderedPage, llms });
+    const findings = buildFindings({ botAccess, rawPage, renderedPage, llms, indexSignals, contentSignals });
     const summary = findings.reduce((a, f) => ((a[f.status] = (a[f.status] || 0) + 1), a), { pass: 0, warn: 0, fail: 0 });
     const citeability = buildCiteability({ rawHtml, rawPage, renderedPage, target });
 
@@ -246,6 +258,7 @@ export async function onRequestGet({ request, env }) {
       rendered: renderedPage ? { visibleTextChars: renderedPage.visibleTextChars, headings: renderedPage.headings, hasJsonLd: renderedPage.hasJsonLd, outline: renderedPage.outline } : null,
       screenshot: render.screenshot || null,
       llms,
+      signals: { metaRobots: indexSignals, contentSignals },
       method: { note: METHOD_NOTE },
       findings,
       citeability,
@@ -372,9 +385,17 @@ async function safeFetch(url, ua) {
   try {
     const res = await fetch(url, { headers: { "User-Agent": ua, Accept: "text/html,*/*" }, redirect: "follow", signal: ctrl.signal, cf: { cacheTtl: 0 } });
     const body = await readCapped(res);
-    return { ok: true, status: res.status, body, bytes: body.length, finalUrl: res.url, contentType: res.headers.get("content-type") || "" };
+    return {
+      ok: true,
+      status: res.status,
+      body,
+      bytes: body.length,
+      finalUrl: res.url,
+      contentType: res.headers.get("content-type") || "",
+      headers: { xRobotsTag: res.headers.get("x-robots-tag") || "" },
+    };
   } catch (e) {
-    return { ok: false, status: 0, body: "", bytes: 0, error: e.name === "AbortError" ? "timeout" : e.message };
+    return { ok: false, status: 0, body: "", bytes: 0, headers: {}, error: e.name === "AbortError" ? "timeout" : e.message };
   } finally {
     clearTimeout(t);
   }
@@ -427,8 +448,25 @@ function parseRobots(text) {
   return groups;
 }
 
-function isAllowed(groups, token, path) {
-  const rules = groups[token.toLowerCase()] || groups["*"] || null;
+function parseContentSignals(text) {
+  const signals = [];
+  for (const rawLine of String(text || "").split(/\r?\n/)) {
+    const line = rawLine.trim();
+    const m = /^content-signal\s*:\s*(.+)$/i.exec(line);
+    if (!m) continue;
+    const raw = m[1].trim();
+    const directives = {};
+    raw.split(",").forEach((part) => {
+      const kv = part.trim().split(/\s*=\s*/);
+      if (kv.length === 2 && kv[0]) directives[kv[0].toLowerCase()] = kv[1].toLowerCase();
+    });
+    signals.push({ raw, directives });
+  }
+  return signals;
+}
+
+function isAllowed(groups, bot, path) {
+  const rules = robotsRulesFor(groups, bot) || null;
   if (!rules || rules.length === 0) return true;
   let best = null, bestLen = -1;
   for (const r of rules) {
@@ -439,11 +477,58 @@ function isAllowed(groups, token, path) {
   return best.type === "allow";
 }
 
+function robotsRulesFor(groups, bot) {
+  const token = String(bot && bot.token || "").toLowerCase();
+  let best = null, bestLen = -1;
+  for (const key of Object.keys(groups || {})) {
+    if (key === "*") continue;
+    const k = key.toLowerCase();
+    const matches = k === token || k.startsWith(token) || token.startsWith(k);
+    if (matches && k.length > bestLen) {
+      best = groups[key];
+      bestLen = k.length;
+    }
+  }
+  return best || (groups && groups["*"]) || null;
+}
+
 function robotsMatchLen(pattern, path) {
   if (pattern === "") return -1;
   let re = "^" + pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
   if (re.endsWith("\\$")) re = re.slice(0, -2) + "$";
   try { return new RegExp(re).test(path) ? pattern.replace(/\*/g, "").length : -1; } catch { return -1; }
+}
+
+function parseIndexSignals(html, headers, bots) {
+  const names = new Set(["robots", ...bots.map((b) => b.token.toLowerCase())]);
+  const records = [];
+  let m, guard = 0;
+  const metaRe = /<meta\b[^>]*>/gi;
+  while ((m = metaRe.exec(html || "")) !== null && guard++ < 5000) {
+    const tag = m[0];
+    const name = String(attr(tag, "name") || "").trim().toLowerCase();
+    if (!name || !names.has(name)) continue;
+    const content = String(attr(tag, "content") || "").trim();
+    if (!content) continue;
+    records.push(indexDirectiveRecord("meta", name, content));
+  }
+
+  const header = String(headers && (headers.xRobotsTag || headers["x-robots-tag"]) || "").trim();
+  if (header) records.push(indexDirectiveRecord("header", "x-robots-tag", header));
+
+  return {
+    records,
+    hasNoindex: records.some((r) => r.noindex),
+    hasNoai: records.some((r) => r.noai),
+  };
+}
+
+function indexDirectiveRecord(source, name, content) {
+  const lower = content.toLowerCase();
+  const directives = lower.split(/[,\s;]+/).map((d) => d.trim()).filter(Boolean);
+  const noindex = directives.includes("noindex") || directives.includes("none") || /\bnoindex\b/i.test(content) || /\bnone\b/i.test(content);
+  const noai = directives.includes("noai") || directives.includes("noimageai") || /\bnoai\b/i.test(content) || /\bnoimageai\b/i.test(content);
+  return { source, name, content, directives, noindex, noai };
 }
 
 function analyzeHtml(html) {
@@ -1015,7 +1100,7 @@ function a11yFromHtml(html) {
 
 // --- Findings ---------------------------------------------------------------
 
-function buildFindings({ botAccess, rawPage, renderedPage, llms }) {
+function buildFindings({ botAccess, rawPage, renderedPage, llms, indexSignals, contentSignals }) {
   const f = [];
 
   const blocked = botAccess.filter((b) => b.server === "blocked");
@@ -1046,6 +1131,8 @@ function buildFindings({ botAccess, rawPage, renderedPage, llms }) {
 
   // The headline check: raw-vs-rendered content gap.
   f.push(contentFinding(rawPage, renderedPage, botAccess));
+  f.push(metaRobotsFinding(indexSignals));
+  f.push(contentSignalsFinding(contentSignals));
 
   // Citeability basics — judged on the RAW HTML (what most AI crawlers get).
   if (!rawPage.title) f.push(finding("title", "Missing <title>", "fail", "No title tag in the raw HTML.", "A clear title helps models label and summarize this page.", SRC.googleTitle));
@@ -1070,6 +1157,37 @@ function buildFindings({ botAccess, rawPage, renderedPage, llms }) {
 
   applyHonestyFixes(f);
   return f;
+}
+
+function metaRobotsFinding(signals) {
+  const records = signals && signals.records || [];
+  const cited = records.length ? records.map((r) => `${r.source === "header" ? "X-Robots-Tag" : r.name}: ${truncate(r.content, 70)}`).slice(0, 4).join("; ") : "No robots meta tag or X-Robots-Tag header found.";
+
+  if (signals && signals.hasNoindex) {
+    return finding("meta-robots", "Page asks not to be indexed", "fail",
+      cited,
+      "A noindex directive asks search engines not to include this page; AI answers that rely on search may leave it out too. Deliberate?", SRC.robotMeta);
+  }
+  if (signals && signals.hasNoai) {
+    return finding("meta-robots", "AI opt-out meta signal found", "info",
+      cited,
+      "noai/noimageai is not an official robots standard, but some systems treat it as a preference signal.", SRC.robotMeta);
+  }
+  return finding("meta-robots", "No noindex signal found", "pass",
+    cited,
+    "Nothing in the raw HTML or response header asks search systems to leave this page out.", SRC.robotMeta);
+}
+
+function contentSignalsFinding(signals) {
+  if (signals && signals.length) {
+    const detail = signals.map((s) => `Content-Signal: ${truncate(s.raw, 90)}`).slice(0, 4).join("; ");
+    return finding("content-signals", "Content-Signal policy declared", "info",
+      detail,
+      "Content Signals are a voluntary robots.txt policy for search and AI-training preferences; they state intent but do not guarantee enforcement.", SRC.contentSignals);
+  }
+  return finding("content-signals", "No Content-Signal policy declared", "info",
+    "robots.txt has no Content-Signal lines.",
+    "Content Signals are a newer voluntary way to state search and AI-training preferences. Absence is normal.", SRC.contentSignals);
 }
 
 function applyHonestyFixes(findings) {
