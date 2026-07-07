@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Regenerate research/index.html from the set of research/*.html articles.
+// Regenerate research/index.html, research/feed.xml, and sitemap.xml from the
+// set of research/*.html articles.
 // Each article must contain a hidden BLURSOR-META JSON comment, e.g.:
 //   <!-- BLURSOR-META: {"slug":"...","title":"...","published_date":"YYYY-MM-DD","reading_time_min":7,"category_label":"...","summary_for_card":"...","arxiv_id":"..."} -->
 // Articles missing the comment are skipped (with a warning).
@@ -9,10 +10,14 @@ const path = require('path');
 
 const DEPLOY_ROOT = path.resolve(__dirname, '..');
 const RESEARCH_DIR = path.join(DEPLOY_ROOT, 'research');
+const HOME_PATH = path.join(DEPLOY_ROOT, 'index.html');
 const INDEX_PATH = path.join(RESEARCH_DIR, 'index.html');
+const FEED_PATH = path.join(RESEARCH_DIR, 'feed.xml');
 const SITEMAP_PATH = path.join(DEPLOY_ROOT, 'sitemap.xml');
 
 const BASE_URL = 'https://blursor.ai';
+const FEED_URL = `${BASE_URL}/research/feed.xml`;
+const FEED_LINK_TAG = `<link rel="alternate" type="application/rss+xml" title="BLURSOR Research RSS" href="${FEED_URL}">`;
 // Static routes that exist regardless of article set. Each maps a URL path to
 // its on-disk source so lastmod reflects the file's real mtime.
 const STATIC_ROUTES = [
@@ -44,6 +49,10 @@ function fmtDate(iso) {
 }
 
 function escapeHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escapeXml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
@@ -82,6 +91,43 @@ function fileLastmod(filePath) {
   }
 }
 
+function rssDate(iso) {
+  const d = new Date(iso);
+  return isNaN(d) ? new Date().toUTCString() : d.toUTCString();
+}
+
+function buildFeed(articles) {
+  const latestDate = articles[0]?.published_date || new Date().toISOString();
+  const items = articles.map(a => {
+    const url = `${BASE_URL}/research/${a.slug}`;
+    const description = a.summary_for_card || a.subtitle || a.meta_description || '';
+    const category = a.category_label ? `\n      <category>${escapeXml(a.category_label)}</category>` : '';
+    return `    <item>
+      <title>${escapeXml(a.title)}</title>
+      <link>${escapeXml(url)}</link>
+      <guid isPermaLink="true">${escapeXml(url)}</guid>
+      <pubDate>${rssDate(a.published_date)}</pubDate>
+      <description>${escapeXml(description)}</description>${category}
+    </item>`;
+  }).join('\n');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n` +
+    `  <channel>\n` +
+    `    <title>BLURSOR Research</title>\n` +
+    `    <link>${BASE_URL}/research</link>\n` +
+    `    <atom:link href="${FEED_URL}" rel="self" type="application/rss+xml"/>\n` +
+    `    <description>Research on why AI says what it says, distilled for practitioners.</description>\n` +
+    `    <language>en</language>\n` +
+    `    <lastBuildDate>${rssDate(latestDate)}</lastBuildDate>\n` +
+    `${items}\n` +
+    `  </channel>\n` +
+    `</rss>\n`;
+
+  fs.writeFileSync(FEED_PATH, xml, 'utf-8');
+  console.log(`  wrote ${path.relative(DEPLOY_ROOT, FEED_PATH)} with ${articles.length} item(s)`);
+}
+
 function buildSitemap(articles) {
   const urls = [];
 
@@ -107,6 +153,52 @@ function buildSitemap(articles) {
 
   fs.writeFileSync(SITEMAP_PATH, xml, 'utf-8');
   console.log(`  wrote ${path.relative(DEPLOY_ROOT, SITEMAP_PATH)} with ${urls.length} URL(s)`);
+}
+
+function ensureFeedDiscovery(filePath) {
+  if (!fs.existsSync(filePath)) return false;
+
+  const html = fs.readFileSync(filePath, 'utf-8');
+  if (/rel=["']alternate["'][^>]+application\/rss\+xml/i.test(html) || html.includes(FEED_URL)) {
+    return false;
+  }
+
+  let updated;
+  const fontsMarker = '\n  <!-- Fonts -->';
+  if (html.includes(fontsMarker)) {
+    updated = html.replace(fontsMarker, `\n  ${FEED_LINK_TAG}\n${fontsMarker}`);
+  } else {
+    updated = html.replace(/<\/head>/i, `  ${FEED_LINK_TAG}\n</head>`);
+  }
+
+  if (updated === html) return false;
+  fs.writeFileSync(filePath, updated, 'utf-8');
+  return true;
+}
+
+function replaceBlockedDigestLinks(filePath) {
+  if (!fs.existsSync(filePath)) return false;
+
+  const html = fs.readFileSync(filePath, 'utf-8');
+  const updated = html
+    .replace(/<li><a href="\/digest">Weekly Digest<\/a><\/li>/g, '<li><a href="/research/feed.xml">RSS Feed</a></li>')
+    .replace(/\n\s*<li><a href="\/digest">Newsletter<\/a><\/li>/g, '');
+
+  if (updated === html) return false;
+  fs.writeFileSync(filePath, updated, 'utf-8');
+  return true;
+}
+
+function updateFeedDiscovery(articleFiles) {
+  const targets = [HOME_PATH, INDEX_PATH, ...articleFiles];
+  let discoveryChanged = 0;
+  let digestLinksChanged = 0;
+  for (const target of targets) {
+    if (ensureFeedDiscovery(target)) discoveryChanged += 1;
+    if (target.startsWith(RESEARCH_DIR) && replaceBlockedDigestLinks(target)) digestLinksChanged += 1;
+  }
+  console.log(`  ensured RSS discovery on ${targets.length} page(s); updated ${discoveryChanged}`);
+  console.log(`  replaced blocked /digest footer links on ${digestLinksChanged} research page(s)`);
 }
 
 function main() {
@@ -188,6 +280,9 @@ function main() {
 
   fs.writeFileSync(INDEX_PATH, updatedHtml, 'utf-8');
   console.log(`  wrote ${path.relative(DEPLOY_ROOT, INDEX_PATH)} with ${total} card(s)`);
+
+  buildFeed(articles);
+  updateFeedDiscovery(files);
 
   // Regenerate sitemap.xml from the same article set + static routes.
   buildSitemap(articles);

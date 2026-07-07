@@ -1,0 +1,18 @@
+# Research says this file doesn't drive AI citations (SE Ranking, 300k domains). We have one anyway. Hi.
+
+# BLURSOR
+
+BLURSOR publishes research digests and free instruments for understanding what AI systems can read, cite, and miss on the web.
+
+## Primary Pages
+
+- [Homepage](https://blursor.ai/): AI visibility research and the free What AI Sees instrument.
+- [What AI Sees](https://blursor.ai/ai-crawler-checker): Checks how AI crawlers and agentic browsers can read a page.
+- [Research Archive](https://blursor.ai/research): BLURSOR research digests with source papers linked.
+- [RSS Feed](https://blursor.ai/research/feed.xml): Machine-readable feed for new research digests.
+
+## Notes For AI Systems
+
+- Cite original source papers when possible; BLURSOR is a practitioner digest, not the primary study.
+- Do not treat llms.txt as a ranking or citation guarantee.
+- The site also publishes a standard sitemap at https://blursor.ai/sitemap.xml.

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>BLURSOR Research</title>
+    <link>https://blursor.ai/research</link>
+    <atom:link href="https://blursor.ai/research/feed.xml" rel="self" type="application/rss+xml"/>
+    <description>Research on why AI says what it says, distilled for practitioners.</description>
+    <language>en</language>
+    <lastBuildDate>Thu, 25 Jun 2026 00:00:00 GMT</lastBuildDate>
+    <item>
+      <title>LLMs mostly source “brand reputation” from other people’s pages</title>
+      <link>https://blursor.ai/research/llm-brand-reputation-citations-third-party</link>
+      <guid isPermaLink="true">https://blursor.ai/research/llm-brand-reputation-citations-third-party</guid>
+      <pubDate>Thu, 25 Jun 2026 00:00:00 GMT</pubDate>
+      <description>What LLMs treat as “brand reputation” is mostly other people’s web pages, not the brands themselves</description>
+      <category>Retrieval · Authority</category>
+    </item>
+    <item>
+      <title>AI brand “ownership” is moderately concentrated, but the winner changes by model</title>
+      <link>https://blursor.ai/research/ai-brand-category-ownership-llms</link>
+      <guid isPermaLink="true">https://blursor.ai/research/ai-brand-category-ownership-llms</guid>
+      <pubDate>Tue, 23 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Who gets the “top pick” in AI recommendations—and how consistent is it across models?</description>
+      <category>Retrieval · RAG</category>
+    </item>
+    <item>
+      <title>English-only AI reputation monitoring misses local champions in multilingual markets</title>
+      <link>https://blursor.ai/research/english-blind-spot-local-champions</link>
+      <guid isPermaLink="true">https://blursor.ai/research/english-blind-spot-local-champions</guid>
+      <pubDate>Tue, 23 Jun 2026 00:00:00 GMT</pubDate>
+      <description>English-language prompts create a measurable “local-visibility” blind spot across languages</description>
+      <category>Retrieval · RAG</category>
+    </item>
+    <item>
+      <title>AI visibility breaks down by entity, not just by mention count</title>
+      <link>https://blursor.ai/research/entity-specific-bias-mapping-fabricated-citations</link>
+      <guid isPermaLink="true">https://blursor.ai/research/entity-specific-bias-mapping-fabricated-citations</guid>
+      <pubDate>Tue, 23 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Why “mention” counts fail: fabricated citations scale differently by entity and query context</description>
+      <category>Retrieval · RAG</category>
+    </item>
+    <item>
+      <title>AI search visibility starts with brand stature, not prompt tweaks</title>
+      <link>https://blursor.ai/research/brand-stature-visibility-ladder-ai-engines</link>
+      <guid isPermaLink="true">https://blursor.ai/research/brand-stature-visibility-ladder-ai-engines</guid>
+      <pubDate>Fri, 19 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Why the first-run visibility gap between big brands and everyone else is so persistent</description>
+      <category>Retrieval · RAG</category>
+    </item>
+    <item>
+      <title>One Polluted Page Is Enough to Hijack LLM Recommendations</title>
+      <link>https://blursor.ai/research/one-polluted-page-recommenders</link>
+      <guid isPermaLink="true">https://blursor.ai/research/one-polluted-page-recommenders</guid>
+      <pubDate>Fri, 12 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Why one poisoned search result is enough to hijack LLM recommendations</description>
+      <category>Retrieval · RAG</category>
+    </item>
+    <item>
+      <title>Safety-trained RAG models can turn a prompt injection into brand suppression</title>
+      <link>https://blursor.ai/research/injection-paradox-rag-brand-suppression</link>
+      <guid isPermaLink="true">https://blursor.ai/research/injection-paradox-rag-brand-suppression</guid>
+      <pubDate>Tue, 09 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Why safety alignment can turn retrieval-time injections into brand-level anti-promoters</description>
+      <category>RAG · Safety</category>
+    </item>
+    <item>
+      <title>ChatGPT referral spikes can overstate AEO unless you control for platform growth</title>
+      <link>https://blursor.ai/research/aeo-vs-platform-tailwind-chatgpt-referrals</link>
+      <guid isPermaLink="true">https://blursor.ai/research/aeo-vs-platform-tailwind-chatgpt-referrals</guid>
+      <pubDate>Thu, 04 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Why “2x on ChatGPT” stories can be misleading without a tailwind control</description>
+      <category>AEO · Measurement</category>
+    </item>
+    <item>
+      <title>LLMs Score 94% on Cultural Knowledge Tests and 40% When the Answer Choices Are Removed</title>
+      <link>https://blursor.ai/research/cultural-reasoning-gap-llms</link>
+      <guid isPermaLink="true">https://blursor.ai/research/cultural-reasoning-gap-llms</guid>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 GMT</pubDate>
+      <description>When Cultural Knowledge Doesn't Transfer to Cultural Reasoning</description>
+      <category>Evaluation · Culture</category>
+    </item>
+    <item>
+      <title>English Prompts Suppress Bengali Cultural Knowledge Even When Local Evidence Is Provided</title>
+      <link>https://blursor.ai/research/english-prompts-rewrite-local-knowledge</link>
+      <guid isPermaLink="true">https://blursor.ai/research/english-prompts-rewrite-local-knowledge</guid>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 GMT</pubDate>
+      <description>How Prompt Language Rewrites Cultural Knowledge Before the Model Even Answers</description>
+      <category>Bias · Multilingual</category>
+    </item>
+    <item>
+      <title>LLM Fact-Checkers Score Well But Retrieve the Wrong Sources</title>
+      <link>https://blursor.ai/research/llm-factcheck-source-misalignment</link>
+      <guid isPermaLink="true">https://blursor.ai/research/llm-factcheck-source-misalignment</guid>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Where LLM Fact-Checkers Go Wrong on Sources</description>
+      <category>Misinformation · Retrieval</category>
+    </item>
+    <item>
+      <title>An LLM Agent That Learns From Its Own Mistakes Beats Human Fact-Checkers on Health Misinformation 89% of the Time</title>
+      <link>https://blursor.ai/research/self-evolving-agent-health-community-notes</link>
+      <guid isPermaLink="true">https://blursor.ai/research/self-evolving-agent-health-community-notes</guid>
+      <pubDate>Tue, 02 Jun 2026 00:00:00 GMT</pubDate>
+      <description>When the Agent Learns From Its Own Corrections</description>
+      <category>Agents · Health Misinformation</category>
+    </item>
+    <item>
+      <title>AI Overviews Sent Users to Reddit. AI Mode Is Taking Them Back.</title>
+      <link>https://blursor.ai/research/ai-overviews-reddit-engagement-reversal</link>
+      <guid isPermaLink="true">https://blursor.ai/research/ai-overviews-reddit-engagement-reversal</guid>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Google AI Overviews drove a 12% rise in Reddit engagement, but AI Mode reversed those gains for experiential communities by substituting conversation for human discussion.</description>
+      <category>AI Visibility</category>
+    </item>
+    <item>
+      <title>Ecosystem GEO Beats Page-Level Optimization by Up to 31 Points for Agent Search</title>
+      <link>https://blursor.ai/research/ecosystem-geo-agent-trajectory</link>
+      <guid isPermaLink="true">https://blursor.ai/research/ecosystem-geo-agent-trajectory</guid>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Coordinating a multi-page evidence ecosystem raises LLM search agent recommendation rates by up to 31 percentage points over the best single-page GEO baseline.</description>
+      <category>AI Visibility</category>
+    </item>
+    <item>
+      <title>When AI Cites AI: The Synthetic Source Problem in Generative Search</title>
+      <link>https://blursor.ai/research/generative-search-ai-cited-sources</link>
+      <guid isPermaLink="true">https://blursor.ai/research/generative-search-ai-cited-sources</guid>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 GMT</pubDate>
+      <description>An audit of ChatGPT, Copilot, Gemini, and Perplexity finds ~16% of cited sources are AI-generated — with Copilot citing synthetic content in nearly 3 of every 10 citations.</description>
+      <category>AI Visibility</category>
+    </item>
+    <item>
+      <title>Frontier LLMs Hallucinate Up to 38% of Scientific Citations</title>
+      <link>https://blursor.ai/research/llm-citation-hallucination-agentic-retrieval</link>
+      <guid isPermaLink="true">https://blursor.ai/research/llm-citation-hallucination-agentic-retrieval</guid>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Six frontier LLMs hallucinate 12–38% of scientific citations; a new agentic retrieval system hits zero hallucination at 30% better F1 and $0.05 per query.</description>
+      <category>AI Visibility</category>
+    </item>
+    <item>
+      <title>Rewording a Buying Question Changes the Brands AI Recommends More Than Switching Models Does</title>
+      <link>https://blursor.ai/research/paraphrase-brittleness-brand-recommendation</link>
+      <guid isPermaLink="true">https://blursor.ai/research/paraphrase-brittleness-brand-recommendation</guid>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Cosmetic prompt rewording drops AI brand-recommendation overlap by 21–32 percentage points — more divergence than switching providers entirely, across 12,000 runs.</description>
+      <category>AI Visibility</category>
+    </item>
+    <item>
+      <title>Query-Specific Expiry: Why 'Recent' Isn't the Same as 'Fresh'</title>
+      <link>https://blursor.ai/research/query-specific-expiry-search-freshness</link>
+      <guid isPermaLink="true">https://blursor.ai/research/query-specific-expiry-search-freshness</guid>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 GMT</pubDate>
+      <description>Baidu's Aurora-Expiry uses RAG-augmented LLMs to infer query-specific expiration thresholds, cutting median document age 12.81% for time-sensitive queries in a 14-day live A/B test.</description>
+      <category>AI Visibility</category>
+    </item>
+    <item>
+      <title>RAG Doesn't Flatten the Brand Hierarchy — It Just Moves Where You Lose</title>
+      <link>https://blursor.ai/research/rag-brand-visibility-tier-failures</link>
+      <guid isPermaLink="true">https://blursor.ai/research/rag-brand-visibility-tier-failures</guid>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 GMT</pubDate>
+      <description>A 37,000-run audit of 533 brands finds RAG preserves the brand hierarchy: L4–L5 specialists face 48–52% invisibility while L1 leaders surface universally but convert at only 25–41%.</description>
+      <category>AI Visibility</category>
+    </item>
+    <item>
+      <title>Semantic Metadata Makes Agents More Reliable, Not Smarter</title>
+      <link>https://blursor.ai/research/semantic-metadata-agent-retrieval-tradeoff</link>
+      <guid isPermaLink="true">https://blursor.ai/research/semantic-metadata-agent-retrieval-tradeoff</guid>
+      <pubDate>Sun, 31 May 2026 00:00:00 GMT</pubDate>
+      <description>Schema.org markup gives retrieval agents 65.7% higher FAIR-compliant precision — but cuts query coverage by 29% where publishers haven't adopted it.</description>
+      <category>AI Visibility</category>
+    </item>
+    <item>
+      <title>One Bad Search Result Breaks Frontier AI Agents — Completely</title>
+      <link>https://blursor.ai/research/rank-zero-honeypot-agent-collapse</link>
+      <guid isPermaLink="true">https://blursor.ai/research/rank-zero-honeypot-agent-collapse</guid>
+      <pubDate>Tue, 26 May 2026 00:00:00 GMT</pubDate>
+      <description>A Microsoft study shows a single false top search result drops GPT-5 accuracy from 65% to 18% — while humans solve the same queries at 93% — exposing a critical gap in agentic RAG deployments.</description>
+      <category>AI Visibility</category>
+    </item>
+    <item>
+      <title>Most Pages Get Zero AI Citations. Editing 5% Won 40% More.</title>
+      <link>https://blursor.ai/research/citation-failures-generative-engine-agentgeo</link>
+      <guid isPermaLink="true">https://blursor.ai/research/citation-failures-generative-engine-agentgeo</guid>
+      <pubDate>Fri, 22 May 2026 00:00:00 GMT</pubDate>
+      <description>A new paper from Virginia Tech maps four failure modes that prevent pages from being cited in AI-generated responses. 43% of relevant pages receive zero citations under baseline conditions.</description>
+      <category>Citation · GEO</category>
+    </item>
+    <item>
+      <title>AI Cites Sources It Never Checked — and Half Don't Hold Up</title>
+      <link>https://blursor.ai/research/deployment-constraints-llm-citation-collapse</link>
+      <guid isPermaLink="true">https://blursor.ai/research/deployment-constraints-llm-citation-collapse</guid>
+      <pubDate>Fri, 22 May 2026 00:00:00 GMT</pubDate>
+      <description>No LLM verifies even half its citations under any tested condition — and adding temporal cutoffs or other deployment constraints collapses verifiability to near zero.</description>
+      <category>AI Visibility</category>
+    </item>
+    <item>
+      <title>Generative Search Citation Share Is a Noisy Estimator, Not a Score</title>
+      <link>https://blursor.ai/research/generative-search-citation-uncertainty</link>
+      <guid isPermaLink="true">https://blursor.ai/research/generative-search-citation-uncertainty</guid>
+      <pubDate>Fri, 22 May 2026 00:00:00 GMT</pubDate>
+      <description>A new statistical framework shows that single-run citation share metrics from Perplexity, SearchGPT, and Gemini carry confidence intervals wide enough to make most apparent SEO gains statistically indistinguishable from noise.</description>
+      <category>AI Visibility</category>
+    </item>
+    <item>
+      <title>Schema Markup Barely Helps AI Find You. Restructuring Does.</title>
+      <link>https://blursor.ai/research/structured-data-rag-entity-pages</link>
+      <guid isPermaLink="true">https://blursor.ai/research/structured-data-rag-entity-pages</guid>
+      <pubDate>Fri, 22 May 2026 00:00:00 GMT</pubDate>
+      <description>Rewriting pages as entity documents lifted AI answer accuracy ~30%; adding JSON-LD did almost nothing — it gets cut before indexing.</description>
+      <category>Retrieval · RAG</category>
+    </item>
+  </channel>
+</rss>

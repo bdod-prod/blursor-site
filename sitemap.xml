@@ -2,22 +2,62 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://blursor.ai/</loc>
-    <lastmod>2026-06-05</lastmod>
+    <lastmod>2026-07-07</lastmod>
   </url>
   <url>
     <loc>https://blursor.ai/ai-crawler-checker</loc>
-    <lastmod>2026-06-05</lastmod>
+    <lastmod>2026-07-05</lastmod>
   </url>
   <url>
     <loc>https://blursor.ai/research</loc>
-    <lastmod>2026-06-05</lastmod>
+    <lastmod>2026-07-07</lastmod>
   </url>
   <url>
     <loc>https://blursor.ai/author/alex-rostovtsev</loc>
     <lastmod>2026-06-05</lastmod>
   </url>
   <url>
+    <loc>https://blursor.ai/research/llm-brand-reputation-citations-third-party</loc>
+    <lastmod>2026-06-25</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/ai-brand-category-ownership-llms</loc>
+    <lastmod>2026-06-23</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/english-blind-spot-local-champions</loc>
+    <lastmod>2026-06-23</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/entity-specific-bias-mapping-fabricated-citations</loc>
+    <lastmod>2026-06-23</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/brand-stature-visibility-ladder-ai-engines</loc>
+    <lastmod>2026-06-19</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/one-polluted-page-recommenders</loc>
+    <lastmod>2026-06-12</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/injection-paradox-rag-brand-suppression</loc>
+    <lastmod>2026-06-09</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/aeo-vs-platform-tailwind-chatgpt-referrals</loc>
+    <lastmod>2026-06-04</lastmod>
+  </url>
+  <url>
     <loc>https://blursor.ai/research/cultural-reasoning-gap-llms</loc>
+    <lastmod>2026-06-02</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/english-prompts-rewrite-local-knowledge</loc>
+    <lastmod>2026-06-02</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/llm-factcheck-source-misalignment</loc>
     <lastmod>2026-06-02</lastmod>
   </url>
   <url>
