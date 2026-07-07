@@ -26,6 +26,8 @@
   <!-- TODO: uncomment once @blursor_ai X account is live -->
   <!-- <meta name="twitter:site" content="@blursor_ai"> -->
 
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 18'%3E%3Crect width='7' height='18' rx='1' fill='%23b73524'/%3E%3Ccircle cx='12' cy='5' r='2' fill='%231a1a18'/%3E%3Ccircle cx='12' cy='13' r='2' fill='%231a1a18'/%3E%3C/svg%3E">
+
   <!-- JSON-LD: Organization -->
   <script type="application/ld+json">
   {
@@ -64,37 +66,38 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,600&display=optional" rel="stylesheet">
 
   <style>
-    /* ——— Reset & base ——— */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --color-bg:             #f0ece4;
-      --color-bg-warm:        #e8e3d9;
-      --color-surface:        #f5f1ea;
-      --color-text:           #1a1a18;
-      --color-text-secondary: #7a776e;
-      --color-border:         #d4d0c8;
-      --color-border-light:   rgba(26,26,24,0.08);
-      --color-accent:         #c43b2a;
-      --color-footer-bg:      #1a1a18;
-      --color-footer-text:    #a09d95;
+      --color-bg: #f0ece4;
+      --color-bg-warm: #e8e3d9;
+      --color-surface: #f5f1ea;
+      --color-text: #1a1a18;
+      --color-text-secondary: #665f55;
+      --color-border: #d4d0c8;
+      --color-border-light: rgba(26, 26, 24, 0.08);
+      --color-accent: #b73524;
+      --color-footer-bg: #1a1a18;
+      --color-footer-text: #a09d95;
       --color-footer-text-hover: #f0ece4;
 
+      --dk: #131110;
+      --dk-line: rgba(236, 231, 220, .13);
+      --dk-line-soft: rgba(236, 231, 220, .07);
+      --dk-text: #ece7dc;
+      --dk-dim: #8d8779;
+      --dk-faint: #5b564c;
+      --dk-red: #e0523c;
+
       --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-      --font-mono:  'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+      --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
 
-      --space-xs:  0.5rem;
-      --space-sm:  1rem;
-      --space-md:  1.5rem;
-      --space-lg:  3rem;
-      --space-xl:  5rem;
-      --space-2xl: 7rem;
-
-      --max-width:  980px;
-      --text-width: 640px;
+      --space-md: 1.5rem;
+      --max-width: 1060px;
+      --text-width: 760px;
     }
 
     html {
@@ -104,19 +107,20 @@
     }
 
     body {
-      font-family: var(--font-serif);
+      min-height: 100vh;
       background: var(--color-bg);
       color: var(--color-text);
+      font-family: var(--font-serif);
       line-height: 1.6;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
     }
 
-    /* ——— Header ——— */
+    ::selection { background: rgba(196, 59, 42, .25); }
+
+    a { color: inherit; }
+    em { font-style: italic; }
 
     .site-header {
-      padding: var(--space-md) 0;
+      padding: 1.4rem 0;
       border-bottom: 1px solid var(--color-border);
     }
 
@@ -127,987 +131,846 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-    }
-
-    .site-header__logo {
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      margin-top: -2px;
-      text-transform: uppercase;
-      color: var(--color-text);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .site-header__nav {
-      display: flex;
-      align-items: center;
-      gap: var(--space-md);
-    }
-
-    .site-header__nav a {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      letter-spacing: 0.03em;
-      color: var(--color-text-secondary);
-      text-decoration: none;
-      text-transform: uppercase;
-      transition: color 0.15s ease;
-    }
-
-    .site-header__nav a:hover { color: var(--color-text); }
-
-    .site-header__nav-cta {
-      text-decoration: underline;
-      text-decoration-color: rgba(196,59,42,0.35);
-      text-decoration-thickness: 1px;
-      text-underline-offset: 3px;
-      white-space: nowrap;
-    }
-
-    .site-header__nav-cta:hover {
-      text-decoration-color: rgba(196,59,42,0.7);
+      gap: 1rem;
     }
 
     .site-header__left {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: .75rem;
+      min-width: 0;
     }
 
-    .site-header__sep {
+    .site-header__logo,
+    .site-footer__logo {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
       font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--color-border);
+      font-size: .9rem;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--color-text);
+      text-decoration: none;
     }
 
     .site-header__tagline {
       font-family: var(--font-mono);
-      font-size: 0.7rem;
-      font-weight: 500;
-      letter-spacing: 0.1em;
+      font-size: .68rem;
+      letter-spacing: .1em;
       text-transform: uppercase;
       color: var(--color-text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .site-header__tagline .why {
+    .site-header__nav {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .site-header__nav a {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .site-header__nav a:hover { color: var(--color-text); }
+
+    .hero {
+      max-width: var(--text-width);
+      margin: 0 auto;
+      padding: 4.8rem var(--space-md) 0;
+    }
+
+    .hero__kicker {
+      margin-bottom: 1.2rem;
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      font-weight: 500;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--color-accent);
+    }
+
+    .hero__title {
+      max-width: 720px;
+      font-size: 3.35rem;
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .hero__title em {
+      color: var(--color-accent);
+      font-style: italic;
+      font-weight: 600;
+    }
+
+    .focus-word {
+      display: inline-block;
+      animation: focusWord .7s cubic-bezier(.3, .7, .3, 1) forwards;
+      animation-delay: calc(var(--i) * 70ms);
+      filter: blur(10px);
+      opacity: .15;
+    }
+
+    @keyframes focusWord {
+      to { filter: blur(0); opacity: 1; }
+    }
+
+    .hero__sub {
+      max-width: 590px;
+      margin-top: 1.3rem;
+      color: var(--color-text-secondary);
+      font-size: 1.06rem;
+      line-height: 1.7;
+    }
+
+    .slot {
+      max-width: var(--text-width);
+      margin: 2.4rem auto 0;
+      padding: 0 var(--space-md);
+    }
+
+    .slot__row {
+      display: flex;
+      background: var(--dk);
+      border: 1px solid var(--dk);
+      box-shadow: 0 18px 40px -18px rgba(26, 20, 12, .45);
+    }
+
+    .slot__prompt {
+      padding: 1.05rem 0 1.05rem 1.1rem;
+      color: var(--dk-red);
+      font-family: var(--font-mono);
+      font-size: .95rem;
+      user-select: none;
+    }
+
+    .slot__input {
+      flex: 1;
+      min-width: 0;
+      padding: 1.05rem .9rem;
+      background: transparent;
+      border: 0;
+      outline: none;
+      color: var(--dk-text);
+      caret-color: var(--dk-red);
+      font-family: var(--font-mono);
+      font-size: .95rem;
+    }
+
+    .slot__input::placeholder { color: var(--dk-faint); }
+
+    .slot__btn {
+      padding: 0 1.7rem;
+      background: var(--color-accent);
+      border: 0;
+      color: #fff;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .slot__btn:hover { background: #b23425; }
+
+    .slot__hint {
+      margin-top: .65rem;
+      color: var(--color-text-secondary);
+      font-family: var(--font-mono);
+      font-size: .68rem;
+    }
+
+    .slot__hint a {
+      color: var(--color-accent);
       text-decoration: underline;
-      text-decoration-color: rgba(196,59,42,0.35);
       text-decoration-thickness: 1px;
       text-underline-offset: 2px;
     }
 
-    /* ——— Screen 1: Hero + Bridge ——— */
+    .slot__hint a:hover { text-decoration-color: rgba(183, 53, 36, .65); }
 
-    .home-s1 {
-      display: flex;
-      align-items: center;
-      padding: var(--space-xl) 0;
-      position: relative;
+    .slot__bots {
+      margin-top: 1.4rem;
+      color: var(--color-text-secondary);
+      font-family: var(--font-mono);
+      font-size: .62rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      word-spacing: .2em;
     }
 
-    .home-s1::before {
+    .slot__bots i {
+      color: var(--color-border);
+      font-style: normal;
+    }
+
+    .findings-band {
+      position: relative;
+      overflow: hidden;
+      margin-top: 4.2rem;
+      padding: 3.2rem 0 3.4rem;
+      background: var(--dk);
+      color: var(--dk-text);
+    }
+
+    .findings-band::after {
       content: '';
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background-image:
-        radial-gradient(circle, rgba(196,59,42,0.55) 4px, transparent 4px),
-        radial-gradient(circle, rgba(196,59,42,0.55) 4px, transparent 4px),
-        radial-gradient(circle, rgba(26,26,24,0.25) 4px, transparent 4px);
-      background-size:
-        240px 240px,
-        240px 240px,
-        120px 120px;
-      background-position:
-        -60px -60px,
-         60px  60px,
-          0px   0px;
-      opacity: 0.5;
-      z-index: 0;
+      opacity: .05;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
     }
 
-    .home-s1 > * {
+    .findings-band__head {
+      position: relative;
+      z-index: 1;
+      max-width: var(--max-width);
+      margin: 0 auto 2rem;
+      padding: 0 var(--space-md);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .section-kicker {
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      font-weight: 500;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .findings-band .section-kicker { color: var(--dk-red); }
+
+    .findings-band__title {
+      margin-top: .4rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .findings-band__note {
+      color: var(--dk-dim);
+      font-family: var(--font-mono);
+      font-size: .64rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .findings-ticker {
       position: relative;
       z-index: 1;
     }
 
-    .home-s1__inner {
-      max-width: 700px;
-      margin: 0 auto;
-      padding: var(--space-md) var(--space-lg);
-      background: var(--color-bg);
-    }
-
-    .home-s1__stats {
-      font-size: 1.0625rem;
-      line-height: 1.85;
-      color: var(--color-text);
-      margin-bottom: 2rem;
-    }
-
-    .home-s1__question {
-      font-size: clamp(2.25rem, 4vw, 2.75rem);
-      font-weight: 600;
-      line-height: 1.1;
-      letter-spacing: -0.025em;
-      margin-bottom: 2rem;
-      text-decoration: underline;
-      text-decoration-color: rgba(196, 59, 42, 0.35);
-      text-decoration-thickness: 1px;
-      text-underline-offset: 4px;
-    }
-
-    .home-s1__bridge {
-      margin-bottom: 1.5rem;
-    }
-
-    .home-s1__bridge p {
-      font-size: 1.0625rem;
-      line-height: 1.85;
-      color: var(--color-text);
-    }
-
-    .home-s1__bridge p + p {
-      margin-top: 0;
-    }
-
-    .home-s1__thesis {
-      font-size: 1.0625rem;
-      font-weight: 600;
-      color: var(--color-accent);
-      text-align: right;
-      text-decoration: underline;
-      text-decoration-color: rgba(196,59,42,0.35);
-      text-decoration-thickness: 1px;
-      text-underline-offset: 3px;
-    }
-
-    .home-s1__scroll-arrow {
-      text-align: right;
-      margin-top: 0.875rem;
-      color: var(--color-accent);
-      opacity: 0.5;
-      animation: scroll-bounce 2s ease-in-out infinite;
-      line-height: 1;
-    }
-
-    @keyframes scroll-bounce {
-      0%, 100% { transform: translateY(0); opacity: 0.5; }
-      50%       { transform: translateY(7px); opacity: 0.75; }
-    }
-
-    .home-s1__section-label {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 1;
-      background: var(--color-bg);
-      padding-top: var(--space-sm);
-    }
-
-    .home-s1__section-label__inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 0 var(--space-md) var(--space-sm);
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    .home-s1__section-label span {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--color-text-secondary);
-    }
-
-    /* ——— How it works ——— */
-
-    .home-how {
-      background: var(--color-bg);
-      padding: var(--space-xl) 0 0 0;
-    }
-
-    .home-how__layout {
-      display: grid;
-      grid-template-columns: minmax(0, 48%) minmax(0, 52%);
-      column-gap: 5rem;
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 0 var(--space-md);
-      align-items: center;
-    }
-
-    .home-how__paper-wrap {
+    .findings-track {
       display: flex;
-      align-items: flex-start;
-    }
-
-    .home-how__paper {
-      border: 1px solid var(--color-border);
-      width: 100%;
-    }
-
-    .home-how__paper--left {
-      transform: perspective(1500px) rotateY(30deg) rotateX(15deg);
-      box-shadow: 6px 14px 40px rgba(26,26,24,0.18);
-      margin-top: -30px;
-      padding: 20px;
-    }
-
-    .home-how__paper img {
-      display: block;
-      width: 100%;
-      height: auto;
-      border-radius: 6px;
-    }
-
-    .home-how__inner {
-      padding: 0;
-    }
-
-    .home-how__item {
-      display: grid;
-      grid-template-columns: 3.75rem minmax(0, 1fr);
-      column-gap: var(--space-md);
-      align-items: start;
-      margin-bottom: 1.125rem;
-    }
-
-    .home-how__ordinal {
-      font-family: var(--font-mono);
-      font-size: 3.25rem;
-      font-weight: 400;
-      line-height: 1;
-      color: var(--color-border);
-      user-select: none;
-    }
-
-    .home-how__line {
-      font-size: 1.0625rem;
-      line-height: 1.6;
-      color: var(--color-text);
-      margin: 0;
-    }
-
-    .home-how__line--final {
-      margin-top: 1.5rem;
-      padding-top: 1.375rem;
-      border-top: 1px solid var(--color-border-light);
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--color-text-secondary);
-      text-align: right;
-    }
-
-    @media (max-width: 960px) {
-      .home-how__paper-wrap { display: none; }
-      .home-how__layout {
-        grid-template-columns: 1fr;
-      }
-      .home-how__inner {
-        max-width: 640px;
-        margin: 0 auto;
-        padding: 0 var(--space-md);
-      }
-    }
-
-    /* ——— Articles ——— */
-
-    .home-articles {
-      padding: 0 0 var(--space-lg);
-      flex: 1;
-    }
-
-    .home-articles__label {
-      margin-bottom: var(--space-xs);
-    }
-
-    .home-articles__label__inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: var(--space-sm) var(--space-md);
-      text-align: right;
-    }
-
-    .home-articles__label span {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--color-text-secondary);
-    }
-
-    .home-articles__inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
+      gap: 1rem;
+      width: max-content;
       padding: 0 var(--space-md);
+      animation: slideFindings 70s linear infinite;
     }
 
-    /* Featured card */
-    .featured-card {
-      display: block;
-      text-decoration: none;
+    .findings-ticker:hover .findings-track,
+    .findings-ticker:focus-within .findings-track {
+      animation-play-state: paused;
+    }
+
+    @keyframes slideFindings {
+      to { transform: translateX(-50%); }
+    }
+
+    .finding-card {
+      width: 320px;
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      gap: .7rem;
+      padding: 1.4rem 1.4rem 1.2rem;
+      background: rgba(236, 231, 220, .02);
+      border: 1px solid var(--dk-line);
       color: inherit;
-      border: 1px solid var(--color-border);
-      margin-bottom: 1.25rem;
-      overflow: hidden;
-      transition: border-color 0.2s ease;
-    }
-
-    .featured-card:hover { border-color: var(--color-text-secondary); }
-    .featured-card:hover .featured-card__title { color: var(--color-accent); }
-
-    .featured-card__arc {
-      position: relative;
-      height: 160px;
-      background: var(--color-bg);
-      overflow: hidden;
-    }
-
-    .featured-card__arc svg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-
-    .featured-card__content {
-      padding: var(--space-md) var(--space-lg) var(--space-lg);
-      background: var(--color-surface);
-    }
-
-    .featured-card__label {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--color-accent);
-      margin-bottom: 0.75rem;
-    }
-
-    .featured-card__title {
-      font-size: 1.625rem;
-      font-weight: 600;
-      line-height: 1.22;
-      letter-spacing: -0.015em;
-      margin-bottom: 0.875rem;
-      transition: color 0.2s ease;
-    }
-
-    .featured-card__summary {
-      font-size: 0.9375rem;
-      line-height: 1.7;
-      color: var(--color-text-secondary);
-      max-width: 600px;
-      margin-bottom: 1.125rem;
-    }
-
-    .featured-card__meta {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.02em;
-      color: var(--color-text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .featured-card__meta .sep { color: var(--color-border); }
-
-    .featured-card__arxiv {
-      color: var(--color-accent);
-      opacity: 0.65;
-      transition: opacity 0.2s ease;
-    }
-
-    .featured-card:hover .featured-card__arxiv { opacity: 1; }
-
-    /* Cards grid */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-      margin-bottom: var(--space-lg);
-    }
-
-    .grid-card {
-      display: block;
       text-decoration: none;
-      color: inherit;
-      border: 1px solid var(--color-border);
-      overflow: hidden;
-      transition: border-color 0.2s ease;
+      transition: border-color .2s ease;
     }
 
-    .grid-card:hover { border-color: var(--color-text-secondary); }
-    .grid-card:hover .grid-card__title { color: var(--color-accent); }
-
-    .grid-card__arc {
-      position: relative;
-      height: 120px;
-      background: var(--color-bg);
-      overflow: hidden;
-    }
-
-    .grid-card__arc svg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-
-    .grid-card__content {
-      padding: var(--space-md);
-      background: var(--color-surface);
-    }
-
-    .grid-card__label {
-      font-family: var(--font-mono);
-      font-size: 0.6rem;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--color-accent);
-      margin-bottom: 0.6rem;
-    }
-
-    .grid-card__title {
-      font-size: 1.0625rem;
-      font-weight: 600;
-      line-height: 1.3;
-      letter-spacing: -0.01em;
-      margin-bottom: 0.75rem;
-      transition: color 0.2s ease;
-    }
-
-    .grid-card__meta {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.02em;
-      color: var(--color-text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .grid-card__meta .sep { color: var(--color-border); }
-
-    .grid-card__arxiv {
-      color: var(--color-accent);
-      opacity: 0.65;
-      transition: opacity 0.2s ease;
-    }
-
-    .grid-card:hover .grid-card__arxiv { opacity: 1; }
-
-    /* All articles */
-    .home-articles__footer {
-      text-align: right;
-    }
-
-    .home-articles__all {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      letter-spacing: 0.03em;
-      color: var(--color-text-secondary);
-      text-decoration: none;
-      transition: color 0.15s ease;
-    }
-
-    .home-articles__all:hover { color: var(--color-accent); }
-
-    /* ——— Subscribe block ——— */
-    .home-subscribe {
-      padding: var(--space-xl) 0;
-    }
-
-    .home-subscribe__inner {
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 0 var(--space-md);
-    }
-
-    .subscribe-block {
-      border: 1px solid var(--color-border);
-      background: var(--color-surface);
-      padding: var(--space-md);
-    }
-
-    .subscribe-block__label {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--color-accent);
-    }
-
-    .subscribe-block__text {
-      font-family: var(--font-serif);
-      color: var(--color-text-secondary);
-      font-size: 0.9375rem;
-      margin: var(--space-xs) 0 var(--space-sm);
-    }
-
-    .subscribe-block__form {
-      display: flex;
-      gap: var(--space-xs);
-    }
-
-    .subscribe-block__input {
-      flex: 1;
-      font-family: var(--font-mono);
-      font-size: 0.875rem;
-      border: 1px solid var(--color-border);
-      background: var(--color-bg);
-      padding: 0.5rem 0.75rem;
-      color: var(--color-text);
+    .finding-card:hover,
+    .finding-card:focus-visible {
+      border-color: var(--dk-dim);
       outline: none;
     }
 
-    .subscribe-block__input:focus {
-      border-color: var(--color-text-secondary);
-    }
-
-    .subscribe-block__btn {
-      background: var(--color-accent);
-      color: #fff;
+    .finding-card__num {
+      color: var(--dk-text);
       font-family: var(--font-mono);
-      font-size: 0.75rem;
+      font-size: 2.55rem;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .finding-card__line {
+      flex: 1;
+      color: var(--dk-dim);
+      font-size: .94rem;
+      line-height: 1.55;
+    }
+
+    .finding-card__line b {
+      color: var(--dk-text);
+      font-weight: 600;
+    }
+
+    .finding-card__src {
+      color: var(--dk-red);
+      font-family: var(--font-mono);
+      font-size: .62rem;
+      letter-spacing: .06em;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      padding: 0.5rem 1rem;
-      border: none;
-      cursor: pointer;
-      transition: opacity 0.15s ease;
     }
 
-    .subscribe-block__btn:hover {
-      opacity: 0.88;
+    .finding-card__src span { color: var(--dk-faint); }
+
+    .finding-card--cta {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
     }
 
-    /* ——— Footer ——— */
+    .finding-card--cta .finding-card__num {
+      color: #fff;
+      font-family: var(--font-serif);
+      font-size: 1.9rem;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .finding-card--cta .finding-card__line { color: rgba(255, 255, 255, .86); }
+    .finding-card--cta .finding-card__src { color: #fff; font-weight: 600; }
+    .finding-card--cta:hover,
+    .finding-card--cta:focus-visible { border-color: #fff; }
+
+    .digests {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 4.2rem var(--space-md) 0;
+    }
+
+    .digests__head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.6rem;
+    }
+
+    .digests__title {
+      margin-top: .4rem;
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .digests__all {
+      color: var(--color-text-secondary);
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      letter-spacing: .04em;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+
+    .digests__all:hover { color: var(--color-accent); }
+
+    .digest-row {
+      display: grid;
+      grid-template-columns: 3.4rem 1fr;
+      gap: 1.2rem;
+      padding: 1.5rem 0;
+      border-top: 1px solid var(--color-border);
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .digest-row:last-of-type { border-bottom: 1px solid var(--color-border); }
+
+    .digest-row__num {
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      font-size: 1.4rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .digest-row__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .7rem;
+      margin-bottom: .45rem;
+      color: var(--color-text-secondary);
+      font-family: var(--font-mono);
+      font-size: .64rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .digest-row__meta .src { color: var(--color-accent); }
+
+    .digest-row__title {
+      color: var(--color-text);
+      font-size: 1.35rem;
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: 0;
+      transition: color .15s ease;
+    }
+
+    .digest-row:hover .digest-row__title,
+    .digest-row:focus-visible .digest-row__title { color: var(--color-accent); }
+
+    .digest-row__summary {
+      max-width: 660px;
+      margin-top: .45rem;
+      color: var(--color-text-secondary);
+      font-size: .95rem;
+      line-height: 1.65;
+    }
+
+    .stance {
+      margin-top: 4.2rem;
+      padding: 4rem 0;
+      background: var(--color-bg-warm);
+      border-top: 1px solid var(--color-border);
+    }
+
+    .stance__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+    }
+
+    .stance__grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 2.4rem;
+      margin-top: 1.6rem;
+    }
+
+    .tenet__label {
+      display: inline-block;
+      margin-bottom: .8rem;
+      padding-bottom: .35rem;
+      border-bottom: 2px solid var(--color-accent);
+      color: var(--color-text);
+      font-family: var(--font-mono);
+      font-size: .66rem;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .tenet p {
+      color: var(--color-text-secondary);
+      font-size: .95rem;
+      line-height: 1.7;
+    }
+
+    .tenet a {
+      color: var(--color-accent);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+
+    .tenet a:hover { text-decoration-color: rgba(183, 53, 36, .65); }
+
+    .stance__close {
+      margin-top: 2.6rem;
+      padding-top: 1.6rem;
+      border-top: 1px solid var(--color-border);
+      color: var(--color-text);
+      font-size: 1.15rem;
+      font-style: italic;
+    }
 
     .site-footer {
       background: var(--color-footer-bg);
-      padding: var(--space-lg) 0 0;
+      padding: 2.6rem 0 0;
     }
 
     .site-footer__inner {
       max-width: var(--max-width);
       margin: 0 auto;
-      padding: 0 var(--space-md);
+      padding: 0 var(--space-md) 2rem;
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
-      gap: var(--space-lg);
-      align-items: start;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 2rem;
     }
 
-    /* Brand block */
-    .site-footer__brand {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
+    .site-footer__logo { color: var(--color-footer-text-hover); }
 
-    .site-footer__logo {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      color: var(--color-footer-text-hover);
-      text-decoration: none;
-    }
-
-    .site-footer__logo:hover { color: #fff; }
-
-    .site-footer__desc {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
+    .site-footer__desc,
+    .site-footer__tagline {
+      margin-top: .6rem;
       color: var(--color-footer-text);
-      letter-spacing: 0.02em;
+      font-family: var(--font-mono);
+      font-size: .66rem;
       line-height: 1.7;
     }
 
     .site-footer__tagline {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--color-footer-text);
-      opacity: 0.6;
+      display: block;
+      color: #8d8779;
+      font-style: italic;
     }
 
-    /* Nav columns */
-    .site-footer__col {}
-
     .site-footer__col-heading {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+      margin-bottom: .8rem;
       color: var(--color-footer-text-hover);
-      margin-bottom: 0.875rem;
+      font-family: var(--font-mono);
+      font-size: .62rem;
+      font-weight: 500;
+      letter-spacing: .12em;
+      text-transform: uppercase;
     }
 
     .site-footer__col ul {
       list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
     }
 
-    .site-footer__col ul a {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
+    .site-footer__col li + li {
+      margin-top: .5rem;
+    }
+
+    .site-footer__col a {
       color: var(--color-footer-text);
+      font-family: var(--font-mono);
+      font-size: .68rem;
       text-decoration: none;
-      letter-spacing: 0.02em;
-      transition: color 0.15s ease;
     }
 
-    .site-footer__col ul a:hover { color: var(--color-footer-text-hover); }
+    .site-footer__col a:hover { color: var(--color-footer-text-hover); }
 
-    .site-footer__col li { display: flex; align-items: center; gap: 0.4rem; }
-    .site-footer__x-link { display: flex; align-items: center; }
-    .site-footer__col-sep { color: rgba(255,255,255,0.2); font-family: var(--font-mono); font-size: 0.65rem; }
-
-    /* Footer bottom */
     .site-footer__bottom {
       max-width: var(--max-width);
-      margin: var(--space-lg) auto 0;
-      padding: var(--space-sm) var(--space-md);
-      border-top: 1px solid rgba(255,255,255,0.08);
+      margin: 0 auto;
+      padding: 1rem var(--space-md);
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      gap: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, .08);
+      flex-wrap: wrap;
     }
 
     .site-footer__copy {
+      color: #8d8779;
       font-family: var(--font-mono);
-      font-size: 0.65rem;
-      color: var(--color-footer-text);
-      letter-spacing: 0.02em;
-      opacity: 0.7;
+      font-size: .62rem;
     }
 
     .site-footer__copy a {
-      color: var(--color-footer-text);
+      color: inherit;
       text-decoration: none;
-      transition: color 0.15s ease;
     }
 
     .site-footer__copy a:hover { color: var(--color-footer-text-hover); }
 
-    /* ——— Fade-up motion ——— */
-
-    .fade-up {
-      opacity: 0;
-      transform: translateY(16px);
-      transition: opacity 0.65s ease, transform 0.65s ease;
+    @media (max-width: 820px) {
+      .site-header__tagline { display: none; }
+      .hero { padding-top: 3.6rem; }
+      .hero__title { font-size: 2.55rem; }
+      .stance__grid { grid-template-columns: 1fr; }
+      .site-footer__inner { grid-template-columns: 1fr; }
     }
 
-    .fade-up.is-visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .delay-1 { transition-delay: 0.05s; }
-    .delay-2 { transition-delay: 0.18s; }
-    .delay-3 { transition-delay: 0.31s; }
-    .delay-4 { transition-delay: 0.46s; }
-
-    /* ——— X Takeaways Section ——— */
-
-    .home-takeaways {
-      background: var(--color-bg-warm);
-      padding: var(--space-lg) 0;
-      border-top: 1px solid var(--color-border);
-    }
-
-    .home-takeaways__inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 0 var(--space-md);
-    }
-
-    .home-takeaways__header {
-      margin-bottom: var(--space-sm);
-    }
-
-    .home-takeaways__label {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      font-weight: 400;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--color-text);
-      margin-bottom: var(--space-xs);
-      line-height: 1.6;
-    }
-
-    .home-takeaways__label .x-logo {
-      display: inline-flex;
-      align-items: center;
-      color: var(--color-text);
-      position: relative;
-      top: 2px;
-      margin-right: 2px;
-    }
-
-    .home-takeaways__desc {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--color-text-secondary);
-      letter-spacing: 0.02em;
-    }
-
-    .home-takeaways__widget {
-      min-height: 200px;
-    }
-
-    /* ——— Responsive ——— */
-
-    @media (max-width: 900px) {
-      .cards-grid { grid-template-columns: 1fr; }
-    }
-
-    .mobile-only { display: none; }
-    .takeaways-line1, .takeaways-line2 { display: inline; }
-
-    @media (max-width: 640px) {
-      html { font-size: 16px; }
-
-      .home-s1 {
-        min-height: auto;
-        padding: var(--space-xl) 0 var(--space-lg);
+    @media (max-width: 560px) {
+      .site-header__inner,
+      .site-header__nav {
+        align-items: flex-start;
       }
 
-      .home-s1__stats { font-size: 1rem; }
-      .home-s1__bridge p { font-size: 1rem; }
-      .home-s1__thesis { font-size: 1rem; }
-      .home-s1__question { font-size: 2rem; margin-bottom: 2.25rem; }
-      .home-how__line { font-size: 0.75rem; }
-      .home-takeaways__label { font-size: 0.65rem; }
-      .home-takeaways__label .x-logo svg { width: 13px; height: 13px; }
+      .site-header__inner {
+        flex-direction: column;
+      }
 
-      .featured-card__content { padding: var(--space-md); }
-      .featured-card__title { font-size: 1.3rem; }
+      .hero__title { font-size: 2.15rem; }
+      .slot__row { flex-wrap: wrap; }
+      .slot__input { width: calc(100% - 2rem); }
+      .slot__btn {
+        width: 100%;
+        padding: .9rem;
+      }
 
-      .site-header__nav { display: none; }
-      .site-header__sep { display: none; }
-      .site-header__tagline { display: none; }
-      .subscribe-block__form { flex-wrap: wrap; }
-      .subscribe-block__input { width: 100%; }
-      .subscribe-block__btn { width: 100%; }
-      .site-footer__inner { grid-template-columns: 1fr; gap: var(--space-md); }
-      .site-footer__desc { max-width: none; }
+      .finding-card { width: 285px; }
+      .digest-row { grid-template-columns: 2.5rem 1fr; gap: .9rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+
+      .focus-word {
+        filter: none;
+        opacity: 1;
+      }
+
+      .findings-track {
+        width: auto;
+        max-width: var(--max-width);
+        margin: 0 auto;
+        flex-wrap: wrap;
+      }
+
+      .finding-card.is-duplicate { display: none; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
   <header class="site-header">
     <div class="site-header__inner">
       <div class="site-header__left">
-        <a href="/" class="site-header__logo">
-          <svg width="15" height="20" viewBox="0 0 15 18" fill="var(--color-accent)" style="margin-bottom: -2px;" aria-hidden="true" focusable="false">
+        <a href="/" class="site-header__logo" aria-label="BLURSOR home">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="#c43b2a" aria-hidden="true" focusable="false">
             <rect x="0" y="0" width="7" height="18" rx="1"/>
             <circle cx="12" cy="5" r="2"/>
             <circle cx="12" cy="13" r="2"/>
           </svg>
           BLURSOR
         </a>
-        <span class="site-header__sep">|</span>
-        <span class="site-header__tagline">Science-backed data on <span class="why">why</span> AI says what it says</span>
+        <span class="site-header__tagline">Science-backed data on why AI says what it says</span>
       </div>
-
-      <nav class="site-header__nav">
-        <a href="/ai-crawler-checker">Tools</a>
-        <a href="/research" class="site-header__nav-cta">Read the Research</a>
+      <nav class="site-header__nav" aria-label="Primary navigation">
+        <a href="/ai-crawler-checker">What AI Sees</a>
+        <a href="/research">Research</a>
       </nav>
     </div>
   </header>
 
-  <!-- Screen 1: hero + bridge -->
-  <section class="home-s1">
-    <div class="home-s1__inner">
+  <main>
+    <section class="hero" aria-labelledby="home-title">
+      <div class="hero__kicker">AI-visibility research · Free instruments · No signup</div>
+      <h1 class="hero__title" id="home-title">
+        <span class="focus-word" style="--i:0">AI</span>
+        <span class="focus-word" style="--i:1">decides</span>
+        <span class="focus-word" style="--i:2">who</span>
+        <span class="focus-word" style="--i:3">gets</span>
+        <em class="focus-word" style="--i:4">recommended.</em>
+        <span class="focus-word" style="--i:5">We</span>
+        <span class="focus-word" style="--i:6">study</span>
+        <em class="focus-word" style="--i:7">why</em>
+        <span class="focus-word" style="--i:8">and</span>
+        <span class="focus-word" style="--i:9">show</span>
+        <span class="focus-word" style="--i:10">you</span>
+        <em class="focus-word" style="--i:11">what it sees</em>
+        <span class="focus-word" style="--i:12">on</span>
+        <span class="focus-word" style="--i:13">your</span>
+        <span class="focus-word" style="--i:14">site.</span>
+      </h1>
+      <p class="hero__sub">We distill the research on why AI says what it says, how generative engines choose their sources, and where brands disappear. Then we built the instrument that shows what those systems can read when they reach <em>your</em> site.</p>
+    </section>
 
-      <p class="home-s1__stats">
-        In <span data-stat="month">March 2026</span>, researchers published over
-        <span data-stat="papers" data-count="2800">2,800</span> papers
-        on how AI decides which sources to trust.
-        That&rsquo;s <span data-stat="pages" data-count-suffix="+">70,000+</span> pages
-        in a single month.
-      </p>
-
-      <p class="home-s1__question">Are you reading this?</p>
-
-      <div class="home-s1__bridge">
-        <p>Neither are most practitioners.</p>
-        <p>Not because they don&rsquo;t care. Because the volume is impossible.</p>
-      </div>
-
-      <p class="home-s1__thesis">We are closing that gap.</p>
-
-      <div class="home-s1__scroll-arrow" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3.5 6.5l5.5 5.5 5.5-5.5"/>
-        </svg>
-      </div>
-
+    <div class="slot" aria-label="Check your website">
+      <form class="slot__row" action="/ai-crawler-checker" method="GET">
+        <span class="slot__prompt" aria-hidden="true">▸</span>
+        <input class="slot__input" name="url" inputmode="url" placeholder="yoursite.com - see what AI sees" autocomplete="off" spellcheck="false" aria-label="Your website URL">
+        <button class="slot__btn" type="submit">Develop</button>
+      </form>
+      <p class="slot__hint">Free, about 10 seconds, shows its work. <a href="#latest-digests">Or read the research first ↓</a></p>
+      <p class="slot__bots">Fetches as <i>·</i> GPTBot <i>·</i> ClaudeBot <i>·</i> PerplexityBot <i>·</i> OAI-SearchBot <i>·</i> Google-Extended <i>·</i> Applebot <i>·</i> + more</p>
     </div>
 
-    <div class="home-s1__section-label">
-      <div class="home-s1__section-label__inner">
-        <span>How Blursor Works</span>
-      </div>
-    </div>
-
-  </section>
-
-  <!-- How it works -->
-  <section class="home-how">
-    <div class="home-how__layout">
-
-      <div class="home-how__paper-wrap">
-        <div class="home-how__paper home-how__paper--left">
-          <img src="/images/sample-paper-0.png" alt="BLURSOR article — citation failure taxonomy">
+    <section class="findings-band" aria-labelledby="findings-title">
+      <div class="findings-band__head">
+        <div>
+          <div class="section-kicker">From the papers we've distilled</div>
+          <h2 class="findings-band__title" id="findings-title">What the research actually says</h2>
         </div>
+        <span class="findings-band__note">Every number links to its paper · updated as we publish</span>
       </div>
 
-      <div class="home-how__inner">
+      <!-- Future sessions: add one finding-card per new article only when the number and arXiv id appear in the published digest metadata or body. Keep duplicate cards aria-hidden. -->
+      <div class="findings-ticker">
+        <div class="findings-track">
+          <a class="finding-card" href="/research/cultural-reasoning-gap-llms">
+            <span class="finding-card__num">94% / 40%</span>
+            <span class="finding-card__line">LLMs ace multiple-choice cultural knowledge, then stumble when <b>answer choices disappear</b>.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2606.01879</span>
+          </a>
+          <a class="finding-card" href="/research/self-evolving-agent-health-community-notes">
+            <span class="finding-card__num">89%</span>
+            <span class="finding-card__line">A self-evolving LLM agent beat human fact-checkers on <b>health misinformation</b>.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2606.02215</span>
+          </a>
+          <a class="finding-card" href="/research/generative-search-ai-cited-sources">
+            <span class="finding-card__num">~16%</span>
+            <span class="finding-card__line">Across major answer engines, cited sources were <b>AI-generated</b> surprisingly often.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2605.23684</span>
+          </a>
+          <a class="finding-card" href="/research/llm-citation-hallucination-agentic-retrieval">
+            <span class="finding-card__num">12-38%</span>
+            <span class="finding-card__line">Six frontier LLMs hallucinated <b>scientific citations</b> at double-digit rates.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2605.14306</span>
+          </a>
+          <a class="finding-card" href="/research/paraphrase-brittleness-brand-recommendation">
+            <span class="finding-card__num">21-32 pts</span>
+            <span class="finding-card__line">Cosmetic rewording changed AI brand recommendations more than <b>switching models</b>.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2605.27440</span>
+          </a>
+          <a class="finding-card" href="/research/rag-brand-visibility-tier-failures">
+            <span class="finding-card__num">48-52%</span>
+            <span class="finding-card__line">Lower-stature specialists stayed invisible in RAG while leaders still surfaced.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2605.27439</span>
+          </a>
+          <a class="finding-card" href="/research/semantic-metadata-agent-retrieval-tradeoff">
+            <span class="finding-card__num">65.7%</span>
+            <span class="finding-card__line">Schema.org metadata raised FAIR-compliant precision, but <b>cut query coverage</b>.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2605.28787</span>
+          </a>
+          <a class="finding-card" href="/research/rank-zero-honeypot-agent-collapse">
+            <span class="finding-card__num">65% → 18%</span>
+            <span class="finding-card__line">One false top search result collapsed frontier agent accuracy in a Microsoft study.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2603.00801</span>
+          </a>
+          <a class="finding-card finding-card--cta" href="/ai-crawler-checker">
+            <span class="finding-card__num">And what does AI see on your site?</span>
+            <span class="finding-card__line">Run the free instrument. No signup, no score theater, no gate.</span>
+            <span class="finding-card__src">Develop your page →</span>
+          </a>
 
-        <div class="home-how__item fade-up delay-1">
-          <span class="home-how__ordinal">01</span>
-          <p class="home-how__line">
-            We monitor research hubs for papers on AI visibility, LLM ranking
-            factors, and how generative engines decide what sources to cite.
-          </p>
+          <a class="finding-card is-duplicate" href="/research/cultural-reasoning-gap-llms" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">94% / 40%</span>
+            <span class="finding-card__line">LLMs ace multiple-choice cultural knowledge, then stumble when <b>answer choices disappear</b>.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2606.01879</span>
+          </a>
+          <a class="finding-card is-duplicate" href="/research/self-evolving-agent-health-community-notes" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">89%</span>
+            <span class="finding-card__line">A self-evolving LLM agent beat human fact-checkers on <b>health misinformation</b>.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2606.02215</span>
+          </a>
+          <a class="finding-card is-duplicate" href="/research/generative-search-ai-cited-sources" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">~16%</span>
+            <span class="finding-card__line">Across major answer engines, cited sources were <b>AI-generated</b> surprisingly often.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2605.23684</span>
+          </a>
+          <a class="finding-card is-duplicate" href="/research/llm-citation-hallucination-agentic-retrieval" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">12-38%</span>
+            <span class="finding-card__line">Six frontier LLMs hallucinated <b>scientific citations</b> at double-digit rates.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2605.14306</span>
+          </a>
+          <a class="finding-card is-duplicate" href="/research/paraphrase-brittleness-brand-recommendation" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">21-32 pts</span>
+            <span class="finding-card__line">Cosmetic rewording changed AI brand recommendations more than <b>switching models</b>.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2605.27440</span>
+          </a>
+          <a class="finding-card is-duplicate" href="/research/rag-brand-visibility-tier-failures" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">48-52%</span>
+            <span class="finding-card__line">Lower-stature specialists stayed invisible in RAG while leaders still surfaced.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2605.27439</span>
+          </a>
+          <a class="finding-card is-duplicate" href="/research/semantic-metadata-agent-retrieval-tradeoff" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">65.7%</span>
+            <span class="finding-card__line">Schema.org metadata raised FAIR-compliant precision, but <b>cut query coverage</b>.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2605.28787</span>
+          </a>
+          <a class="finding-card is-duplicate" href="/research/rank-zero-honeypot-agent-collapse" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">65% → 18%</span>
+            <span class="finding-card__line">One false top search result collapsed frontier agent accuracy in a Microsoft study.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2603.00801</span>
+          </a>
+          <a class="finding-card finding-card--cta is-duplicate" href="/ai-crawler-checker" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">And what does AI see on your site?</span>
+            <span class="finding-card__line">Run the free instrument. No signup, no score theater, no gate.</span>
+            <span class="finding-card__src">Develop your page →</span>
+          </a>
         </div>
+      </div>
+    </section>
 
-        <div class="home-how__item fade-up delay-2">
-          <span class="home-how__ordinal">02</span>
-          <p class="home-how__line">
-            We filter for what matters in practice. We extract the findings
-            that have real implications and distill them into readable,
-            actionable articles.
-          </p>
+    <section class="digests" id="latest-digests" aria-labelledby="digests-title">
+      <div class="digests__head">
+        <div>
+          <div class="section-kicker">The research, distilled</div>
+          <h2 class="digests__title" id="digests-title">Latest digests</h2>
         </div>
-
-        <div class="home-how__item fade-up delay-3">
-          <span class="home-how__ordinal">03</span>
-          <p class="home-how__line">
-            Then we publish &mdash; the insights, the supporting data,
-            and what it means for your work.
-          </p>
-        </div>
-
-        <p class="home-how__line home-how__line--final fade-up delay-4">
-          The original paper is always linked.
-        </p>
-
+        <a class="digests__all" href="/research">All articles →</a>
       </div>
 
-    </div>
-  </section>
-
-  <!-- Article cards -->
-  <!-- Subscribe -->
-  <section class="home-subscribe">
-    <div class="home-subscribe__inner">
-      <!-- TODO: replace action="#" with real endpoint (ConvertKit / Buttondown) -->
-      <div class="subscribe-block">
-        <div class="subscribe-block__label">Weekly digest</div>
-        <p class="subscribe-block__text">New papers, distilled, once a week.</p>
-        <form class="subscribe-block__form" action="#newsletter" method="POST" id="newsletter">
-          <input type="email" name="email" placeholder="your@email.com" class="subscribe-block__input" disabled>
-          <button type="submit" class="subscribe-block__btn" disabled style="opacity:0.5;cursor:not-allowed">Coming soon</button>
-        </form>
-      </div>
-    </div>
-  </section>
-
-  <section class="home-articles">
-
-    <div class="home-articles__label">
-      <div class="home-articles__label__inner">
-        <span>&#8595; This is what it looks like</span>
-      </div>
-    </div>
-
-    <div class="home-articles__inner">
-
-      <!-- Featured card -->
-      <a href="/research/citation-failures-generative-engine-agentgeo" class="featured-card fade-up">
-        <div class="featured-card__arc">
-          <svg viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-            <circle cx="-60" cy="480" r="380"  fill="none" stroke="rgba(26,26,24,0.28)"  stroke-width="1"/>
-            <circle cx="-60" cy="480" r="560"  fill="none" stroke="rgba(26,26,24,0.22)"  stroke-width="1"/>
-            <circle cx="-60" cy="480" r="740"  fill="none" stroke="rgba(26,26,24,0.16)"  stroke-width="1"/>
-            <circle cx="-60" cy="480" r="920"  fill="none" stroke="rgba(26,26,24,0.11)"  stroke-width="1"/>
-            <circle cx="-60" cy="480" r="1100" fill="none" stroke="rgba(26,26,24,0.07)"  stroke-width="1"/>
-          </svg>
-        </div>
-        <div class="featured-card__content">
-          <div class="featured-card__label">Citation &middot; Geography</div>
-          <h2 class="featured-card__title">Diagnosing Citation Failures in Generative Engine Optimization: What AgentGEO Actually Shows</h2>
-          <p class="featured-card__summary">A new paper from Virginia Tech maps four failure modes that prevent pages from being cited in AI-generated responses. 43% of relevant pages receive zero citations under baseline conditions.</p>
-          <div class="featured-card__meta">
-            <span>May 22, 2026</span>
-            <span class="sep">&middot;</span>
-            <span>7 min read</span>
-            <span class="sep">&middot;</span>
-            <span class="featured-card__arxiv">arXiv:2603.09296</span>
-          </div>
-        </div>
+      <a class="digest-row" href="/research/llm-brand-reputation-citations-third-party">
+        <span class="digest-row__num">01</span>
+        <span>
+          <span class="digest-row__meta"><span>Jun 25, 2026</span><span>9 min</span><span class="src">arXiv:2606.25787</span></span>
+          <span class="digest-row__title" role="heading" aria-level="3">LLMs mostly source "brand reputation" from other people's pages</span>
+          <span class="digest-row__summary">What LLMs treat as brand reputation is mostly other people's web pages, not the brands themselves.</span>
+        </span>
       </a>
 
-      <!-- Grid cards -->
-      <div class="home-articles__footer">
-        <a href="/research" class="home-articles__all">All articles &rarr;</a>
-      </div>
+      <a class="digest-row" href="/research/ai-brand-category-ownership-llms">
+        <span class="digest-row__num">02</span>
+        <span>
+          <span class="digest-row__meta"><span>Jun 23, 2026</span><span>10 min</span><span class="src">arXiv:2606.23057</span></span>
+          <span class="digest-row__title" role="heading" aria-level="3">AI brand "ownership" is moderately concentrated, but the winner changes by model</span>
+          <span class="digest-row__summary">Who gets the top pick in AI recommendations, and how consistent is it across models?</span>
+        </span>
+      </a>
 
-    </div>
-  </section>
+      <a class="digest-row" href="/research/english-blind-spot-local-champions">
+        <span class="digest-row__num">03</span>
+        <span>
+          <span class="digest-row__meta"><span>Jun 23, 2026</span><span>10 min</span><span class="src">arXiv:2606.23165</span></span>
+          <span class="digest-row__title" role="heading" aria-level="3">English-only AI reputation monitoring misses local champions in multilingual markets</span>
+          <span class="digest-row__summary">English-language prompts create a measurable local-visibility blind spot across languages.</span>
+        </span>
+      </a>
+    </section>
 
-  <!-- X Takeaways -->
-  <section class="home-takeaways">
-    <div class="home-takeaways__inner">
-      <div class="home-takeaways__header">
-        <div class="home-takeaways__label">KEY TAKEAWAYS FOR THE <span class="x-logo" aria-label="X"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg></span>CEPTIONALLY BUSY</div>
-        <p class="home-takeaways__desc">Every distilled paper includes a key takeaway. We post it on X the day it publishes.</p>
+    <section class="stance" aria-labelledby="stance-title">
+      <div class="stance__inner">
+        <div class="section-kicker">How we work</div>
+        <h2 class="digests__title" id="stance-title">Honesty is the product</h2>
+        <div class="stance__grid">
+          <div class="tenet">
+            <span class="tenet__label">SHOW THE WORK</span>
+            <p>Every digest links the paper it came from. Every checker result cites its source. If we cannot source a claim, we do not say it.</p>
+          </div>
+          <div class="tenet">
+            <span class="tenet__label">SAY WHAT DOESN'T WORK</span>
+            <p>The <a href="/ai-crawler-checker">checker</a> tells users llms.txt is hygiene, not a citation lever, citing <a href="https://seranking.com/blog/llms-txt/" target="_blank" rel="noopener">SE Ranking's 300k-domain study</a> instead of selling a generator.</p>
+          </div>
+          <div class="tenet">
+            <span class="tenet__label">NO GATES</span>
+            <p>No signup, no email wall, no book-a-demo trap. Read it, use it, act on it, leave.</p>
+          </div>
+        </div>
+        <p class="stance__close">Now you have no excuses not to act on it.</p>
       </div>
-      <div class="home-takeaways__widget">
-        <!-- Elfsight Twitter Feed | Katy Perry Test -->
-        <script src="https://elfsightcdn.com/platform.js" async></script>
-        <div class="elfsight-app-b43fd5ab-0c98-43cb-82a9-9def169f7bc1" data-elfsight-app-lazy></div>
-      </div>
-    </div>
-  </section>
+    </section>
+  </main>
 
-  <!-- Footer -->
   <footer class="site-footer">
     <div class="site-footer__inner">
-
-      <!-- Brand block -->
       <div class="site-footer__brand">
-        <a href="/" class="site-footer__logo">
+        <a href="/" class="site-footer__logo" aria-label="BLURSOR home">
           <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
             <rect x="0" y="0" width="7" height="18" rx="1"/>
             <circle cx="12" cy="5" r="2"/>
@@ -1115,101 +978,39 @@
           </svg>
           BLURSOR
         </a>
-        <p class="site-footer__desc">AI research paper digest for non-academic audiences.</p>
+        <p class="site-footer__desc">Research on why AI says what it says, distilled for people who act on it.</p>
         <span class="site-footer__tagline">Now you have no excuses not to act on it.</span>
       </div>
 
-      <!-- Research column -->
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Instruments</div>
+        <ul>
+          <li><a href="/ai-crawler-checker">What AI Sees</a></li>
+        </ul>
+      </div>
+
       <div class="site-footer__col">
         <div class="site-footer__col-heading">Research</div>
         <ul>
           <li><a href="/research">All articles</a></li>
-          <li><a href="#newsletter">Weekly Digest</a></li>
+          <li><a href="/author/alex-rostovtsev">Author</a></li>
         </ul>
       </div>
 
-      <!-- Connect column -->
       <div class="site-footer__col">
         <div class="site-footer__col-heading">Connect</div>
         <ul>
-          <li><a href="#newsletter">Newsletter</a></li>
-          <li>
-            <a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener" class="site-footer__x-link">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-            </a>
-            <span class="site-footer__col-sep">|</span>
-            <a href="mailto:contact@blursor.ai">contact@blursor.ai</a>
-          </li>
+          <li><a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener">@blursor_ai</a></li>
+          <li><a href="mailto:contact@blursor.ai">contact@blursor.ai</a></li>
         </ul>
       </div>
-
     </div>
 
     <div class="site-footer__bottom">
       <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
       <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>
     </div>
-
   </footer>
-
-  <script>
-    // ——— STATS CONFIG — update these three values each month ———
-    var STATS = {
-      month:  'March 2026',
-      papers: '2,800',
-      pages:  '70,000+'
-    };
-
-    // Fill stat spans with configured values
-    document.querySelectorAll('[data-stat]').forEach(function(el) {
-      var key = el.dataset.stat;
-      if (STATS[key]) el.textContent = STATS[key];
-    });
-
-    // ——— Count-up animation ———
-    function formatNum(n) {
-      return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    }
-
-    function countUp(el, endVal, suffix, duration) {
-      var startTime = null;
-      function step(ts) {
-        if (!startTime) startTime = ts;
-        var progress = Math.min((ts - startTime) / duration, 1);
-        var ease = 1 - Math.pow(1 - progress, 3);
-        var current = Math.round(endVal * ease);
-        el.textContent = formatNum(current) + (progress >= 1 ? suffix : '');
-        if (progress < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
-
-    // Run count-up on page load
-    window.addEventListener('DOMContentLoaded', function() {
-      setTimeout(function() {
-        var papersEl = document.querySelector('[data-stat="papers"]');
-        var pagesEl  = document.querySelector('[data-stat="pages"]');
-        if (papersEl) countUp(papersEl, 2800, '',  1500);
-        if (pagesEl)  countUp(pagesEl,  70000, '+', 1500);
-      }, 350);
-    });
-
-    // ——— Fade-up on scroll ———
-    var fadeEls = document.querySelectorAll('.fade-up');
-    if ('IntersectionObserver' in window) {
-      var io = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            io.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.1 });
-      fadeEls.forEach(function(el) { io.observe(el); });
-    } else {
-      fadeEls.forEach(function(el) { el.classList.add('is-visible'); });
-    }
-  </script>
 
 </body>
 </html>
