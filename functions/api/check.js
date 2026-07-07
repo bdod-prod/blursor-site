@@ -68,6 +68,8 @@ const FETCH_TIMEOUT_MS = 9000;
 const RENDER_TIMEOUT_MS = 25000;
 const MAX_BYTES = 2_500_000;
 const RENDER_CACHE_TTL = 21600; // 6h
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 
 // Injected into the page during render (addScriptTag) to read the signals an AI
 // AGENT needs — things that only exist after JS runs and can't be seen in static
@@ -173,6 +175,15 @@ export async function onRequestGet({ request, env }) {
     target = normalizeTarget(raw);
   } catch (e) {
     return json({ ok: false, error: e.message }, 400);
+  }
+
+  const rate = await checkRateLimit(request);
+  if (!rate.ok) {
+    return json({
+      ok: false,
+      error: "Easy there - this free tool is limited to 10 checks per hour from one IP so the render budget survives. Try again soon.",
+      retryAfterSeconds: rate.retryAfter,
+    }, 429, { "Retry-After": String(rate.retryAfter) });
   }
 
   try {
@@ -363,20 +374,85 @@ function extractInjected(html) {
 
 function normalizeTarget(input) {
   if (!input) throw new Error("Add a ?url= parameter.");
+  const urlText = /^https?:\/\//i.test(input) ? input : `https://${input}`;
+  const rawHost = rawHostnameFromInput(urlText);
+  if (isNumericHostToken(rawHost)) throw new Error("That host isn't allowed (numeric IP aliases are blocked).");
+
   let u;
   try {
-    u = new URL(/^https?:\/\//i.test(input) ? input : `https://${input}`);
+    u = new URL(urlText);
   } catch {
     throw new Error("That doesn't look like a valid URL.");
   }
   if (u.protocol !== "http:" && u.protocol !== "https:") throw new Error("Only http and https URLs are supported.");
   const host = u.hostname.toLowerCase();
+  const ipv6Literal = host.startsWith("[") && host.endsWith("]");
   const blocked =
-    host === "localhost" || host.endsWith(".local") || host.endsWith(".internal") ||
-    /^(127\.|10\.|0\.|169\.254\.|192\.168\.|::1$|fc|fd)/.test(host) ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(host) || !host.includes(".");
+    host === "localhost" || host.endsWith(".localhost") ||
+    host.endsWith(".local") || host.endsWith(".internal") ||
+    isPrivateIpv4(host) || isBlockedIpv6Literal(host) ||
+    (!ipv6Literal && !host.includes("."));
   if (blocked) throw new Error("That host isn't allowed (internal/private addresses are blocked).");
   return u;
+}
+
+// SSRF guard notes:
+// - rejects numeric/hex host aliases before URL() can normalize them (2130706433, 0x7f000001)
+// - rejects localhost/private IPv4, .localhost/.local/.internal, and non-public IPv6 literals ([::], [::1], [fc00::1])
+// - allows normal public domains and public IPv6 literals such as [2606:4700:4700::1111]
+function rawHostnameFromInput(urlText) {
+  const m = /^[a-z][a-z0-9+.-]*:\/\/(?:[^/?#@]*@)?(\[[^\]]+\]|[^/:?#]+)/i.exec(urlText);
+  return m ? m[1].toLowerCase() : "";
+}
+
+function isNumericHostToken(host) {
+  return /^(?:0x[0-9a-f]+|\d+)$/i.test(String(host || ""));
+}
+
+function isPrivateIpv4(host) {
+  return /^(127\.|10\.|0\.|169\.254\.|192\.168\.)/.test(host) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(host);
+}
+
+function isBlockedIpv6Literal(host) {
+  if (!host.startsWith("[") || !host.endsWith("]")) return false;
+  const ip = host.slice(1, -1).toLowerCase();
+  if (ip === "::" || ip === "::1" || ip === "0:0:0:0:0:0:0:0" || ip === "0:0:0:0:0:0:0:1") return true;
+  if (/^(fc|fd|fe8|fe9|fea|feb|ff)/.test(ip)) return true;
+  if (/^2001:db8(?::|$)/.test(ip)) return true;
+  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(ip);
+  if (mapped) return isPrivateIpv4(mapped[1]);
+  return false;
+}
+
+async function checkRateLimit(request) {
+  // Free-tier throttle: 10 valid checks per IP per hour. Cache failure falls open
+  // so the checker remains usable if Cloudflare's edge cache is unavailable.
+  try {
+    if (typeof caches === "undefined" || !caches.default) return { ok: true };
+    const ip = (request.headers.get("CF-Connecting-IP") ||
+      (request.headers.get("x-forwarded-for") || "").split(",")[0] ||
+      "unknown").trim() || "unknown";
+    const now = Date.now();
+    const cache = caches.default;
+    const key = new Request("https://rate-limit.blursor.ai/api-check/" + encodeURIComponent(ip));
+    const hit = await cache.match(key);
+    let record = hit ? await hit.json().catch(() => null) : null;
+    if (!record || typeof record.resetAt !== "number" || record.resetAt <= now) {
+      record = { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
+    }
+
+    const retryAfter = Math.max(1, Math.ceil((record.resetAt - now) / 1000));
+    if (record.count >= RATE_LIMIT_MAX) return { ok: false, retryAfter };
+
+    record.count += 1;
+    await cache.put(key, new Response(JSON.stringify(record), {
+      headers: { "Cache-Control": `public, max-age=${retryAfter}` },
+    }));
+    return { ok: true, remaining: Math.max(0, RATE_LIMIT_MAX - record.count), retryAfter };
+  } catch {
+    return { ok: true };
+  }
 }
 
 async function safeFetch(url, ua) {
@@ -554,6 +630,8 @@ function analyzeHtml(html) {
     .replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ").replace(/<!--[\s\S]*?-->/g, " ")
     .replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const outline = extractOutline(html);
+  const firstParagraph = (outline.find((b) => b.tag === "p" && b.text && b.text.length >= 40) || {}).text || null;
   const visibleTextChars = stripped.length;
   const htmlBytes = html.length;
   const scriptBytes = (html.match(/<script[\s\S]*?<\/script>/gi) || []).join("").length;
@@ -577,7 +655,8 @@ function analyzeHtml(html) {
     hasJsonLd: jsonLdBlocks.length > 0, jsonLdTypes: [...new Set(jsonLdTypes)],
     visibleTextChars, htmlBytes, scriptBytes, textRatio: Math.round(textRatio * 1000) / 1000,
     looksLikeJsShell, frameworkHint,
-    outline: extractOutline(html),
+    outline,
+    firstParagraph,
   };
 }
 
@@ -1121,9 +1200,12 @@ function buildFindings({ botAccess, rawPage, renderedPage, llms, indexSignals, c
 
   const disallowed = botAccess.filter((b) => b.robots === "disallowed");
   if (disallowed.length) {
-    f.push(finding("robots", "robots.txt disallows AI crawlers", "fail",
+    const item = finding("robots", "robots.txt disallows AI crawlers", "fail",
       `Blocked by robots.txt: ${disallowed.map((b) => b.token).join(", ")}.`,
-      "robots.txt is the front door. Disallowed bots won't crawl you at all.", SRC.vercel));
+      "robots.txt is the front door. Disallowed bots won't crawl you at all.", SRC.vercel);
+    item.copyLabel = "Paste into robots.txt if you want these bots allowed:";
+    item.copyText = robotsAllowSnippet(disallowed);
+    f.push(item);
   } else {
     f.push(finding("robots", "robots.txt allows AI crawlers", "pass",
       "No AI-bot tokens are disallowed for this path.", "Allowing the bots is necessary to appear in AI answers.", SRC.vercel));
@@ -1138,8 +1220,17 @@ function buildFindings({ botAccess, rawPage, renderedPage, llms, indexSignals, c
   if (!rawPage.title) f.push(finding("title", "Missing <title>", "fail", "No title tag in the raw HTML.", "A clear title helps models label and summarize this page.", SRC.googleTitle));
   else f.push(finding("title", "Has a title", "pass", `“${truncate(rawPage.title, 80)}”`, "Gives the model a clear label for citation.", SRC.geo));
 
-  if (!rawPage.metaDescription) f.push(finding("meta", "No meta description", "warn", "No meta description in the raw HTML.", "A clear summary helps models quote you accurately.", SRC.geo));
-  else f.push(finding("meta", "Has a meta description", "pass", truncate(rawPage.metaDescription, 100), "Gives a ready-made summary to quote.", SRC.geo));
+  if (!rawPage.metaDescription) {
+    const item = finding("meta", "No meta description", "warn", "No meta description in the raw HTML.", "A clear summary helps models quote you accurately.", SRC.geo);
+    const draft = metaDescriptionDraft(rawPage);
+    if (draft) {
+      item.copyLabel = "A starting point - edit before shipping:";
+      item.copyText = `<meta name="description" content="${escapeAttr(draft)}">`;
+    }
+    f.push(item);
+  } else {
+    f.push(finding("meta", "Has a meta description", "pass", truncate(rawPage.metaDescription, 100), "Gives a ready-made summary to quote.", SRC.geo));
+  }
 
   if (rawPage.headings.h1 === 1) f.push(finding("headings", "Clean heading structure", "pass", `1 H1, ${rawPage.headings.h2} H2, ${rawPage.headings.h3} H3.`, "A clear H1→H2→H3 hierarchy is strongly associated with cited pages.", SRC.geo));
   else f.push(finding("headings", "Heading structure needs work", "warn", `${rawPage.headings.h1} H1 tags (want exactly 1), ${rawPage.headings.h2} H2 — in the raw HTML.`, "Cited pages overwhelmingly use one H1 and a clean hierarchy.", SRC.geo));
@@ -1251,14 +1342,33 @@ function finding(id, label, status, detail, why, source) {
   return { id, label, status, detail, why, source };
 }
 
+function robotsAllowSnippet(disallowed) {
+  return disallowed.map((b) => `User-agent: ${b.token}\nAllow: /`).join("\n\n");
+}
+
+function metaDescriptionDraft(rawPage) {
+  const text = String(rawPage && rawPage.firstParagraph || "").replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  const clean = text.replace(/[<>"]/g, "");
+  if (clean.length <= 155) return clean;
+  const head = clean.slice(0, 156);
+  const boundary = Math.max(head.lastIndexOf(". "), head.lastIndexOf("! "), head.lastIndexOf("? "), head.lastIndexOf("; "), head.lastIndexOf(", "), head.lastIndexOf(" "));
+  const cut = boundary > 80 ? head.slice(0, boundary) : head.slice(0, 152);
+  return cut.replace(/[.,;:!?-]+$/, "").trim() + "...";
+}
+
+function escapeAttr(s) {
+  return String(s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 function truncate(s, n) {
   return s && s.length > n ? s.slice(0, n - 1) + "…" : s;
 }
 
-function json(obj, status = 200) {
+function json(obj, status = 200, extraHeaders = {}) {
   const cache = status >= 400 || (obj && obj.ok === false) ? "no-store" : "public, max-age=300";
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": cache, "Access-Control-Allow-Origin": "*" },
+    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": cache, "Access-Control-Allow-Origin": "*", ...extraHeaders },
   });
 }

@@ -13,16 +13,16 @@
   <meta property="og:description" content="Paste a URL. See what GPTBot, ClaudeBot and PerplexityBot actually receive — and whether your page can be cited by AI.">
   <meta property="og:url" content="https://blursor.ai/ai-crawler-checker">
   <meta property="og:site_name" content="BLURSOR">
-  <meta property="og:image" content="https://blursor.ai/assets/og-default.png">
+  <meta property="og:image" content="https://blursor.ai/assets/og-what-ai-sees.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="BLURSOR">
+  <meta property="og:image:alt" content="What does AI see on your site?">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="What AI Sees — AI Crawler Readability Checker">
   <meta name="twitter:description" content="See what AI crawlers actually receive when they hit your page — free, no signup.">
-  <meta name="twitter:image" content="https://blursor.ai/assets/og-default.png">
+  <meta name="twitter:image" content="https://blursor.ai/assets/og-what-ai-sees.png">
 
   <!-- JSON-LD: WebApplication -->
   <script type="application/ld+json">
@@ -1044,7 +1044,9 @@
       letter-spacing: .14em;
       text-transform: uppercase;
       color: var(--dk-faint);
+      text-decoration: none;
     }
+    .shareBar__brand:hover { color: var(--dk-text); }
     .shareBar__btns { display: flex; gap: .6rem; flex-wrap: wrap; }
     .sbtn {
       font-family: var(--font-mono);
@@ -1128,6 +1130,26 @@
     }
     .fix__t { font-size: 1.12rem; font-weight: 600; margin-bottom: .3rem; }
     .fix__b { font-size: .95rem; color: var(--color-text-secondary); line-height: 1.7; }
+    .fix__copyLabel {
+      margin-top: .75rem;
+      font-family: var(--font-mono);
+      font-size: .64rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+    .fix__copy {
+      margin-top: .45rem;
+      padding: .85rem .95rem;
+      overflow-x: auto;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+      font-family: var(--font-mono);
+      font-size: .78rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
     .fix__who {
       margin-top: .55rem;
       font-family: var(--font-mono);
@@ -2760,7 +2782,9 @@
 
       function renderShare() {
         var share = el('div', 'shareBar');
-        share.appendChild(el('span', 'shareBar__brand', 'Developed by BLURSOR · What AI Sees · blursor.ai'));
+        var brand = el('a', 'shareBar__brand', 'Developed by BLURSOR · What AI Sees');
+        brand.href = 'https://blursor.ai/ai-crawler-checker';
+        share.appendChild(brand);
         var btns = el('div', 'shareBar__btns');
         var copy = el('button', 'sbtn', 'Copy report link');
         copy.type = 'button';
@@ -2804,13 +2828,13 @@
         clear(fixList);
         var issues = [];
         read.forEach(function (f) {
-          if ((f.status === 'fail' || f.status === 'warn') && PLAIN[f.id]) issues.push({ status: f.status, info: PLAIN[f.id] });
+          if ((f.status === 'fail' || f.status === 'warn') && PLAIN[f.id]) issues.push({ status: f.status, info: PLAIN[f.id], finding: f });
         });
         cite.forEach(function (f) {
-          if (f.status === 'warn' && PLAIN_CITE[f.id]) issues.push({ status: f.status, info: PLAIN_CITE[f.id] });
+          if (f.status === 'warn' && PLAIN_CITE[f.id]) issues.push({ status: f.status, info: PLAIN_CITE[f.id], finding: f });
         });
         agent.forEach(function (f) {
-          if ((f.status === 'fail' || f.status === 'warn') && PLAIN_AGENT[f.id]) issues.push({ status: f.status, info: PLAIN_AGENT[f.id] });
+          if ((f.status === 'fail' || f.status === 'warn') && PLAIN_AGENT[f.id]) issues.push({ status: f.status, info: PLAIN_AGENT[f.id], finding: f });
         });
         issues.sort(function (a, b) { return (SEV[a.status] || 9) - (SEV[b.status] || 9); });
         if (!issues.length) {
@@ -2824,6 +2848,10 @@
             var body = el('div');
             body.appendChild(el('div', 'fix__t', it.info.title));
             body.appendChild(el('div', 'fix__b', it.info.fix));
+            if (it.finding && it.finding.copyText) {
+              body.appendChild(el('div', 'fix__copyLabel', it.finding.copyLabel || 'Suggested text'));
+              body.appendChild(el('pre', 'fix__copy', it.finding.copyText));
+            }
             var who = el('div', 'fix__who');
             who.appendChild(document.createTextNode('Send this to: '));
             who.appendChild(el('b', null, it.info.who));
