@@ -435,7 +435,8 @@ async function checkRateLimit(request) {
       "unknown").trim() || "unknown";
     const now = Date.now();
     const cache = caches.default;
-    const key = new Request("https://rate-limit.blursor.ai/api-check/" + encodeURIComponent(ip));
+    const scope = new URL(request.url).hostname.toLowerCase();
+    const key = new Request("https://rate-limit.blursor.ai/api-check/" + encodeURIComponent(scope) + "/" + encodeURIComponent(ip));
     const hit = await cache.match(key);
     let record = hit ? await hit.json().catch(() => null) : null;
     if (!record || typeof record.resetAt !== "number" || record.resetAt <= now) {
