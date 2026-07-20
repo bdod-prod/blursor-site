@@ -32,6 +32,9 @@ jobs:
             echo "branch=$BR" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Run tests
+        run: npm test
+
       - name: Regenerate research/index.html from article metadata
         run: node scripts/build-research-index.js
 

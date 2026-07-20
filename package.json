@@ -1,0 +1,10 @@
+{
+  "name": "blursor-site",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
