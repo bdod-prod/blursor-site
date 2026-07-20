@@ -2,7 +2,8 @@
   "name": "blursor-site",
   "private": true,
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "test:visibility": "node --test tests/visibility"
   },
   "engines": {
     "node": ">=20"
