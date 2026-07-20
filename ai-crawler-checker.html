@@ -1809,10 +1809,21 @@
           });
       }
 
-      function replaceShareUrl(url, vs) {
+      function fetchStoredReport(id) {
+        return fetch('/api/reports/' + encodeURIComponent(id))
+          .then(function (r) {
+            return r.text().then(function (text) {
+              var body = null;
+              try { body = JSON.parse(text); } catch (e) {}
+              return { ok: r.ok, body: body };
+            });
+          });
+      }
+
+      function replaceShareUrl(url, vs, report) {
         try {
-          var next = '?url=' + encodeURIComponent(url);
-          if (vs) next += '&vs=' + encodeURIComponent(vs);
+          var next = report && report.url ? report.url : '?url=' + encodeURIComponent(url);
+          if (vs) next = '?url=' + encodeURIComponent(url) + '&vs=' + encodeURIComponent(vs);
           history.replaceState(null, '', next);
         } catch (e) {}
       }
@@ -1843,6 +1854,33 @@
         btn.textContent = on ? 'Developing…' : 'Develop';
       }
 
+      function loadStoredReport(id) {
+        setBusy(true);
+        instrument.classList.add('show');
+        reportEl.hidden = true;
+        scanEl.hidden = false;
+        plainWords.classList.remove('show');
+        scanTitle.textContent = 'Loading saved report';
+        clear(scanLines);
+        scanLines.appendChild(el('div', 'scan__line in pend', 'retrieving the stored snapshot …'));
+
+        fetchStoredReport(id)
+          .then(function (res) {
+            if (!res.ok || !res.body || res.body.ok === false) {
+              renderError('', res.body && res.body.error ? res.body.error : 'That saved report could not be found.');
+              return;
+            }
+            input.value = res.body.url || '';
+            renderReport(res.body);
+          })
+          .catch(function () {
+            renderError('', 'Network error — the saved report could not be loaded.');
+          })
+          .finally(function () {
+            setBusy(false);
+          });
+      }
+
       function run(url) {
         url = normalizeUrl(url);
         if (!url) return;
@@ -1860,7 +1898,7 @@
             }
             scan.finish(res.body, function () {
               renderReport(res.body);
-              replaceShareUrl(url);
+              replaceShareUrl(url, null, res.body.report);
             });
           })
           .catch(function () {
@@ -2128,7 +2166,7 @@
         renderLedger(read, cite, agent, footnotes, data.agentic);
         renderMethod(data);
         renderSources(footnotes.list);
-        renderShare();
+        renderShare(data);
         renderPlainWords(data, read, cite, agent);
       }
 
@@ -2162,7 +2200,7 @@
 
         renderMethod(a);
         renderSources(footnotes.list);
-        renderShare();
+        renderShare(null);
       }
 
       function allFindingsFor(data) {
@@ -2780,18 +2818,22 @@
         reportEl.appendChild(src);
       }
 
-      function renderShare() {
+      function renderShare(data) {
         var share = el('div', 'shareBar');
         var brand = el('a', 'shareBar__brand', 'Developed by BLURSOR · What AI Sees');
         brand.href = 'https://blursor.ai/ai-crawler-checker';
         share.appendChild(brand);
         var btns = el('div', 'shareBar__btns');
-        var copy = el('button', 'sbtn', 'Copy report link');
+        var copy = el('button', 'sbtn', data && data.report ? 'Copy saved report link' : 'Copy check link');
         copy.type = 'button';
         copy.addEventListener('click', function () { copyLink(copy); });
-        var again = el('button', 'sbtn sbtn--hot', 'Check another site');
+        var again = el('button', 'sbtn sbtn--hot', data ? 'Re-run this page' : 'Check another site');
         again.type = 'button';
         again.addEventListener('click', function () {
+          if (data && data.url) {
+            run(data.url);
+            return;
+          }
           input.focus();
           input.select();
           window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
@@ -2803,12 +2845,13 @@
       }
 
       function copyLink(button) {
+        var original = button.textContent;
         function done() {
           button.classList.add('copied');
           button.textContent = 'Copied!';
           setTimeout(function () {
             button.classList.remove('copied');
-            button.textContent = 'Copy report link';
+            button.textContent = original;
           }, 1600);
         }
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -2887,15 +2930,20 @@
         }
       });
 
-      var params = new URLSearchParams(window.location.search);
-      var initial = params.get('url');
-      var initialVs = params.get('vs');
-      if (initialVs) {
-        showCompare(true);
-        if (vsInput) vsInput.value = normalizeUrl(initialVs);
-        if (initial) runCompare(initial, initialVs);
-      } else if (initial) {
-        run(initial);
+      var reportMatch = window.location.pathname.match(/^\/r\/([0-9a-f-]{36})\/?$/i);
+      if (reportMatch) {
+        loadStoredReport(reportMatch[1]);
+      } else {
+        var params = new URLSearchParams(window.location.search);
+        var initial = params.get('url');
+        var initialVs = params.get('vs');
+        if (initialVs) {
+          showCompare(true);
+          if (vsInput) vsInput.value = normalizeUrl(initialVs);
+          if (initial) runCompare(initial, initialVs);
+        } else if (initial) {
+          run(initial);
+        }
       }
     })();
   </script>
