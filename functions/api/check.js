@@ -18,6 +18,9 @@
 //   CF_ACCOUNT_ID    - your Cloudflare account id
 //   CF_BROWSER_TOKEN - API token with Browser Rendering permission
 
+import { calculateRenderDelta } from "../lib/report-model.mjs";
+import { captureReport } from "../lib/report-store.mjs";
+
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36";
 
@@ -256,13 +259,15 @@ export async function onRequestGet({ request, env }) {
     // The second half: can an AI AGENT use the page (not just read it)?
     const agentic = analyzeAgentic({ injected: render.agentic, renderedHtml: render.html, rawHtml, llms });
 
-    return json({
+    const result = {
       ok: true,
       url: target.href,
       finalUrl: baseline.finalUrl || target.href,
       checkedAt: new Date().toISOString(),
+      httpStatus: baseline.status,
       renderMode: renderedPage ? "rendered" : "heuristic",
       renderStatus: render.status,
+      renderDelta: calculateRenderDelta(rawPage, renderedPage),
       summary,
       botAccess,
       content: rawPage,
@@ -274,7 +279,9 @@ export async function onRequestGet({ request, env }) {
       findings,
       citeability,
       agentic,
-    });
+    };
+    const captured = await captureReport(result, env, { origin: reqUrl.origin });
+    return json({ ...result, ...captured });
   } catch (e) {
     return json({ ok: false, error: `Check failed: ${e.message}` }, 500);
   }
@@ -1367,7 +1374,9 @@ function truncate(s, n) {
 }
 
 function json(obj, status = 200, extraHeaders = {}) {
-  const cache = status >= 400 || (obj && obj.ok === false) ? "no-store" : "public, max-age=300";
+  // Every successful request must cross the capture layer. The expensive browser
+  // render has its own cache; caching this API response would silently skip logs.
+  const cache = "no-store";
   return new Response(JSON.stringify(obj), {
     status,
     headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": cache, "Access-Control-Allow-Origin": "*", ...extraHeaders },
