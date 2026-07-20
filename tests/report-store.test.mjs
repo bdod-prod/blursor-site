@@ -47,6 +47,35 @@ test("missing server configuration leaves a successful check usable", async () =
   assert.equal(calls, 0);
 });
 
+test("storage requires HTTPS except for explicit loopback development", async () => {
+  let localCalls = 0;
+  const local = await captureReport(result(), {
+    ...ENV,
+    SUPABASE_URL: "http://127.0.0.1:8789",
+  }, {
+    origin: "http://127.0.0.1:8788",
+    fetch: async () => {
+      localCalls += 1;
+      return new Response(JSON.stringify([{ id: REPORT_ID }]), { status: 201 });
+    },
+  });
+  const insecure = await captureReport(result(), {
+    ...ENV,
+    SUPABASE_URL: "http://project.supabase.co",
+  }, {
+    origin: "https://blursor.ai",
+    fetch: async () => { throw new Error("should not fetch insecure storage"); },
+    logger: { error: () => {} },
+  });
+
+  assert.equal(local.capture.status, "stored");
+  assert.equal(localCalls, 1);
+  assert.deepEqual(insecure, {
+    report: null,
+    capture: { status: "failed", code: "storage_error" },
+  });
+});
+
 test("captureReport inserts one allowlisted row with server-only credentials", async () => {
   let request;
   const outcome = await captureReport(result(), ENV, {

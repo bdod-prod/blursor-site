@@ -97,7 +97,10 @@ function storageConfig(env) {
   } catch {
     throw storageError("config_url");
   }
-  if (url.protocol !== "https:") throw storageError("config_url");
+  const loopback = url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "[::1]";
+  if (url.protocol !== "https:" && !(url.protocol === "http:" && loopback)) {
+    throw storageError("config_url");
+  }
   return { url, key: env.SUPABASE_SERVICE_ROLE_KEY.trim() };
 }
 
