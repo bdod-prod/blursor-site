@@ -52,6 +52,7 @@ export async function captureReport(result, env, options = {}) {
 export async function readReport(id, env, options = {}) {
   if (!isReportId(id)) return { status: "invalid" };
   if (!hasStorageEnvironment(env)) return { status: "unconfigured" };
+  const reportId = String(id).toLowerCase();
 
   const fetchImpl = options.fetch || globalThis.fetch;
   const logger = options.logger || console;
@@ -59,7 +60,7 @@ export async function readReport(id, env, options = {}) {
     const config = storageConfig(env);
     const endpoint = new URL(TABLE_PATH, config.url);
     endpoint.searchParams.set("select", "id,result,checked_at");
-    endpoint.searchParams.set("id", `eq.${id}`);
+    endpoint.searchParams.set("id", `eq.${reportId}`);
     endpoint.searchParams.set("limit", "1");
     const response = await fetchImpl(endpoint, {
       method: "GET",
@@ -72,7 +73,7 @@ export async function readReport(id, env, options = {}) {
     if (!Array.isArray(rows)) throw storageError("read_shape");
     if (rows.length === 0) return { status: "missing" };
     const row = rows[0];
-    if (!row || row.id !== id || !row.result || typeof row.result !== "object") {
+    if (!row || String(row.id).toLowerCase() !== reportId || !row.result || typeof row.result !== "object") {
       throw storageError("read_shape");
     }
     return { status: "found", row };

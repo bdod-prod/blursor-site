@@ -182,3 +182,14 @@ test("readReport distinguishes missing rows from upstream failures", async () =>
   assert.deepEqual(missing, { status: "missing" });
   assert.deepEqual(failed, { status: "failed" });
 });
+
+test("readReport accepts uppercase UUID paths returned in canonical lowercase", async () => {
+  const stored = { ok: true, url: "https://example.com/page" };
+  const outcome = await readReport(REPORT_ID.toUpperCase(), ENV, {
+    fetch: async () => new Response(JSON.stringify([{ id: REPORT_ID, result: stored }]), { status: 200 }),
+    logger: { error: () => {} },
+  });
+
+  assert.equal(outcome.status, "found");
+  assert.equal(outcome.row.id, REPORT_ID);
+});
