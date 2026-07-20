@@ -70,9 +70,10 @@ Prompt panel
     -> internal report or controlled export
 ```
 
-The rights gate is a product control, not a policy document that engineers can ignore. Each surface has one of four runtime states:
+The rights gate is a product control, not a policy document that engineers can ignore. Each surface has one of five runtime states:
 
 - `production_authorized`: scheduler and manual runs allowed;
+- `contract_review`: cost forecasting and adapter development allowed, but no provider execution;
 - `verification_only`: manual import or analyst comparison allowed, no scheduled collection;
 - `research_only`: isolated calibration runs allowed, excluded from customer reports;
 - `disabled`: no execution.
@@ -83,9 +84,9 @@ The production worker refuses any scheduled job unless the surface is `productio
 
 | Surface ID | Public label | Initial state | Important limitation |
 |---|---|---:|---|
-| `yandex_gen_search_api_ru` | Yandex generative Search API · RU | `production_authorized` after account setup | Not consumer Alice parity |
+| `yandex_gen_search_api_ru` | Yandex generative Search API · RU | `contract_review` | Not consumer Alice parity; account and downstream-use terms still need review |
 | `yandex_webmaster_alice_native` | Alice AI visibility · Yandex Webmaster | `verification_only` | Verified client sites; no documented Alice API resource |
-| `gigachat_api` | GigaChat API | `production_authorized` after business setup | Not consumer-app browsing parity |
+| `gigachat_api` | GigaChat API | `contract_review` | Not consumer-app browsing parity; business terms still need review |
 | `openai_responses_web_search` | OpenAI Responses API · web search | `disabled` until optional lane is approved | Not every ChatGPT product mode |
 | `alice_ai_consumer_ui` | Alice AI consumer interface | `research_only` | Contract and continuity risk |
 | `alice_pro_ui` | Alice Pro interface | `research_only` | Separate commercial-use permission required under current licence |
@@ -264,4 +265,3 @@ The approved direction does not authorize production deployment. Separate review
 - importing client Webmaster data;
 - enabling a supplier or consumer-interface collector;
 - merging or pushing a site change to `main`.
-
