@@ -43,6 +43,7 @@ test("report migration creates a private append-only report store", async () => 
 
   assert.match(sql, /alter table public\.check_reports enable row level security/);
   assert.match(sql, /revoke all (privileges )?on table public\.check_reports from public, anon, authenticated/);
+  assert.match(sql, /revoke all (privileges )?on table public\.check_reports from service_role/);
   assert.match(sql, /grant select, insert on table public\.check_reports to service_role/);
   assert.doesNotMatch(sql, /grant[^;]*(update|delete|truncate)[^;]*service_role/);
   assert.match(sql, /create index check_reports_checked_at_idx/);

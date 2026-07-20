@@ -25,6 +25,8 @@ alter table public.check_reports enable row level security;
 
 -- All access goes through trusted server-side code. No browser policy exists.
 revoke all privileges on table public.check_reports from public, anon, authenticated;
+-- Supabase projects can default-grant ALL to service_role, so reset it first.
+revoke all privileges on table public.check_reports from service_role;
 grant select, insert on table public.check_reports to service_role;
 
 commit;
