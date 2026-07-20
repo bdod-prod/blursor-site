@@ -39,7 +39,7 @@ export async function getStableReportPageResponse(context) {
     return text("Report page is temporarily unavailable.", 500);
   }
 
-  const assetUrl = new URL("/ai-crawler-checker.html", context.request.url);
+  const assetUrl = new URL("/ai-crawler-checker", context.request.url);
   const upstream = await context.env.ASSETS.fetch(new Request(assetUrl, { method: "GET" }));
   const headers = new Headers(upstream.headers);
   for (const [name, value] of Object.entries(PRIVATE_REPORT_HEADERS)) headers.set(name, value);

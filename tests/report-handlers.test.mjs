@@ -102,8 +102,9 @@ test("stable report page serves the checker shell with noindex and no-referrer h
     env: { ASSETS: { fetch: async (request) => { requestedUrl = String(request.url || request); return upstream; } } },
   });
 
-  assert.equal(requestedUrl, "https://blursor.ai/ai-crawler-checker.html");
+  assert.equal(requestedUrl, "https://blursor.ai/ai-crawler-checker");
   assert.equal(response.status, 200);
+  assert.equal(response.headers.get("Location"), null);
   assert.equal(response.headers.get("Content-Type"), "text/html; charset=utf-8");
   assert.equal(response.headers.get("ETag"), '"asset-tag"');
   assert.equal(response.headers.get("Cache-Control"), "private, no-store");
