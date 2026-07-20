@@ -1,0 +1,94 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import {
+  VISIBILITY_SURFACES,
+  assertVisibilitySurfaceAllowed,
+  getVisibilitySurface,
+} from "../../functions/lib/visibility/surface-registry.mjs";
+
+test("registry uses exact surface identities and integer pricing", () => {
+  assert.deepEqual(Object.keys(VISIBILITY_SURFACES).sort(), [
+    "alice_ai_consumer_ui",
+    "alice_pro_ui",
+    "gigachat_api",
+    "openai_responses_web_search",
+    "rush_alice_supplier",
+    "yandex_gen_search_api_ru",
+    "yandex_webmaster_alice_native",
+  ]);
+
+  assert.deepEqual(VISIBILITY_SURFACES.yandex_gen_search_api_ru.pricing, {
+    kind: "per_request",
+    currency: "RUB",
+    microrubPerRequest: 5_080_000,
+    effectiveDate: "2026-07-20",
+  });
+  assert.equal(VISIBILITY_SURFACES.yandex_gen_search_api_ru.rightsState, "contract_review");
+  assert.equal(VISIBILITY_SURFACES.gigachat_api.rightsState, "contract_review");
+  assert.equal(VISIBILITY_SURFACES.gigachat_api.pricing.microrubPer1000Tokens, 65_000);
+});
+
+test("forecast permits priced APIs under contract review", () => {
+  assert.equal(
+    assertVisibilitySurfaceAllowed("yandex_gen_search_api_ru", "forecast").id,
+    "yandex_gen_search_api_ru",
+  );
+  assert.equal(
+    assertVisibilitySurfaceAllowed("gigachat_api", "forecast").id,
+    "gigachat_api",
+  );
+});
+
+test("production rejects every surface until downstream rights are approved", () => {
+  for (const id of [
+    "yandex_gen_search_api_ru",
+    "gigachat_api",
+    "yandex_webmaster_alice_native",
+    "alice_ai_consumer_ui",
+    "alice_pro_ui",
+  ]) {
+    assert.throws(
+      () => assertVisibilitySurfaceAllowed(id, "production"),
+      (error) => error.code === "SURFACE_NOT_AUTHORIZED",
+    );
+  }
+  for (const id of ["openai_responses_web_search", "rush_alice_supplier"]) {
+    assert.throws(
+      () => assertVisibilitySurfaceAllowed(id, "production"),
+      (error) => error.code === "SURFACE_DISABLED",
+    );
+  }
+});
+
+test("verification and research purposes remain bounded", () => {
+  assert.equal(
+    assertVisibilitySurfaceAllowed("yandex_webmaster_alice_native", "verification").id,
+    "yandex_webmaster_alice_native",
+  );
+  assert.equal(
+    assertVisibilitySurfaceAllowed("alice_pro_ui", "research").id,
+    "alice_pro_ui",
+  );
+  assert.throws(
+    () => assertVisibilitySurfaceAllowed("rush_alice_supplier", "research"),
+    (error) => error.code === "SURFACE_DISABLED",
+  );
+  assert.throws(
+    () => assertVisibilitySurfaceAllowed("unknown", "production"),
+    (error) => error.code === "UNKNOWN_SURFACE",
+  );
+  assert.throws(
+    () => assertVisibilitySurfaceAllowed("gigachat_api", "sales"),
+    (error) => error.code === "INVALID_PURPOSE",
+  );
+});
+
+test("callers cannot mutate registry entries", () => {
+  const surface = getVisibilitySurface("yandex_gen_search_api_ru");
+  assert.equal(Object.isFrozen(surface), true);
+  assert.equal(Object.isFrozen(surface.pricing), true);
+  assert.throws(() => {
+    surface.rightsState = "disabled";
+  }, TypeError);
+});
