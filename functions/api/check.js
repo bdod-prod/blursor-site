@@ -391,6 +391,9 @@ function normalizeTarget(input) {
   } catch {
     throw new Error("That doesn't look like a valid URL.");
   }
+  if (u.username || u.password) {
+    throw new Error("URLs with embedded usernames or passwords aren't supported.");
+  }
   if (u.protocol !== "http:" && u.protocol !== "https:") throw new Error("Only http and https URLs are supported.");
   const host = u.hostname.toLowerCase();
   const ipv6Literal = host.startsWith("[") && host.endsWith("]");

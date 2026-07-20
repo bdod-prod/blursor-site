@@ -22,7 +22,7 @@ export async function captureReport(result, env, options = {}) {
     endpoint.searchParams.set("select", "id");
     const response = await fetchImpl(endpoint, {
       method: "POST",
-      headers: storageHeaders(config.key, {
+      headers: storageHeaders(config, {
         "Content-Type": "application/json",
         Prefer: "return=representation",
       }),
@@ -64,7 +64,7 @@ export async function readReport(id, env, options = {}) {
     endpoint.searchParams.set("limit", "1");
     const response = await fetchImpl(endpoint, {
       method: "GET",
-      headers: storageHeaders(config.key),
+      headers: storageHeaders(config),
       signal: timeoutSignal(),
     });
     if (!response || !response.ok) throw storageError("read_http");
@@ -84,10 +84,16 @@ export async function readReport(id, env, options = {}) {
 }
 
 function hasStorageEnvironment(env) {
+  const secretKey = env && typeof env.SUPABASE_SECRET_KEY === "string"
+    ? env.SUPABASE_SECRET_KEY.trim()
+    : "";
+  const legacyKey = env && typeof env.SUPABASE_SERVICE_ROLE_KEY === "string"
+    ? env.SUPABASE_SERVICE_ROLE_KEY.trim()
+    : "";
   return Boolean(
     env &&
     typeof env.SUPABASE_URL === "string" && env.SUPABASE_URL.trim() &&
-    typeof env.SUPABASE_SERVICE_ROLE_KEY === "string" && env.SUPABASE_SERVICE_ROLE_KEY.trim(),
+    (secretKey || legacyKey),
   );
 }
 
@@ -102,16 +108,29 @@ function storageConfig(env) {
   if (url.protocol !== "https:" && !(url.protocol === "http:" && loopback)) {
     throw storageError("config_url");
   }
-  return { url, key: env.SUPABASE_SERVICE_ROLE_KEY.trim() };
+  const secretKey = typeof env.SUPABASE_SECRET_KEY === "string"
+    ? env.SUPABASE_SECRET_KEY.trim()
+    : "";
+  if (secretKey) {
+    if (!secretKey.startsWith("sb_secret_")) throw storageError("config_key");
+    return { url, key: secretKey, kind: "secret" };
+  }
+
+  const legacyKey = typeof env.SUPABASE_SERVICE_ROLE_KEY === "string"
+    ? env.SUPABASE_SERVICE_ROLE_KEY.trim()
+    : "";
+  if (legacyKey.split(".").length !== 3) throw storageError("config_key");
+  return { url, key: legacyKey, kind: "legacy-jwt" };
 }
 
-function storageHeaders(key, extra = {}) {
-  return {
-    apikey: key,
-    Authorization: `Bearer ${key}`,
+function storageHeaders(config, extra = {}) {
+  const headers = {
+    apikey: config.key,
     Accept: "application/json",
     ...extra,
   };
+  if (config.kind === "legacy-jwt") headers.Authorization = `Bearer ${config.key}`;
+  return headers;
 }
 
 function timeoutSignal() {

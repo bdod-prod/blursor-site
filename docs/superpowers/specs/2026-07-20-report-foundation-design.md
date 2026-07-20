@@ -28,7 +28,7 @@ It does not add watches, email, n8n workflows, analytics, explainer content, or 
 
 ### A. Supabase behind Cloudflare Pages Functions (selected)
 
-Cloudflare performs checks and is the only public application API. It writes and reads Supabase with a server-side service-role secret. Browsers never receive a Supabase key or table access.
+Cloudflare performs checks and is the only public application API. It writes and reads Supabase with a server-side secret key. Browsers never receive a Supabase key or table access. The implementation prefers Supabase's opaque `SUPABASE_SECRET_KEY` and temporarily accepts a legacy service-role JWT for migration compatibility.
 
 This fits the existing stack, leaves n8n able to query the same database for scheduled watches later, and keeps authorization in one narrow boundary.
 
@@ -60,13 +60,15 @@ RLS is enabled and no policy is created for `anon` or `authenticated`. Their tab
 
 ## URL and payload privacy
 
-The checker may be given a public URL containing credentials, query tokens, campaign tags, or fragments. The live fetch continues to use the requested URL, but persistent fields are sanitized:
+The checker may be given a public URL containing credentials, query tokens, campaign tags, or fragments. URLs with embedded usernames or passwords are rejected before any fetch. Query strings and fragments may still be used for the live check, but persistent fields are sanitized:
 
 - username and password are removed;
 - query and fragment are removed;
 - the normalized scheme, host, optional non-default port, and path remain.
 
 The stored payload is built from an allowlist. It retains the information needed to reproduce the report: baseline status, per-bot results and status codes, raw/rendered summary data, render delta, findings, citeability, index/content signals, and agent probe results. It omits the screenshot because base64 images are large and can disclose more page content than the diagnostic report needs.
+
+That allowlist still includes the page title, short finding excerpts, and extracted raw/rendered outline text. The checker discloses this before submission and warns visitors not to paste private or tokenized URLs. Automatic expiry is deliberately not invented in this foundation because it changes the product promise of a stable URL. Production activation is therefore gated on Alex approving either a defined retention window or indefinite unlisted retention with manual takedown. Until that decision is recorded, the migrations and credentials must remain unapplied. Manual takedown is performed by the database owner after verifying the exact UUID; the application service role has no delete privilege.
 
 Stable links are unguessable UUIDs, not an authorization system. Reports are intentionally link-shareable. `/r/<uuid>` responses carry `X-Robots-Tag: noindex, nofollow, noarchive` and `Referrer-Policy: no-referrer`; the JSON endpoint also returns `no-store` and no permissive CORS header.
 
@@ -111,7 +113,7 @@ The hardening is a separate migration from report-table creation so it can be re
 - fix the trigger helper's mutable search path to `pg_catalog`;
 - change Postgres default privileges in `public` so future tables, sequences, and functions are not automatically exposed to browser roles.
 
-Immediately before production application, verify the n8n credential's database user and run one read-only pipeline query. Immediately after, verify n8n can still read/update through its direct credential, while requests using the publishable/anon key can neither select nor mutate `blursor_papers`.
+Immediately before production application, verify the n8n credential's database user, run one read-only pipeline query, and inspect the trigger function's current configuration. Immediately after, inspect the function definition and `proconfig`, then verify the trigger through a reviewed update inside a transaction that is rolled back. Confirm requests using the publishable/anon key can neither select nor mutate `blursor_papers`.
 
 ## Verification
 
@@ -121,7 +123,7 @@ Production activation requires separate approval and receipts:
 
 1. migration output and Supabase security advisor output;
 2. anonymous SELECT/INSERT/UPDATE/DELETE denial on `blursor_papers` and `check_reports`;
-3. an n8n pipeline read and controlled no-op-safe update check;
+3. an n8n pipeline read and controlled rolled-back trigger update check;
 4. a real checker run whose response ID exists in `check_reports`;
 5. the stable URL loads without invoking `/api/check`;
 6. response headers and rendered markup prove `noindex`;
@@ -131,6 +133,7 @@ Production activation requires separate approval and receipts:
 
 - A public read policy was rejected because link secrecy should be enforced at the application boundary, not by exposing the whole table through PostgREST.
 - Screenshots were excluded to control storage cost and reduce accidental page-content disclosure.
+- Credential-bearing URLs are rejected; query-bearing URLs remain supported but are stripped from stored URLs and carry a pre-submit warning.
 - Persistence is fail-open for checker availability, but the UI never fabricates a stable link when capture fails.
 - Results are snapshots, not mutable canonical records; each re-run inserts a new row.
 - Watch subscriptions are intentionally absent. Adding email before SPF/DKIM/DMARC and change semantics are ready would produce an unreliable and potentially noisy product.

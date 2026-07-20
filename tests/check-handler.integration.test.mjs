@@ -33,3 +33,19 @@ test("the real check handler persists a sanitized successful snapshot", () => {
     storedBotCount: 16,
   });
 });
+
+test("the real check handler rejects credential-bearing URLs before any fetch", () => {
+  const run = spawnSync(process.execPath, ["--experimental-default-type=module", FIXTURE, "userinfo"], {
+    cwd: ROOT,
+    encoding: "utf8",
+  });
+
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.deepEqual(JSON.parse(run.stdout), {
+    ok: false,
+    status: 400,
+    error: "URLs with embedded usernames or passwords aren't supported.",
+    fetchCalls: 0,
+    storedRows: 0,
+  });
+});

@@ -9,7 +9,7 @@ import {
 const REPORT_ID = "7a386ed9-2ea5-4ac1-bc4e-7b4f1d9b0f2a";
 const ENV = {
   SUPABASE_URL: "https://project.supabase.co",
-  SUPABASE_SERVICE_ROLE_KEY: "service-role-secret",
+  SUPABASE_SECRET_KEY: "sb_secret_test",
 };
 
 test("stored report handler returns the same 404 for invalid and unknown IDs", async () => {

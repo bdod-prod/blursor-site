@@ -32,3 +32,10 @@ test("single reports offer an explicit re-run that creates a new snapshot", asyn
   assert.match(html, /'Re-run this page'/);
   assert.match(html, /run\(data\.url\)/);
 });
+
+test("the checker discloses snapshot storage before a visitor submits a URL", async () => {
+  const html = await readFile(CHECKER, "utf8");
+
+  assert.match(html, /Successful checks are saved as unlisted report links and include extracted page text\./);
+  assert.match(html, /Don’t paste private or tokenized URLs\./);
+});

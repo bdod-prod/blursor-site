@@ -6,8 +6,9 @@ import { captureReport, isReportId, readReport } from "../functions/lib/report-s
 const REPORT_ID = "7a386ed9-2ea5-4ac1-bc4e-7b4f1d9b0f2a";
 const ENV = {
   SUPABASE_URL: "https://project.supabase.co/",
-  SUPABASE_SERVICE_ROLE_KEY: "service-role-secret",
+  SUPABASE_SECRET_KEY: "sb_secret_test",
 };
+const LEGACY_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.signature";
 
 function result() {
   return {
@@ -95,8 +96,8 @@ test("captureReport inserts one allowlisted row with server-only credentials", a
   });
   assert.equal(request.url, "https://project.supabase.co/rest/v1/check_reports?select=id");
   assert.equal(request.init.method, "POST");
-  assert.equal(request.init.headers.apikey, "service-role-secret");
-  assert.equal(request.init.headers.Authorization, "Bearer service-role-secret");
+  assert.equal(request.init.headers.apikey, "sb_secret_test");
+  assert.equal(request.init.headers.Authorization, undefined);
   assert.equal(request.init.headers.Prefer, "return=representation");
 
   const row = JSON.parse(request.init.body);
@@ -166,8 +167,41 @@ test("readReport performs a bounded server-authorized lookup", async () => {
   assert.match(request.url, /select=id%2Cresult%2Cchecked_at/);
   assert.match(request.url, new RegExp(`id=eq\\.${REPORT_ID}`));
   assert.match(request.url, /limit=1/);
-  assert.equal(request.init.headers.apikey, "service-role-secret");
-  assert.equal(request.init.headers.Authorization, "Bearer service-role-secret");
+  assert.equal(request.init.headers.apikey, "sb_secret_test");
+  assert.equal(request.init.headers.Authorization, undefined);
+});
+
+test("legacy service-role JWTs remain supported during key migration", async () => {
+  let headers;
+  const outcome = await readReport(REPORT_ID, {
+    SUPABASE_URL: ENV.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: LEGACY_KEY,
+  }, {
+    fetch: async (_url, init) => {
+      headers = init.headers;
+      return new Response("[]", { status: 200 });
+    },
+  });
+
+  assert.deepEqual(outcome, { status: "missing" });
+  assert.equal(headers.apikey, LEGACY_KEY);
+  assert.equal(headers.Authorization, `Bearer ${LEGACY_KEY}`);
+});
+
+test("the opaque secret key takes precedence when both key formats are configured", async () => {
+  let headers;
+  await readReport(REPORT_ID, {
+    ...ENV,
+    SUPABASE_SERVICE_ROLE_KEY: LEGACY_KEY,
+  }, {
+    fetch: async (_url, init) => {
+      headers = init.headers;
+      return new Response("[]", { status: 200 });
+    },
+  });
+
+  assert.equal(headers.apikey, "sb_secret_test");
+  assert.equal(headers.Authorization, undefined);
 });
 
 test("readReport distinguishes missing rows from upstream failures", async () => {

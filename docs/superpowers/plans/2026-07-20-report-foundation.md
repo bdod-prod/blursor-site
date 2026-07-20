@@ -4,7 +4,7 @@
 
 **Goal:** Persist every successful checker result in a server-only Supabase table and give it an opaque, noindex, stable report URL without exposing Supabase to the browser.
 
-**Architecture:** Cloudflare Pages Functions remain the public application boundary. Pure `.mjs` helpers sanitize and allowlist report data, build a semantic snapshot, and communicate with Supabase REST using a server-only service-role key. Thin file-routed Functions expose report reads and serve the existing checker UI at `/r/<uuid>`.
+**Architecture:** Cloudflare Pages Functions remain the public application boundary. Pure `.mjs` helpers sanitize and allowlist report data, build a semantic snapshot, and communicate with Supabase REST using a server-only secret key. Thin file-routed Functions expose report reads and serve the existing checker UI at `/r/<uuid>`.
 
 **Tech Stack:** Cloudflare Pages Functions, JavaScript ES modules, Node 20 built-in test runner, Supabase Postgres/PostgREST, static HTML/CSS/JavaScript.
 
@@ -113,7 +113,7 @@ Expected: FAIL because the module does not exist.
 
 **Step 3: Implement the minimum store**
 
-Accept injected `fetch` and logger dependencies for deterministic tests. Keep service-role details out of returned errors. Return structured store outcomes so HTTP wrappers can choose status codes.
+Accept injected `fetch` and logger dependencies for deterministic tests. Prefer `SUPABASE_SECRET_KEY`, retain a temporary legacy-JWT fallback, and keep credential details out of returned errors. Return structured store outcomes so HTTP wrappers can choose status codes.
 
 **Step 4: Run the tests and verify they pass**
 
@@ -262,7 +262,7 @@ Create a dependency-free `package.json` whose `test` script runs `node --test`. 
 
 **Step 2: Document configuration without secrets**
 
-List `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and the existing browser-rendering variables in `.env.example`. The runbook must separate local checks, migration approval, production configuration, live smoke testing, and rollback.
+List `SUPABASE_URL`, preferred `SUPABASE_SECRET_KEY`, the temporary legacy-key fallback, and browser-rendering variables in `.env.example`. The runbook must separate local checks, migration approval, production configuration, live smoke testing, and rollback.
 
 **Step 3: Run full verification**
 
