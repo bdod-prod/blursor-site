@@ -108,6 +108,7 @@ The hardening is a separate migration from report-table creation so it can be re
 - enable RLS on `public.blursor_papers`;
 - revoke all table privileges from `anon` and `authenticated`;
 - revoke direct execution of its trigger helper from `PUBLIC`, `anon`, and `authenticated`;
+- fix the trigger helper's mutable search path to `pg_catalog`;
 - change Postgres default privileges in `public` so future tables, sequences, and functions are not automatically exposed to browser roles.
 
 Immediately before production application, verify the n8n credential's database user and run one read-only pipeline query. Immediately after, verify n8n can still read/update through its direct credential, while requests using the publishable/anon key can neither select nor mutate `blursor_papers`.

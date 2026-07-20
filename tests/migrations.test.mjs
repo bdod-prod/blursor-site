@@ -17,6 +17,7 @@ test("hardening migration closes browser-role access to the pipeline table", asy
   assert.match(sql, /alter table public\.blursor_papers enable row level security/);
   assert.match(sql, /revoke all (privileges )?on table public\.blursor_papers from anon, authenticated/);
   assert.match(sql, /revoke execute on function public\.set_blursor_row_updated_at\(\) from public, anon, authenticated/);
+  assert.match(sql, /alter function public\.set_blursor_row_updated_at\(\) set search_path = pg_catalog/);
   assert.match(sql, /alter default privileges for role postgres in schema public\s+revoke all on tables from anon, authenticated/);
   assert.match(sql, /alter default privileges for role postgres in schema public\s+revoke all on sequences from anon, authenticated/);
   assert.match(sql, /alter default privileges for role postgres in schema public\s+revoke execute on functions from public, anon, authenticated/);

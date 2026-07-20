@@ -7,6 +7,7 @@ revoke all privileges on table public.blursor_papers from anon, authenticated;
 
 -- This trigger helper is invoked by the table trigger, not by browser clients.
 revoke execute on function public.set_blursor_row_updated_at() from public, anon, authenticated;
+alter function public.set_blursor_row_updated_at() set search_path = pg_catalog;
 
 -- Existing Supabase projects may automatically grant browser roles access to
 -- new public objects. Make new objects private unless a later migration opts in.

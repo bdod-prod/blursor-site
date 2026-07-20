@@ -85,6 +85,7 @@ Expected:
 - RLS enabled on both tables;
 - no `anon` or `authenticated` table grants;
 - no browser policies;
+- the trigger helper has a fixed `pg_catalog` search path;
 - `service_role` has only `SELECT` and `INSERT` on `check_reports`;
 - the existing pipeline table contents are unchanged.
 

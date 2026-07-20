@@ -20,7 +20,7 @@
 
 **Step 1: Write the failing migration-contract tests**
 
-Assert that the hardening migration enables RLS, revokes browser-role table access and trigger-function execution, and changes default privileges. Assert that the report migration creates the required columns and indexes, enables RLS, revokes browser roles, and grants only `SELECT, INSERT` to `service_role`.
+Assert that the hardening migration enables RLS, revokes browser-role table access and trigger-function execution, fixes the trigger function search path, and changes default privileges. Assert that the report migration creates the required columns and indexes, enables RLS, revokes browser roles, and grants only `SELECT, INSERT` to `service_role`.
 
 **Step 2: Run the test and verify it fails**
 
