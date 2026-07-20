@@ -49,7 +49,7 @@ The code temporarily accepts a legacy JWT in `SUPABASE_SERVICE_ROLE_KEY` when mi
    - function `public.set_blursor_row_updated_at()` exists with no arguments;
    - the table owner is `postgres`;
    - there are no intentional browser-facing policies.
-7. Record Alex's retention decision before activation: either a reviewed expiry/purge migration or indefinite unlisted retention with the manual takedown procedure below. Do not activate persistence while this is undecided.
+7. Confirm Alex's activation approval covers the v1 retention policy: durable unlisted reports with the manual takedown procedure below. If that policy is rejected, stop and add a reviewed expiry/purge migration before activation.
 
 ## Phase 2: apply migrations
 
@@ -173,7 +173,7 @@ After the approved production deploy, use a public, non-sensitive test page. Thi
 
 ## Retention and manual takedown
 
-This foundation has no automatic deletion job. The stored allowlist includes extracted page outline text, so production activation requires the retention decision in Phase 1 and the checker disclosure must remain visible.
+V1 reports are durable unlisted snapshots and have no automatic deletion job. The stored allowlist includes extracted page outline text, so the checker disclosure must remain visible and the policy must be included in the explicit production approval.
 
 For a manual takedown, first verify the exact opaque report UUID and capture a receipt of the affected row. After explicit approval, delete only that UUID through the database-owner path, verify that zero other rows changed, and confirm both the JSON endpoint and `/r/<uuid>` resolve as not found. The Pages secret has no `DELETE` grant and must not be broadened for this procedure.
 
