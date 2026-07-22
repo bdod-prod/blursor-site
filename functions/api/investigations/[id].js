@@ -1,5 +1,5 @@
 import { getInvestigationDossierResponse } from "../../lib/investigation/investigation-handlers.mjs";
 
-export function onRequestGet(context) {
+export function onRequest(context) {
   return getInvestigationDossierResponse(context);
 }

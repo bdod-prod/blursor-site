@@ -30,7 +30,8 @@ test("dossier shell uses the approved investigation hierarchy", async () => {
 
 test("dossier shell loads only the ID in its private route", async () => {
   const html = await readFile(page, "utf8");
-  assert.ok(html.includes("window.location.pathname.match(/^\\/i\\/([^/]+)$/)"));
+  assert.ok(html.includes("window.location.pathname.match(/^\\/i\\/([^/]+)\\/?$/)"));
+  assert.ok(!html.includes("window.location.pathname.match(/^\\/i\\/([^/]+)$/)"));
   assert.ok(html.includes("fetch('/api/investigations/' + encodeURIComponent(id)"));
   assert.match(html, /credentials:\s*'same-origin'/);
   assert.match(html, /textContent/);

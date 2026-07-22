@@ -8,6 +8,7 @@ const PRIVATE_HEADERS = Object.freeze({
 
 const enabled = (context) => context?.env?.INVESTIGATION_DEMO_ENABLED === "true";
 const known = (context) => enabled(context) && context?.params?.id === "kamran-synthetic";
+const isGet = (context) => context?.request?.method === "GET";
 
 const json = (body, status) => new Response(JSON.stringify(body), {
   status,
@@ -26,7 +27,7 @@ const text = (body, status) => new Response(body, {
 });
 
 export async function getInvestigationDossierResponse(context) {
-  if (!known(context)) {
+  if (!isGet(context) || !known(context)) {
     return json({ ok: false, error: "Investigation not found." }, 404);
   }
 
@@ -34,7 +35,7 @@ export async function getInvestigationDossierResponse(context) {
 }
 
 export async function getInvestigationDossierPageResponse(context) {
-  if (!known(context)) return text("Investigation not found.", 404);
+  if (!isGet(context) || !known(context)) return text("Investigation not found.", 404);
   if (!context?.env?.ASSETS || typeof context.env.ASSETS.fetch !== "function") {
     return text("Investigation page is temporarily unavailable.", 500);
   }

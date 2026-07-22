@@ -188,7 +188,7 @@
       byId('status').classList.add('error');
     }
 
-    const match = window.location.pathname.match(/^\/i\/([^/]+)$/);
+    const match = window.location.pathname.match(/^\/i\/([^/]+)\/?$/);
     if (!match) showError();
     else {
       const id = match[1];
