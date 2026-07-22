@@ -2,10 +2,18 @@ import { VisibilityError } from "../visibility/visibility-error.mjs";
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const sentenceSegments = (text) => String(text || "").split(/(?<!Dr\.)(?<=[.!?])\s+/).map((value) => value.trim()).filter(Boolean);
+const wordCharacter = "[\\p{L}\\p{N}_]";
+const startsWithWordCharacter = (value) => new RegExp(`^${wordCharacter}`, "u").test(value);
+const endsWithWordCharacter = (value) => new RegExp(`${wordCharacter}$`, "u").test(value);
+const aliasPattern = (alias) => new RegExp(
+  `${startsWithWordCharacter(alias) ? `(?<!${wordCharacter})` : ""}${escapeRegExp(alias)}${endsWithWordCharacter(alias) ? `(?!${wordCharacter})` : ""}`,
+  "iu",
+);
+const normalizedAliases = (aliases) => (aliases || []).map(String).map((value) => value.trim()).filter(Boolean);
 
 export function extractAnswerEvidence(observation, config) {
   const version = String(config?.extractorVersion || "").trim();
-  const brandAliases = (config?.brandAliases || []).map(String).map((value) => value.trim()).filter(Boolean);
+  const brandAliases = normalizedAliases(config?.brandAliases);
   if (!version) throw new VisibilityError("INVALID_EXTRACTOR_VERSION", "Extractor version is required.");
   if (brandAliases.length === 0) throw new VisibilityError("INVALID_ALIAS_CONFIG", "At least one brand alias is required.");
   if (observation.state === "failed") {
@@ -14,7 +22,7 @@ export function extractAnswerEvidence(observation, config) {
 
   const entities = [
     { id: "brand", aliases: brandAliases },
-    ...(config?.competitors || []).map((competitor) => ({ id: String(competitor.id), aliases: (competitor.aliases || []).map(String) })),
+    ...(config?.competitors || []).map((competitor) => ({ id: String(competitor.id), aliases: normalizedAliases(competitor.aliases) })),
   ];
   const claims = sentenceSegments(observation.rawAnswer).map((text, index) => Object.freeze({
     id: `${observation.id}-claim-${index + 1}`,
@@ -27,7 +35,7 @@ export function extractAnswerEvidence(observation, config) {
   for (const claim of claims) {
     for (const entity of entities) {
       for (const alias of entity.aliases) {
-        if (new RegExp(`\\b${escapeRegExp(alias)}\\b`, "i").test(claim.text)) {
+        if (aliasPattern(alias).test(claim.text)) {
           mentions.push(Object.freeze({ claimId: claim.id, entityId: entity.id, alias }));
           break;
         }

@@ -103,6 +103,37 @@ test("treats aliases containing regular-expression metacharacters literally", ()
   assert.deepEqual(extracted.mentions, [{ claimId: "obs-001-claim-1", entityId: "brand", alias: "A+B" }]);
 });
 
+test("trims and ignores blank competitor aliases", () => {
+  const observation = normalizeObservation(validObservation({
+    rawAnswer: "A routine statement. Competitor Name is listed.",
+    citations: [],
+    sources: [],
+  }));
+
+  const extracted = extractAnswerEvidence(observation, {
+    extractorVersion: "answer-evidence-1",
+    brandAliases: ["Kamran Aghayev"],
+    competitors: [{ id: "competitor-example", aliases: ["", "  ", "  Competitor Name  "] }],
+  });
+
+  assert.deepEqual(extracted.mentions, [{ claimId: "obs-001-claim-2", entityId: "competitor-example", alias: "Competitor Name" }]);
+});
+
+test("matches punctuation-ending aliases literally without matching inside a larger word", () => {
+  const observation = normalizeObservation(validObservation({
+    rawAnswer: "C++ is listed. XC++ is a different token.",
+    citations: [],
+    sources: [],
+  }));
+
+  const extracted = extractAnswerEvidence(observation, {
+    extractorVersion: "answer-evidence-1",
+    brandAliases: ["C++"],
+  });
+
+  assert.deepEqual(extracted.mentions, [{ claimId: "obs-001-claim-1", entityId: "brand", alias: "C++" }]);
+});
+
 test("requires at least one non-empty brand alias", () => {
   const observation = normalizeObservation(validObservation());
 
