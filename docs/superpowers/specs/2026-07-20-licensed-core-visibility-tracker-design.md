@@ -3,6 +3,8 @@
 Date: 2026-07-20
 Status: approved direction under Alex's delegated authority; implementation and production activation remain separate reviewable change-sets
 
+Amendment: the requirement for explicit target-platform permission before any supplier consumer-interface use is superseded for the bounded Western closed beta by `2026-07-22-controlled-supplier-ui-closed-beta-design.md`. General production remains permission-gated; the amendment records internal risk acceptance, not platform authorization.
+
 ## Decision
 
 BLURSOR will begin as a service-enabled visibility tracker for approximately ten active clients. It will not launch as a self-serve SaaS, and it will not make centralized Alice consumer-interface automation the dependency beneath paid reports.
@@ -13,7 +15,7 @@ The public production core will use sources for which BLURSOR can point to a doc
 2. GigaChat's commercial API;
 3. OpenAI's Responses API with web search, if enabled;
 4. native Yandex Webmaster Alice visibility as a client-owned verification source, not as an undocumented automated feed;
-5. a third-party Alice collector only after its contract explicitly grants downstream use, storage, derived reporting, and customer delivery.
+5. a third-party Alice collector only after its contract explicitly grants downstream use, storage, derived reporting, and customer delivery. The separate Western ChatGPT closed beta may use a supplier consumer-interface collector under the dated `supplier_ui_risk_accepted` policy; that exception does not activate or relax the Russian Alice surfaces in this design.
 
 Alice Pro and Alice AI consumer-interface automation remain an isolated research lane. They may be used to test whether licensed surfaces are directionally representative, but the production scheduler, client reports, and public methodology must not depend on them without written permission.
 

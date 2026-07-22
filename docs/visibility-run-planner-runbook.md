@@ -29,6 +29,14 @@ The fixture must produce four observations and a projected Yandex cost of `20,32
 
 Planning permission does not itself authorize a provider call. Production adapters, credentials, contracts, and deployment remain separate gates.
 
+## Access purposes and controlled supplier risk
+
+The planner recognizes five purposes: `forecast`, `closed_beta`, `production`, `verification`, and `research`.
+
+`supplier_ui_risk_accepted` is reserved for an exact third-party consumer-interface surface whose residual supplier, platform-enforcement, and continuity risk has been accepted for a dated closed beta. It is permitted for `closed_beta`, `forecast`, and `research`; it is never sufficient for ordinary `production`. The kill switch overrides every state.
+
+No current runtime surface has this state. Do not create a generic `ChatGPT` supplier surface. Supplier activation must add an exact provider-specific ID, visible label, pricing, cost ceiling, dated rights/risk evidence, and tests in a separate reviewed change.
+
 ## Money units
 
 `1 RUB = 1,000,000 microrubles`.
@@ -40,12 +48,12 @@ Update a price only after checking the current primary pricing page. Change the 
 
 ## Rights-state changes
 
-1. Add the dated source, agreement conclusion, allowed surface, volume, retention, and downstream-use rights to `docs/ops/provider-rights-register.md`.
+1. Add the dated source, agreement conclusion, exact allowed surface, volume, retention, downstream-use position, upstream uncertainty, and internal risk owner to `docs/ops/provider-rights-register.md`.
 2. Keep confidential correspondence and contracts outside the deployed repository.
 3. Change the exact `rightsState` and `killSwitch` in `functions/lib/visibility/surface-registry.mjs`.
 4. Add or update tests that demonstrate the newly permitted and still-forbidden purposes.
 5. Run `npm test` and review the rights-document drift test.
-6. Obtain the separate production approval required by the design.
+6. Obtain the separate closed-beta or production approval required by the applicable design.
 
 ## Safe error codes
 
@@ -80,6 +88,6 @@ These messages may be logged or shown to an operator. They must not contain cred
 
 ## Next change-set
 
-The next reviewed plan may add a private Supabase schema and the Yandex generative Search API adapter. It must preserve exact surface identity, server-only credentials, immutable observations, the rights gate, and cost ceilings.
+The next reviewed Western plan may select one exact ChatGPT web supplier and add its priced adapter behind `closed_beta`. The Russian plan may separately add a private Supabase schema and the Yandex generative Search API adapter. Both must preserve exact surface identity, server-only credentials, immutable observations, the access gate, and cost ceilings.
 
 Stop before applying a migration, adding a credential, activating n8n, importing client data, deploying a preview, or merging to `main`.
