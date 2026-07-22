@@ -1,4 +1,5 @@
 import { buildKamranSyntheticDemo } from "./kamran-synthetic-demo.mjs";
+import { DOSSIER_PAGE_HTML } from "./dossier-page.mjs";
 
 const PRIVATE_HEADERS = Object.freeze({
   "Cache-Control": "private, no-store",
@@ -36,22 +37,11 @@ export async function getInvestigationDossierResponse(context) {
 
 export async function getInvestigationDossierPageResponse(context) {
   if (!isGet(context) || !known(context)) return text("Investigation not found.", 404);
-  if (!context?.env?.ASSETS || typeof context.env.ASSETS.fetch !== "function") {
-    return text("Investigation page is temporarily unavailable.", 500);
-  }
-
-  const assetUrl = new URL("/investigation-dossier", context.request.url);
-  let upstream;
-  try {
-    upstream = await context.env.ASSETS.fetch(new Request(assetUrl, { method: "GET" }));
-  } catch {
-    return text("Investigation page is temporarily unavailable.", 500);
-  }
-  const headers = new Headers(upstream.headers);
-  for (const [name, value] of Object.entries(PRIVATE_HEADERS)) headers.set(name, value);
-  return new Response(upstream.body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-    headers,
+  return new Response(DOSSIER_PAGE_HTML, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      ...PRIVATE_HEADERS,
+    },
   });
 }

@@ -14,3 +14,6 @@ desktop.ini
 
 # Wrangler local state
 .wrangler/
+
+# Generated Cloudflare Pages static bundle
+.pages-public*/

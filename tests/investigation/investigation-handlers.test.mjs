@@ -94,15 +94,11 @@ test("JSON handler owns non-GET methods with the same private 404", async () => 
 });
 
 test("private page makes disabled and unknown demo IDs indistinguishable", async () => {
-  let assetCalls = 0;
-  const env = {
-    INVESTIGATION_DEMO_ENABLED: "true",
-    ASSETS: { fetch: async () => { assetCalls += 1; } },
-  };
+  const env = { INVESTIGATION_DEMO_ENABLED: "true" };
   const disabled = await getInvestigationDossierPageResponse({
     request: new Request(`https://blursor.test/i/${DEMO_ID}`),
     params: { id: DEMO_ID },
-    env: { ASSETS: env.ASSETS },
+    env: {},
   });
   const unknown = await getInvestigationDossierPageResponse({
     request: new Request("https://blursor.test/i/unknown-investigation"),
@@ -114,21 +110,16 @@ test("private page makes disabled and unknown demo IDs indistinguishable", async
   assert.equal(unknown.status, 404);
   assert.equal(await disabled.text(), "Investigation not found.");
   assert.equal(await unknown.text(), "Investigation not found.");
-  assert.equal(assetCalls, 0);
   assertPrivate(disabled);
   assertPrivate(unknown);
 });
 
 test("page handler owns non-GET methods with the same private 404", async () => {
-  let assetCalls = 0;
-  const env = {
-    INVESTIGATION_DEMO_ENABLED: "true",
-    ASSETS: { fetch: async () => { assetCalls += 1; } },
-  };
+  const env = { INVESTIGATION_DEMO_ENABLED: "true" };
   const hidden = await getInvestigationDossierPageResponse({
     request: new Request(`https://blursor.test/i/${DEMO_ID}`),
     params: { id: DEMO_ID },
-    env: { ASSETS: env.ASSETS },
+    env: {},
   });
   const expectedBody = await hidden.text();
 
@@ -142,64 +133,19 @@ test("page handler owns non-GET methods with the same private 404", async () => 
     assert.equal(await response.text(), expectedBody, method);
     assertPrivate(response);
   }
-  assert.equal(assetCalls, 0);
 });
 
-test("private page serves the dossier shell only when enabled", async () => {
-  let requestedUrl;
-  let requestedMethod;
-  const asset = new Response("<html>dossier shell</html>", {
-    headers: { "Content-Type": "text/html; charset=utf-8", ETag: '"dossier-shell"' },
-  });
-  const response = await getInvestigationDossierPageResponse({
-    request: new Request(`https://blursor.test/i/${DEMO_ID}`),
-    params: { id: DEMO_ID },
-    env: {
-      INVESTIGATION_DEMO_ENABLED: "true",
-      ASSETS: {
-        fetch: async (assetRequest) => {
-          requestedUrl = assetRequest.url;
-          requestedMethod = assetRequest.method;
-          return asset.clone();
-        },
-      },
-    },
-  });
-
-  assert.equal(requestedUrl, "https://blursor.test/investigation-dossier");
-  assert.equal(requestedMethod, "GET");
-  assert.equal(response.status, 200);
-  assert.equal(response.headers.get("Content-Type"), "text/html; charset=utf-8");
-  assert.equal(response.headers.get("ETag"), '"dossier-shell"');
-  assertPrivate(response);
-  assert.equal(await response.text(), "<html>dossier shell</html>");
-});
-
-test("enabled page returns a private generic error when assets are unavailable", async () => {
+test("private page serves its server-only dossier shell when enabled", async () => {
   const response = await getInvestigationDossierPageResponse({
     request: new Request(`https://blursor.test/i/${DEMO_ID}`),
     params: { id: DEMO_ID },
     env: { INVESTIGATION_DEMO_ENABLED: "true" },
   });
 
-  assert.equal(response.status, 500);
-  assert.equal(await response.text(), "Investigation page is temporarily unavailable.");
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("Content-Type"), "text/html; charset=utf-8");
   assertPrivate(response);
-});
-
-test("enabled page keeps asset-fetch failures private and generic", async () => {
-  const response = await getInvestigationDossierPageResponse({
-    request: new Request(`https://blursor.test/i/${DEMO_ID}`),
-    params: { id: DEMO_ID },
-    env: {
-      INVESTIGATION_DEMO_ENABLED: "true",
-      ASSETS: { fetch: async () => { throw new Error("secret asset failure"); } },
-    },
-  });
-
-  assert.equal(response.status, 500);
-  assert.equal(await response.text(), "Investigation page is temporarily unavailable.");
-  assertPrivate(response);
+  assert.match(await response.text(), /^<!doctype html>[\s\S]*Investigation dossier/);
 });
 
 test("Cloudflare routes export catch-all request handlers", async () => {

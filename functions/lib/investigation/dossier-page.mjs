@@ -1,4 +1,4 @@
-<!doctype html>
+export const DOSSIER_PAGE_HTML = String.raw`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -143,16 +143,16 @@
       byId('example-label').textContent = dossier.header.exampleOnly ? 'Example structure only' : 'Private client evidence';
       const meta = byId('scope-meta');
       clear(meta);
-      for (const value of [dossier.header.language.toUpperCase(), dossier.header.location, `Panel ${dossier.header.panelId} v${dossier.header.panelVersion}`, dossier.header.baselineWindow, dossier.header.followupWindow]) meta.append(element('span', 'pill', value));
+      for (const value of [dossier.header.language.toUpperCase(), dossier.header.location, 'Panel ' + dossier.header.panelId + ' v' + dossier.header.panelVersion, dossier.header.baselineWindow, dossier.header.followupWindow]) meta.append(element('span', 'pill', value));
       const observed = dossier.sections.find((section) => section.id === 'observed-pattern');
       byId('observed-summary').textContent = observed.summary;
-      byId('coverage').textContent = `${observed.coverage.valid} valid of ${observed.coverage.scheduled} scheduled samples · ${observed.coverage.failed} failed`;
+      byId('coverage').textContent = observed.coverage.valid + ' valid of ' + observed.coverage.scheduled + ' scheduled samples · ' + observed.coverage.failed + ' failed';
       const metrics = byId('metrics');
       clear(metrics);
       for (const metric of observed.metrics) {
         const card = element('div', 'metric');
-        card.append(element('span', 'muted', `${metric.label} · ${metric.window}`));
-        card.append(element('strong', '', `${metric.numerator}/${metric.denominator}`));
+        card.append(element('span', 'muted', metric.label + ' · ' + metric.window));
+        card.append(element('strong', '', metric.numerator + '/' + metric.denominator));
         card.append(element('span', 'muted', metric.surfaceId));
         metrics.append(card);
       }
@@ -165,7 +165,7 @@
         const top = element('div', 'evidence-top');
         top.append(element('span', 'label', evidenceLabel(item.type)));
         top.append(element('span', 'relation', item.relation));
-        row.append(top, element('h3', '', item.label), element('p', '', item.excerpt || 'No excerpt retained.'), element('p', 'muted', `${item.provenance}${item.optional ? ' · optional' : ''}`));
+        row.append(top, element('h3', '', item.label), element('p', '', item.excerpt || 'No excerpt retained.'), element('p', 'muted', item.provenance + (item.optional ? ' · optional' : '')));
         evidence.append(row);
       }
       const rationaleSection = dossier.sections.find((section) => section.id === 'diagnostic-rationale');
@@ -174,20 +174,20 @@
       if (!rationaleSection.hypothesis) rationale.append(element('p', '', 'Unresolved — the evidence does not yet support a diagnosis.'));
       else {
         const hypothesis = rationaleSection.hypothesis;
-        rationale.append(element('h3', '', hypothesis.wording), element('p', 'muted', `Confidence: ${hypothesis.confidence}`));
+        rationale.append(element('h3', '', hypothesis.wording), element('p', 'muted', 'Confidence: ' + hypothesis.confidence));
         const basis = element('ul', 'plain-list');
         rationale.append(basis);
         addList(basis, hypothesis.basis);
-        rationale.append(element('p', 'muted', `Falsifier: ${hypothesis.falsifier}`));
+        rationale.append(element('p', 'muted', 'Falsifier: ' + hypothesis.falsifier));
       }
       const nextSection = dossier.sections.find((section) => section.id === 'alternatives-next-test');
-      addList(byId('alternatives'), nextSection.alternatives, (item) => `${item.wording} — ${item.disposition}`);
+      addList(byId('alternatives'), nextSection.alternatives, (item) => item.wording + ' — ' + item.disposition);
       byId('next-test').textContent = nextSection.nextTest;
       byId('followup').textContent = nextSection.followup ? nextSection.followup.summary : 'No comparable follow-up yet.';
       byId('evidence-state').textContent = evidenceStateLabel(dossier.evidenceState);
-      byId('evidence-level').textContent = `${dossier.evidenceLevel} · ${dossier.evidenceTerm}`;
+      byId('evidence-level').textContent = dossier.evidenceLevel + ' · ' + dossier.evidenceTerm;
       byId('method').textContent = dossier.header.methodVersion;
-      byId('review').textContent = `${dossier.review.analyst} · ${dossier.review.reviewedAt}`;
+      byId('review').textContent = dossier.review.analyst + ' · ' + dossier.review.reviewedAt;
       addList(byId('surfaces'), dossier.header.surfaces);
       addList(byId('limitations'), dossier.limitations);
       byId('status').classList.remove('error');
@@ -212,3 +212,4 @@
   </script>
 </body>
 </html>
+`;

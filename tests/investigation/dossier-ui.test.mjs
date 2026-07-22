@@ -1,12 +1,19 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access } from "node:fs/promises";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 
-const page = new URL("../../investigation-dossier.html", import.meta.url);
+import { DOSSIER_PAGE_HTML } from "../../functions/lib/investigation/dossier-page.mjs";
 
-test("dossier shell uses the approved investigation hierarchy", async () => {
-  const html = await readFile(page, "utf8");
+const rootPage = new URL("../../investigation-dossier.html", import.meta.url);
+
+test("dossier shell exists only in the server bundle", async () => {
+  await assert.rejects(access(rootPage), (error) => error?.code === "ENOENT");
+  assert.match(DOSSIER_PAGE_HTML, /^<!doctype html>/);
+});
+
+test("dossier shell uses the approved investigation hierarchy", () => {
+  const html = DOSSIER_PAGE_HTML;
   assert.match(html, /Investigation dossier/i);
   assert.match(html, /Observed pattern/i);
   assert.match(html, /Evidence chain/i);
@@ -29,8 +36,8 @@ test("dossier shell uses the approved investigation hierarchy", async () => {
   assert.equal((html.match(/<section\b/g) || []).length, 4);
 });
 
-test("dossier shell loads only the ID in its private route", async () => {
-  const html = await readFile(page, "utf8");
+test("dossier shell loads only the ID in its private route", () => {
+  const html = DOSSIER_PAGE_HTML;
   assert.ok(html.includes("window.location.pathname.match(/^\\/i\\/([^/]+)\\/?$/)"));
   assert.ok(!html.includes("window.location.pathname.match(/^\\/i\\/([^/]+)$/)"));
   assert.ok(html.includes("fetch('/api/investigations/' + encodeURIComponent(id)"));
@@ -40,8 +47,8 @@ test("dossier shell loads only the ID in its private route", async () => {
   assert.doesNotMatch(html, /insertAdjacentHTML|document\.write|eval\s*\(/);
 });
 
-test("dossier shell is private, responsive, and exposes robust loading and error states", async () => {
-  const html = await readFile(page, "utf8");
+test("dossier shell is private, responsive, and exposes robust loading and error states", () => {
+  const html = DOSSIER_PAGE_HTML;
   assert.match(html, /<meta name="robots" content="noindex,nofollow,noarchive">/);
   assert.match(html, /role="status"/);
   assert.match(html, /Loading investigation…/);
@@ -52,15 +59,15 @@ test("dossier shell is private, responsive, and exposes robust loading and error
   assert.match(html, /@media \(max-width:800px\)/);
 });
 
-test("responsive dossier content can shrink and wrap long identifiers", async () => {
-  const html = await readFile(page, "utf8");
+test("responsive dossier content can shrink and wrap long identifiers", () => {
+  const html = DOSSIER_PAGE_HTML;
   assert.match(html, /\.layout > \*,\.stack > \*,\.metric-grid > \*,\.evidence-top > \*,\.meta > \* \{ min-width:0; \}/);
   assert.match(html, /\.pill,\.metric,\.evidence,\.rationale,\.plain-list li \{ overflow-wrap:anywhere; \}/);
   assert.match(html, /@media \(max-width:800px\) \{ \.layout \{ grid-template-columns:1fr; \}/);
 });
 
-test("renderer uses polished deterministic evidence-state labels", async () => {
-  const html = await readFile(page, "utf8");
+test("renderer uses polished deterministic evidence-state labels", () => {
+  const html = DOSSIER_PAGE_HTML;
   const helperSource = html.match(/const evidenceStateLabel = \(\(\) => \{[\s\S]*?\n    \}\)\(\);/)?.[0];
   assert.ok(helperSource, "expected an executable evidence-state helper");
   const evidenceStateLabel = runInNewContext(
@@ -86,8 +93,8 @@ test("renderer uses polished deterministic evidence-state labels", async () => {
   assert.doesNotMatch(html, /dossier\.evidenceState\.replaceAll/);
 });
 
-test("renderer covers the complete client-safe dossier without raw observations", async () => {
-  const html = await readFile(page, "utf8");
+test("renderer covers the complete client-safe dossier without raw observations", () => {
+  const html = DOSSIER_PAGE_HTML;
   for (const field of [
     "dossier.header.question",
     "dossier.header.project",
