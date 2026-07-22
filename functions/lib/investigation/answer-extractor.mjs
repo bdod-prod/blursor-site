@@ -16,7 +16,7 @@ export function extractAnswerEvidence(observation, config) {
   const brandAliases = normalizedAliases(config?.brandAliases);
   if (!version) throw new VisibilityError("INVALID_EXTRACTOR_VERSION", "Extractor version is required.");
   if (brandAliases.length === 0) throw new VisibilityError("INVALID_ALIAS_CONFIG", "At least one brand alias is required.");
-  if (observation.state === "failed") {
+  if (observation.state === "failed" || observation.state === "missing_answer") {
     return Object.freeze({ extractionState: "not_applicable", extractorVersion: version, claims: Object.freeze([]), mentions: Object.freeze([]), citations: Object.freeze([]), sources: Object.freeze([]) });
   }
 

@@ -3,25 +3,7 @@ import { createInvestigationCase, transitionInvestigationCase } from "./case-mod
 import { buildInvestigationDossier } from "./dossier-model.mjs";
 import { buildEvidenceTrace, validateEvidenceAssessment } from "./evidence-trace.mjs";
 import { normalizeObservation } from "./observation-model.mjs";
-import { validateV1InvestigationScope } from "./v1-scope.mjs";
-
-const PROMPT_TEXTS = Object.freeze([
-  "Which public sources help evaluate minimally invasive spine surgeons in the United States?",
-  "What information should someone compare when researching a spine surgeon in the United States?",
-  "Which websites commonly document a surgeon's professional background?",
-  "How can someone verify a spine surgeon's areas of practice from public information?",
-  "What makes a surgeon's website understandable to AI search systems?",
-  "Which public evidence is useful when comparing spine surgery specialists?",
-  "Compare the types of evidence found on hospital, directory, and surgeon websites.",
-  "What public sources are commonly cited when AI systems describe medical specialists?",
-  "How should professional credentials be represented consistently across the web?",
-  "What can make two public profiles of the same surgeon appear inconsistent?",
-  "What does the public web say about Dr. Kamran Aghayev's professional focus?",
-  "Which public pages describe Dr. Kamran Aghayev's services?",
-  "Are Dr. Kamran Aghayev's public professional profiles consistent with his website?",
-  "What public page should be improved first when a surgeon is missing from an AI answer?",
-  "How should a website change be evaluated after an AI visibility intervention?",
-]);
+import { V1_PROMPT_PANEL, validateV1InvestigationScope } from "./v1-scope.mjs";
 
 const DEMO_SURFACES = Object.freeze([
   Object.freeze({
@@ -52,12 +34,7 @@ const WINDOWS = Object.freeze([
   }),
 ]);
 
-const prompts = Object.freeze(PROMPT_TEXTS.map((text, index) => Object.freeze({
-  id: `prompt-${String(index + 1).padStart(2, "0")}`,
-  text,
-  language: "en",
-  intent: index < 6 ? "discovery" : index < 10 ? "comparison" : index < 13 ? "validation" : "action",
-})));
+const prompts = V1_PROMPT_PANEL.prompts;
 
 const deepFreeze = (value, seen = new WeakSet()) => {
   if (!value || typeof value !== "object" || seen.has(value)) return value;
@@ -98,8 +75,12 @@ function buildObservations() {
           observations.push(normalizeObservation({
             id: `${window.name}-${day}-${surface.id}-${prompt.id}`,
             investigationId: "kamran-investigation-01",
+            projectId: "kamran-aghayev",
             promptId: prompt.id,
-            panelVersion: 1,
+            panelId: V1_PROMPT_PANEL.id,
+            panelVersion: V1_PROMPT_PANEL.version,
+            methodologyVersion: V1_PROMPT_PANEL.methodologyVersion,
+            panelFingerprint: V1_PROMPT_PANEL.fingerprint,
             runId: `${window.name}-${day}`,
             repeatOrdinal: cycleIndex + 1,
             state: "success",
@@ -108,8 +89,12 @@ function buildObservations() {
             collectionClass: surface.collectionClass,
             synthetic: true,
             scheduledAt: `${day}T09:00:00.000Z`,
-            collectedAt: `${day}T09:00:02.000Z`,
-            latencyMs: 2000,
+            observationStartedAt: `${day}T09:00:00.000Z`,
+            observationCompletedAt: `${day}T09:00:02.000Z`,
+            adapterVersion: "synthetic-adapter-1",
+            supplierVersion: null,
+            extractorVersion: "answer-evidence-1",
+            reviewStatus: "reviewed",
             retryCount: 0,
             cost: { currency: "USD", microAmount: 0 },
             requestId: null,
@@ -190,12 +175,7 @@ export function buildKamranSyntheticDemo() {
     projectId: "kamran-aghayev",
     location: "US",
     cadenceDays: 3,
-    panel: {
-      id: "kamran-us-en-v1",
-      version: 1,
-      methodologyVersion: "0.2",
-      prompts,
-    },
+    panel: V1_PROMPT_PANEL,
   });
   const observations = buildObservations();
   const target = observations.find(({ runId, surfaceId, promptId }) => (

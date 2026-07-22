@@ -1,6 +1,38 @@
 import { validatePromptPanel } from "../visibility/prompt-panel.mjs";
 import { VisibilityError } from "../visibility/visibility-error.mjs";
 
+const V1_PROMPT_TEXTS = Object.freeze([
+  "Which public sources help evaluate minimally invasive spine surgeons in the United States?",
+  "What information should someone compare when researching a spine surgeon in the United States?",
+  "Which websites commonly document a surgeon's professional background?",
+  "How can someone verify a spine surgeon's areas of practice from public information?",
+  "What makes a surgeon's website understandable to AI search systems?",
+  "Which public evidence is useful when comparing spine surgery specialists?",
+  "Compare the types of evidence found on hospital, directory, and surgeon websites.",
+  "What public sources are commonly cited when AI systems describe medical specialists?",
+  "How should professional credentials be represented consistently across the web?",
+  "What can make two public profiles of the same surgeon appear inconsistent?",
+  "What does the public web say about Dr. Kamran Aghayev's professional focus?",
+  "Which public pages describe Dr. Kamran Aghayev's services?",
+  "Are Dr. Kamran Aghayev's public professional profiles consistent with his website?",
+  "What public page should be improved first when a surgeon is missing from an AI answer?",
+  "How should a website change be evaluated after an AI visibility intervention?",
+]);
+
+export const V1_PROMPT_PANEL = validatePromptPanel({
+  id: "kamran-us-en-v1",
+  version: 1,
+  methodologyVersion: "0.2",
+  prompts: V1_PROMPT_TEXTS.map((text, index) => ({
+    id: `prompt-${String(index + 1).padStart(2, "0")}`,
+    text,
+    language: "en",
+    intent: index < 6 ? "discovery" : index < 10 ? "comparison" : index < 13 ? "validation" : "action",
+  })),
+});
+
+export const V1_PROMPT_PANEL_FINGERPRINT = V1_PROMPT_PANEL.fingerprint;
+
 const plannedSurfaces = Object.freeze([
   Object.freeze({
     surfaceId: "openai_responses_web_search_auto",
@@ -35,6 +67,10 @@ export const V1_INVESTIGATION_SCOPE = Object.freeze({
     "openai_responses_web_search_required",
   ]),
   consumerSurfaceStatus: "supplier_pending",
+  panelId: V1_PROMPT_PANEL.id,
+  panelVersion: V1_PROMPT_PANEL.version,
+  methodologyVersion: V1_PROMPT_PANEL.methodologyVersion,
+  panelFingerprint: V1_PROMPT_PANEL_FINGERPRINT,
 });
 
 export function validateV1InvestigationScope(input) {
@@ -54,6 +90,18 @@ export function validateV1InvestigationScope(input) {
   }
   if (panel.prompts.some(({ language }) => language !== V1_INVESTIGATION_SCOPE.language)) {
     throw new VisibilityError("V1_LANGUAGE_MISMATCH", "Every v1 prompt must be English.");
+  }
+  if (panel.id !== V1_PROMPT_PANEL.id) {
+    throw new VisibilityError("V1_PANEL_ID_MISMATCH", "The v1 prompt-panel ID is frozen.");
+  }
+  if (panel.version !== V1_PROMPT_PANEL.version) {
+    throw new VisibilityError("V1_PANEL_VERSION_MISMATCH", "The v1 prompt-panel version is frozen.");
+  }
+  if (panel.methodologyVersion !== V1_PROMPT_PANEL.methodologyVersion) {
+    throw new VisibilityError("V1_METHODOLOGY_MISMATCH", "The v1 methodology version is frozen.");
+  }
+  if (panel.fingerprint !== V1_PROMPT_PANEL_FINGERPRINT) {
+    throw new VisibilityError("V1_PANEL_FINGERPRINT_MISMATCH", "The v1 prompt content and order are frozen.");
   }
   return Object.freeze({ projectId, location: input.location, cadenceDays: input.cadenceDays, panel });
 }

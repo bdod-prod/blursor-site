@@ -3,13 +3,18 @@ import test from "node:test";
 
 import { extractAnswerEvidence } from "../../functions/lib/investigation/answer-extractor.mjs";
 import { normalizeObservation } from "../../functions/lib/investigation/observation-model.mjs";
+import { V1_PROMPT_PANEL } from "../../functions/lib/investigation/v1-scope.mjs";
 
 function validObservation(overrides = {}) {
   return {
     id: "obs-001",
     investigationId: "kamran-investigation-01",
+    projectId: "kamran-aghayev",
     promptId: "prompt-01",
+    panelId: V1_PROMPT_PANEL.id,
     panelVersion: 1,
+    methodologyVersion: V1_PROMPT_PANEL.methodologyVersion,
+    panelFingerprint: V1_PROMPT_PANEL.fingerprint,
     runId: "baseline-2026-07-22",
     repeatOrdinal: 1,
     state: "success",
@@ -18,15 +23,19 @@ function validObservation(overrides = {}) {
     collectionClass: "official_api",
     synthetic: false,
     scheduledAt: "2026-07-22T09:00:00.000Z",
-    collectedAt: "2026-07-22T09:00:02.000Z",
-    latencyMs: 2000,
+    observationStartedAt: "2026-07-22T09:00:00.000Z",
+    observationCompletedAt: "2026-07-22T09:00:02.000Z",
+    adapterVersion: "openai-responses-adapter-1",
+    supplierVersion: null,
+    extractorVersion: "answer-evidence-1",
+    reviewStatus: "reviewed",
     retryCount: 0,
     cost: { currency: "USD", microAmount: 0 },
     requestId: "req_demo",
     responseId: "resp_demo",
     responseHash: "68ed3796366768f986f8d7196479e15063b9814473578b2212c2fb6ec21146a6",
     requestConfig: {
-      promptText: "Who are leading minimally invasive spine surgeons in the United States?",
+      promptText: V1_PROMPT_PANEL.prompts[0].text,
       wrapper: "Answer for a US audience.",
       instructions: "Use public information only.",
       language: "en",
@@ -74,9 +83,10 @@ test("does not extract evidence from a failed observation", () => {
   const observation = normalizeObservation(validObservation({
     state: "failed",
     rawAnswer: null,
+    responseHash: null,
     citations: [],
     sources: [],
-    failure: { code: "TRANSPORT", message: "Collection failed." },
+    failure: { code: "TRANSPORT", message: "Collection failed.", retryable: true },
   }));
 
   const extracted = extractAnswerEvidence(observation, config);
@@ -86,6 +96,22 @@ test("does not extract evidence from a failed observation", () => {
   assert.deepEqual(extracted.mentions, []);
   assert.deepEqual(extracted.citations, []);
   assert.deepEqual(extracted.sources, []);
+});
+
+test("does not treat a completed missing answer as extractable or as a provider failure", () => {
+  const observation = normalizeObservation(validObservation({
+    state: "missing_answer",
+    rawAnswer: null,
+    responseHash: null,
+    citations: [],
+    sources: [],
+  }));
+
+  const extracted = extractAnswerEvidence(observation, config);
+
+  assert.equal(observation.failure, null);
+  assert.equal(extracted.extractionState, "not_applicable");
+  assert.deepEqual(extracted.claims, []);
 });
 
 test("treats aliases containing regular-expression metacharacters literally", () => {

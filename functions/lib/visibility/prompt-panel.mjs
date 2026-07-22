@@ -5,6 +5,21 @@ export const PROMPT_LANGUAGES = Object.freeze(["ru", "en"]);
 
 const freezePrompt = (prompt) => Object.freeze({ ...prompt });
 
+export function createPromptPanelFingerprint(panel) {
+  return JSON.stringify({
+    schema: "prompt-panel-identity-v1",
+    id: String(panel?.id || ""),
+    version: panel?.version,
+    methodologyVersion: String(panel?.methodologyVersion || ""),
+    prompts: (panel?.prompts || []).map((prompt) => ({
+      id: String(prompt?.id || ""),
+      text: String(prompt?.text || ""),
+      language: String(prompt?.language || ""),
+      intent: String(prompt?.intent || ""),
+    })),
+  });
+}
+
 export function validatePromptPanel(input) {
   if (!input || typeof input !== "object") {
     throw new VisibilityError("INVALID_PANEL", "Prompt panel must be an object.");
@@ -51,10 +66,11 @@ export function validatePromptPanel(input) {
     return freezePrompt(prompt);
   });
 
-  return Object.freeze({
+  const panel = {
     id,
     version: input.version,
     methodologyVersion,
     prompts: Object.freeze(prompts),
-  });
+  };
+  return Object.freeze({ ...panel, fingerprint: createPromptPanelFingerprint(panel) });
 }

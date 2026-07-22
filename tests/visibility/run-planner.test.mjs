@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { planVisibilityRun } from "../../functions/lib/visibility/run-planner.mjs";
+import { validatePromptPanel } from "../../functions/lib/visibility/prompt-panel.mjs";
 
 const PANEL = {
   id: "ru-ai-visibility-pilot",
@@ -31,6 +32,8 @@ test("plans ordered, costed, deterministic Yandex forecast observations", async 
   const second = await planVisibilityRun(structuredClone(BASE_INPUT));
 
   assert.equal(first.observationCount, 4);
+  assert.equal(first.panelFingerprint, validatePromptPanel(PANEL).fingerprint);
+  assert.equal(first.methodologyVersion, PANEL.methodologyVersion);
   assert.equal(first.scheduledFor, "2026-07-21T06:00:00.000Z");
   assert.equal(first.projectedCost.projectedMicrorub, 20_320_000);
   assert.deepEqual(first.observations.map(({ promptId, repeatOrdinal }) => [promptId, repeatOrdinal]), [
@@ -52,6 +55,8 @@ test("changes idempotency keys when an identity component changes", async () => 
   const base = await planVisibilityRun(BASE_INPUT);
   const variants = [
     { ...BASE_INPUT, panel: { ...PANEL, version: 2 } },
+    { ...BASE_INPUT, panel: { ...PANEL, methodologyVersion: "0.2" } },
+    { ...BASE_INPUT, panel: { ...PANEL, prompts: [{ ...PANEL.prompts[0], text: `${PANEL.prompts[0].text} Changed.` }, PANEL.prompts[1]] } },
     { ...BASE_INPUT, scheduledFor: "2026-07-22T09:00:00+03:00" },
     { ...BASE_INPUT, panel: { ...PANEL, prompts: [{ ...PANEL.prompts[0], id: "discovery-02" }] } },
   ];

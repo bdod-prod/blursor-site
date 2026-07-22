@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { validatePromptPanel } from "../../functions/lib/visibility/prompt-panel.mjs";
+import {
+  createPromptPanelFingerprint,
+  validatePromptPanel,
+} from "../../functions/lib/visibility/prompt-panel.mjs";
 
 const VALID_PANEL = {
   id: "ru-saas-pilot",
@@ -22,11 +25,27 @@ test("normalizes and deeply freezes a valid panel", () => {
   assert.equal(Object.isFrozen(panel), true);
   assert.equal(Object.isFrozen(panel.prompts), true);
   assert.equal(Object.isFrozen(panel.prompts[0]), true);
+  assert.equal(panel.fingerprint, createPromptPanelFingerprint(panel));
   assert.throws(() => {
     panel.prompts[0].text = "changed";
   }, TypeError);
   input.prompts[0].text = "caller mutation";
   assert.notEqual(panel.prompts[0].text, input.prompts[0].text);
+});
+
+test("fingerprint deterministically identifies prompt content, order, panel, and methodology versions", () => {
+  const panel = validatePromptPanel(VALID_PANEL);
+  const variants = [
+    { ...VALID_PANEL, version: 2 },
+    { ...VALID_PANEL, methodologyVersion: "0.2" },
+    { ...VALID_PANEL, prompts: [{ ...VALID_PANEL.prompts[0], text: `${VALID_PANEL.prompts[0].text} Changed.` }, VALID_PANEL.prompts[1]] },
+    { ...VALID_PANEL, prompts: [...VALID_PANEL.prompts].reverse() },
+  ];
+
+  assert.equal(validatePromptPanel(structuredClone(VALID_PANEL)).fingerprint, panel.fingerprint);
+  for (const variant of variants) {
+    assert.notEqual(validatePromptPanel(variant).fingerprint, panel.fingerprint);
+  }
 });
 
 test("rejects an invalid panel identity and version", () => {

@@ -3,23 +3,18 @@ import test from "node:test";
 
 import {
   V1_INVESTIGATION_SCOPE,
+  V1_PROMPT_PANEL,
+  V1_PROMPT_PANEL_FINGERPRINT,
   calculateV1ObservationVolume,
   validateV1InvestigationScope,
 } from "../../functions/lib/investigation/v1-scope.mjs";
-
-const prompts = Array.from({ length: 15 }, (_, index) => ({
-  id: `prompt-${String(index + 1).padStart(2, "0")}`,
-  text: `English public-brand question ${index + 1}?`,
-  language: "en",
-  intent: index < 6 ? "discovery" : index < 10 ? "comparison" : index < 13 ? "validation" : "action",
-}));
 
 function validInput() {
   return {
     projectId: "kamran-aghayev",
     location: "US",
     cadenceDays: 3,
-    panel: { id: "kamran-us-en-v1", version: 1, methodologyVersion: "0.2", prompts },
+    panel: structuredClone(V1_PROMPT_PANEL),
   };
 }
 
@@ -29,6 +24,8 @@ test("validates and freezes the exact Kamran v1 scope", () => {
   assert.equal(scope.location, "US");
   assert.equal(scope.cadenceDays, 3);
   assert.equal(scope.panel.prompts.length, 15);
+  assert.equal(scope.panel.fingerprint, V1_PROMPT_PANEL_FINGERPRINT);
+  assert.strictEqual(V1_PROMPT_PANEL.fingerprint, V1_PROMPT_PANEL_FINGERPRINT);
   assert.equal(Object.isFrozen(scope), true);
   assert.equal(Object.isFrozen(scope.panel), true);
 });
@@ -42,6 +39,31 @@ test("rejects scope drift", () => {
   const russian = validInput();
   russian.panel = { ...russian.panel, prompts: russian.panel.prompts.map((prompt, index) => index === 0 ? { ...prompt, language: "ru" } : prompt) };
   assert.throws(() => validateV1InvestigationScope(russian), (error) => error.code === "V1_LANGUAGE_MISMATCH");
+});
+
+test("rejects v1 panel identity, methodology, prompt content, and order drift", () => {
+  const cases = [
+    ["V1_PANEL_ID_MISMATCH", (panel) => ({ ...panel, id: "another-panel" })],
+    ["V1_PANEL_VERSION_MISMATCH", (panel) => ({ ...panel, version: 2 })],
+    ["V1_METHODOLOGY_MISMATCH", (panel) => ({ ...panel, methodologyVersion: "0.3" })],
+    ["V1_PANEL_FINGERPRINT_MISMATCH", (panel) => ({
+      ...panel,
+      prompts: panel.prompts.map((prompt, index) => index === 0
+        ? { ...prompt, text: `${prompt.text} Mutated.` }
+        : prompt),
+    })],
+    ["V1_PANEL_FINGERPRINT_MISMATCH", (panel) => ({ ...panel, prompts: [...panel.prompts].reverse() })],
+  ];
+
+  for (const [code, mutate] of cases) {
+    const input = validInput();
+    input.panel = mutate(input.panel);
+    assert.throws(
+      () => validateV1InvestigationScope(input),
+      (error) => error.code === code,
+      code,
+    );
+  }
 });
 
 test("calculates the approved collection volume", () => {
