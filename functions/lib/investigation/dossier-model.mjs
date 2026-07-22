@@ -1,3 +1,11 @@
+import { VisibilityError } from "../visibility/visibility-error.mjs";
+
+const CLOSED_FOLLOWUP_OUTCOMES = Object.freeze({
+  closed_supported: "supported_after_followup",
+  closed_weakened: "weakened_after_followup",
+  closed_unresolved: "unresolved_after_followup",
+});
+
 const clone = (value, seen = new WeakMap()) => {
   if (!value || typeof value !== "object") return value;
   if (seen.has(value)) return seen.get(value);
@@ -14,16 +22,68 @@ const deepFreeze = (value, seen = new WeakSet()) => {
   return Object.freeze(value);
 };
 
+const safeText = (value) => typeof value === "string" ? value : null;
+
+const projectMetric = (metric) => ({
+  id: safeText(metric?.id),
+  label: safeText(metric?.label),
+  numerator: Number.isInteger(metric?.numerator) ? metric.numerator : null,
+  denominator: Number.isInteger(metric?.denominator) ? metric.denominator : null,
+  surfaceId: safeText(metric?.surfaceId),
+  window: safeText(metric?.window),
+});
+
+const projectIntervention = (intervention) => intervention ? {
+  label: safeText(intervention.label),
+  detail: safeText(intervention.detail),
+  deployedAt: safeText(intervention.deployedAt),
+} : null;
+
+const projectFollowup = (followup, comparableOutcome) => followup ? {
+  comparable: followup.comparable === true,
+  outcome: comparableOutcome || safeText(followup.outcome),
+  summary: safeText(followup.summary),
+} : null;
+
+const validateFollowupConsistency = (input) => {
+  const levelFive = input?.assessment?.level === 5;
+  const comparable = input?.followup?.comparable === true;
+  if (levelFive && !comparable) {
+    throw new VisibilityError(
+      "LEVEL_FIVE_FOLLOWUP_REQUIRED",
+      "Evidence level 5 requires a comparable follow-up.",
+    );
+  }
+  if (!comparable) return null;
+
+  const state = input?.caseRecord?.state;
+  const expectedOutcome = CLOSED_FOLLOWUP_OUTCOMES[state];
+  if (!expectedOutcome) {
+    throw new VisibilityError(
+      "CLOSED_FOLLOWUP_REQUIRED",
+      "Comparable follow-up requires a closed follow-up state.",
+    );
+  }
+  if (input.followup.outcome !== expectedOutcome) {
+    throw new VisibilityError(
+      "FOLLOWUP_OUTCOME_MISMATCH",
+      `Follow-up outcome does not match ${state}.`,
+    );
+  }
+  return expectedOutcome;
+};
+
 export function buildInvestigationDossier(input) {
   const evidenceItems = input?.evidenceItems || [];
   const alternatives = input?.alternatives || [];
+  const comparableOutcome = validateFollowupConsistency(input);
   const hasIndependentEvidence = evidenceItems.some(({ type }) => type !== "provider_rationale" && type !== "analyst_annotation");
   const approved = input?.hypothesis?.reviewState === "approved"
     && alternatives.length > 0
     && hasIndependentEvidence;
   const comparable = input?.followup?.comparable === true;
   const evidenceState = approved
-    ? (comparable ? input.followup.outcome : "hypothesis_ready")
+    ? (comparable ? comparableOutcome : "hypothesis_ready")
     : "unresolved";
   const rationale = approved ? {
     wording: clone(input.hypothesis.wording),
@@ -64,7 +124,7 @@ export function buildInvestigationDossier(input) {
         id: "observed-pattern",
         title: "Observed pattern",
         summary: clone(input.observedPattern.summary),
-        metrics: clone(input.observedPattern.metrics),
+        metrics: input.observedPattern.metrics.map(projectMetric),
         coverage: clone(input.observedPattern.coverage),
       },
       {
@@ -95,8 +155,8 @@ export function buildInvestigationDossier(input) {
           disposition: clone(item.disposition),
         })),
         nextTest: clone(input.nextTest),
-        intervention: clone(input.intervention || null),
-        followup: clone(input.followup || null),
+        intervention: projectIntervention(input.intervention),
+        followup: projectFollowup(input.followup, comparableOutcome),
       },
     ],
     review: {

@@ -230,6 +230,7 @@ export function buildKamranSyntheticDemo() {
     ...item,
     relation,
   }));
+  const caseRecord = closeSyntheticCase();
   const assessment = validateEvidenceAssessment({
     level: 5,
     repeated: true,
@@ -239,7 +240,6 @@ export function buildKamranSyntheticDemo() {
     alternativesReviewed: 2,
     followupComparable: true,
   });
-  const caseRecord = closeSyntheticCase();
   const metrics = DEMO_SURFACES.flatMap((surface) => [
     { id: `${surface.id}-baseline`, label: "Brand mentions", numerator: 0, denominator: 45, surfaceId: surface.id, window: "baseline" },
     { id: `${surface.id}-followup`, label: "Brand mentions", numerator: 3, denominator: 45, surfaceId: surface.id, window: "follow-up" },

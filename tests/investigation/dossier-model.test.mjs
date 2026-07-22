@@ -106,6 +106,7 @@ test("returns a deeply frozen copy without freezing caller-owned inputs", () => 
   const interventionEvidence = ["synthetic change record"];
   const remainingUncertainty = ["surface variation"];
   const input = minimalInput({
+    caseRecord: { ...minimalInput().caseRecord, state: "closed_supported" },
     observedPattern: {
       ...minimalInput().observedPattern,
       metrics: [{ ...minimalInput().observedPattern.metrics[0], detail: metricDetail }],
@@ -124,11 +125,96 @@ test("returns a deeply frozen copy without freezing caller-owned inputs", () => 
   assert.equal(Object.isFrozen(metricDetail.source), false);
   assert.equal(Object.isFrozen(interventionEvidence), false);
   assert.equal(Object.isFrozen(remainingUncertainty), false);
-  assert.notStrictEqual(dossier.sections[0].metrics[0].detail, metricDetail);
+  assert.equal(dossier.sections[0].metrics[0].detail, undefined);
   assert.notStrictEqual(next.intervention, input.intervention);
   assert.notStrictEqual(next.followup, input.followup);
   assert.equal(Object.isFrozen(dossier), true);
-  assert.equal(Object.isFrozen(dossier.sections[0].metrics[0].detail.source), true);
-  assert.equal(Object.isFrozen(next.intervention.evidence), true);
-  assert.equal(Object.isFrozen(next.followup.remainingUncertainty), true);
+  assert.equal(next.intervention.evidence, undefined);
+  assert.equal(next.followup.remainingUncertainty, undefined);
+});
+
+test("whitelists client-safe metric, intervention, and follow-up fields", () => {
+  const sentinel = { value: "PRIVATE_SENTINEL" };
+  const extraFields = {
+    rawAnswer: "PRIVATE_SENTINEL",
+    requestId: "PRIVATE_SENTINEL",
+    responseId: "PRIVATE_SENTINEL",
+    requestConfig: sentinel,
+    archive: sentinel,
+    secret: "PRIVATE_SENTINEL",
+  };
+  const input = minimalInput({
+    caseRecord: { ...minimalInput().caseRecord, state: "closed_supported" },
+    assessment: { level: 5, term: "supported after follow-up" },
+    observedPattern: {
+      ...minimalInput().observedPattern,
+      metrics: [{ ...minimalInput().observedPattern.metrics[0], ...extraFields }],
+    },
+    intervention: {
+      label: "Synthetic intervention",
+      detail: "Synthetic detail.",
+      deployedAt: "2026-07-29T09:00:00.000Z",
+      ...extraFields,
+    },
+    followup: {
+      comparable: true,
+      outcome: "supported_after_followup",
+      summary: "Synthetic summary.",
+      ...extraFields,
+    },
+  });
+  const original = structuredClone(input);
+
+  const dossier = buildInvestigationDossier(input);
+  const observed = dossier.sections[0];
+  const next = dossier.sections[3];
+  const serialized = JSON.stringify(dossier);
+
+  assert.deepEqual(Object.keys(observed.metrics[0]), ["id", "label", "numerator", "denominator", "surfaceId", "window"]);
+  assert.deepEqual(Object.keys(next.intervention), ["label", "detail", "deployedAt"]);
+  assert.deepEqual(Object.keys(next.followup), ["comparable", "outcome", "summary"]);
+  for (const field of Object.keys(extraFields)) assert.equal(serialized.includes(`\"${field}\"`), false);
+  assert.equal(serialized.includes("PRIVATE_SENTINEL"), false);
+  assert.deepEqual(input, original);
+  assert.equal(Object.isFrozen(input), false);
+  assert.equal(Object.isFrozen(sentinel), false);
+});
+
+test("requires level-five and comparable follow-up states to match the closed lifecycle", () => {
+  assert.throws(
+    () => buildInvestigationDossier(minimalInput({ assessment: { level: 5, term: "supported after follow-up" } })),
+    /level 5.*comparable follow-up/i,
+  );
+  assert.throws(
+    () => buildInvestigationDossier(minimalInput({
+      followup: { comparable: true, outcome: "supported_after_followup", summary: "Premature." },
+    })),
+    /closed follow-up state/i,
+  );
+  assert.throws(
+    () => buildInvestigationDossier(minimalInput({
+      caseRecord: { ...minimalInput().caseRecord, state: "closed_supported" },
+      assessment: { level: 5, term: "supported after follow-up" },
+      followup: { comparable: true, outcome: "weakened_after_followup", summary: "Mismatched." },
+    })),
+    /outcome.*closed_supported/i,
+  );
+});
+
+test("derives a safe comparable outcome from each closed follow-up state", () => {
+  const outcomes = new Map([
+    ["closed_supported", "supported_after_followup"],
+    ["closed_weakened", "weakened_after_followup"],
+    ["closed_unresolved", "unresolved_after_followup"],
+  ]);
+
+  for (const [state, outcome] of outcomes) {
+    const dossier = buildInvestigationDossier(minimalInput({
+      caseRecord: { ...minimalInput().caseRecord, state },
+      assessment: { level: 5, term: "supported after follow-up" },
+      followup: { comparable: true, outcome, summary: "Comparable synthetic follow-up." },
+    }));
+    assert.equal(dossier.evidenceState, outcome);
+    assert.equal(dossier.sections[3].followup.outcome, outcome);
+  }
 });
