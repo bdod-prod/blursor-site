@@ -84,6 +84,37 @@ test("permits synthetic consumer evidence only under an explicit fixture identit
   assert.throws(() => normalizeObservation({ ...validObservation(), surfaceId: "synthetic_fake", synthetic: false }), /unknown visibility surface/i);
 });
 
+test("accepts the registered native dashboard identity without checking execution rights", () => {
+  const observation = normalizeObservation(validObservation({
+    surfaceId: "yandex_webmaster_alice_native",
+    surfaceLabel: "Alice AI visibility · Yandex Webmaster",
+    collectionClass: "native_dashboard",
+  }));
+
+  assert.equal(observation.surfaceId, "yandex_webmaster_alice_native");
+  assert.equal(observation.surfaceLabel, "Alice AI visibility · Yandex Webmaster");
+  assert.equal(observation.collectionClass, "native_dashboard");
+});
+
+test("clones and deeply freezes nested configuration and flags from pre-frozen containers", () => {
+  const requestConfig = validObservation().requestConfig;
+  const requestToolChoice = { mode: "auto" };
+  requestConfig.toolChoice = requestToolChoice;
+  Object.freeze(requestConfig);
+
+  const featureCollection = { searchUsed: true };
+  const featureFlags = Object.freeze({ collection: featureCollection });
+
+  const observation = normalizeObservation(validObservation({ requestConfig, featureFlags }));
+
+  assert.notStrictEqual(observation.requestConfig.toolChoice, requestToolChoice);
+  assert.notStrictEqual(observation.featureFlags.collection, featureCollection);
+  assert.equal(Object.isFrozen(observation.requestConfig.toolChoice), true);
+  assert.equal(Object.isFrozen(observation.featureFlags.collection), true);
+  assert.equal(Object.isFrozen(requestToolChoice), false);
+  assert.equal(Object.isFrozen(featureCollection), false);
+});
+
 test("does not collapse refusal, failure, and brand absence", () => {
   const refused = normalizeObservation(validObservation({ state: "refused", rawAnswer: "I cannot answer that.", citations: [], sources: [] }));
   const failed = normalizeObservation(validObservation({ state: "failed", rawAnswer: null, citations: [], sources: [], failure: { code: "TRANSPORT", message: "Collection failed." } }));

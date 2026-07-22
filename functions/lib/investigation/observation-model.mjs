@@ -2,7 +2,7 @@ import { getVisibilitySurface } from "../visibility/surface-registry.mjs";
 import { VisibilityError } from "../visibility/visibility-error.mjs";
 
 export const OBSERVATION_STATES = Object.freeze(["success", "refused", "failed"]);
-export const COLLECTION_CLASSES = Object.freeze(["official_api", "supplier", "consumer_interface", "synthetic_fixture"]);
+export const COLLECTION_CLASSES = Object.freeze(["official_api", "supplier", "consumer_interface", "native_dashboard", "synthetic_fixture"]);
 
 const required = (value, code, message) => {
   const text = String(value ?? "").trim();
@@ -48,9 +48,19 @@ const normalizeLinks = (items, citation) => Object.freeze((items || []).map((ite
   }
 }));
 
-const freeze = (value) => {
-  if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
-  for (const child of Object.values(value)) freeze(child);
+const clone = (value, seen = new WeakMap()) => {
+  if (!value || typeof value !== "object") return value;
+  if (seen.has(value)) return seen.get(value);
+  const copy = Array.isArray(value) ? [] : {};
+  seen.set(value, copy);
+  for (const [key, child] of Object.entries(value)) copy[key] = clone(child, seen);
+  return copy;
+};
+
+const freeze = (value, seen = new WeakSet()) => {
+  if (!value || typeof value !== "object" || seen.has(value)) return value;
+  seen.add(value);
+  for (const child of Object.values(value)) freeze(child, seen);
   return Object.freeze(value);
 };
 
@@ -75,7 +85,7 @@ export function normalizeObservation(input) {
   if ((state === "success" || state === "refused") && !rawAnswer) throw new VisibilityError("ANSWER_REQUIRED", "Usable observations require answer text.");
   if (state === "failed" && rawAnswer) throw new VisibilityError("FAILED_OBSERVATION_HAS_ANSWER", "A failed observation cannot contain answer text.");
   if (state === "failed" && !input?.failure?.code) throw new VisibilityError("FAILURE_REQUIRED", "A failed observation requires a failure record.");
-  const config = input?.requestConfig || {};
+  const config = clone(input?.requestConfig || {});
   const observation = {
     schemaVersion: 1,
     id: required(input?.id, "INVALID_OBSERVATION_ID", "Observation ID is required."),
@@ -121,7 +131,7 @@ export function normalizeObservation(input) {
       retentionStatus: required(input.providerRationale.retentionStatus, "RATIONALE_RETENTION_REQUIRED", "Provider rationale retention status is required."),
       provenance: "provider_supplied",
     } : null,
-    featureFlags: { ...(input?.featureFlags || {}) },
+    featureFlags: clone(input?.featureFlags || {}),
     failure: state === "failed" ? { code: String(input.failure.code), message: String(input.failure.message || "Collection failed.") } : null,
   };
   if (!Number.isInteger(observation.panelVersion) || observation.panelVersion < 1) throw new VisibilityError("INVALID_PANEL_VERSION", "Panel version must be a positive integer.");
