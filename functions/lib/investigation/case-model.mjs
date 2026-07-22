@@ -124,5 +124,5 @@ export function transitionInvestigationCase(record, transition) {
   const event = Object.freeze({ from: record.state, to, at: date(transition.at), reviewer: reviewName(transition.reviewer), note: String(transition.note || "").trim(), evidenceLinks: transition.evidenceLinks ?? null, alternativesCount: transition.alternativesCount ?? null, comparability: transition.comparability ?? null });
   if (!event.reviewer) throw new VisibilityError("REVIEWER_REQUIRED", "Every transition requires a reviewer.");
   const history = record.events.map((previousEvent) => ({ ...previousEvent }));
-  return freeze({ ...record, state: to, events: [...history, event] });
+  return freeze({ ...record, surfaces: [...record.surfaces], state: to, events: [...history, event] });
 }
