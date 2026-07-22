@@ -113,6 +113,25 @@ test("reopens unresolved work by appending an immutable review event", () => {
   assert.equal(Object.isFrozen(reopened.events.at(-1)), true);
 });
 
+test("does not freeze a rehydrated caller history while appending a transition", () => {
+  const draft = createInvestigationCase(caseInput());
+  const baseline = transition(draft, "baseline_collecting", "2026-07-22T09:01:00.000Z");
+  const supplied = {
+    ...baseline,
+    events: baseline.events.map((event) => ({ ...event })),
+  };
+  const original = structuredClone(supplied);
+
+  const next = transition(supplied, "evidence_review", "2026-07-28T09:01:00.000Z");
+
+  assert.deepEqual(supplied, original);
+  assert.equal(Object.isFrozen(supplied), false);
+  assert.equal(Object.isFrozen(supplied.events), false);
+  assert.equal(Object.isFrozen(supplied.events[0]), false);
+  assert.notStrictEqual(next.events[0], supplied.events[0]);
+  assert.equal(Object.isFrozen(next.events[0]), true);
+});
+
 test("requires a comparable follow-up window before closure", () => {
   const record = Object.freeze({
     ...createInvestigationCase(caseInput()),
