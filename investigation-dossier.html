@@ -126,13 +126,16 @@
       provider_rationale: 'Provider-supplied rationale',
       analyst_annotation: 'Analyst annotation',
     }[type] || 'Evidence');
-    const evidenceStateLabel = (state) => ({
-      unresolved: 'Unresolved is a valid result.',
-      hypothesis_ready: 'Hypothesis ready',
-      supported_after_followup: 'Supported after follow-up',
-      weakened_after_followup: 'Weakened after follow-up',
-      unresolved_after_followup: 'Unresolved after follow-up',
-    }[state] || 'Unresolved is a valid result.');
+    const evidenceStateLabel = (() => {
+      const labels = Object.freeze({
+        unresolved: 'Unresolved is a valid result.',
+        hypothesis_ready: 'Hypothesis ready',
+        supported_after_followup: 'Supported after follow-up',
+        weakened_after_followup: 'Weakened after follow-up',
+        unresolved_after_followup: 'Unresolved after follow-up',
+      });
+      return (state) => Object.hasOwn(labels, state) ? labels[state] : 'Unresolved is a valid result.';
+    })();
 
     function renderDossier(dossier) {
       byId('question').textContent = dossier.header.question;

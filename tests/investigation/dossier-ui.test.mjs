@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
 
 const page = new URL("../../investigation-dossier.html", import.meta.url);
 
@@ -60,15 +61,27 @@ test("responsive dossier content can shrink and wrap long identifiers", async ()
 
 test("renderer uses polished deterministic evidence-state labels", async () => {
   const html = await readFile(page, "utf8");
-  for (const label of [
-    "unresolved: 'Unresolved is a valid result.'",
-    "hypothesis_ready: 'Hypothesis ready'",
-    "supported_after_followup: 'Supported after follow-up'",
-    "weakened_after_followup: 'Weakened after follow-up'",
-    "unresolved_after_followup: 'Unresolved after follow-up'",
+  const helperSource = html.match(/const evidenceStateLabel = \(\(\) => \{[\s\S]*?\n    \}\)\(\);/)?.[0];
+  assert.ok(helperSource, "expected an executable evidence-state helper");
+  const evidenceStateLabel = runInNewContext(
+    `${helperSource}\nevidenceStateLabel;`,
+    Object.create(null),
+  );
+
+  for (const [state, label] of [
+    ["unresolved", "Unresolved is a valid result."],
+    ["hypothesis_ready", "Hypothesis ready"],
+    ["supported_after_followup", "Supported after follow-up"],
+    ["weakened_after_followup", "Weakened after follow-up"],
+    ["unresolved_after_followup", "Unresolved after follow-up"],
   ]) {
-    assert.ok(html.includes(label), `expected evidence-state label ${label}`);
+    assert.equal(evidenceStateLabel(state), label, state);
   }
+  for (const state of ["future_state", "toString", "constructor", "__proto__", "hasOwnProperty"]) {
+    assert.equal(evidenceStateLabel(state), "Unresolved is a valid result.", state);
+  }
+  assert.match(helperSource, /Object\.freeze/);
+  assert.match(helperSource, /Object\.hasOwn/);
   assert.ok(html.includes("byId('evidence-state').textContent = evidenceStateLabel(dossier.evidenceState)"));
   assert.doesNotMatch(html, /dossier\.evidenceState\.replaceAll/);
 });
