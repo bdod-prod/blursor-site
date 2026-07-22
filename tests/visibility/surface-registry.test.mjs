@@ -2,9 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  VISIBILITY_PURPOSES,
+  VISIBILITY_RIGHTS_STATES,
   VISIBILITY_SURFACES,
   assertVisibilitySurfaceAllowed,
   getVisibilitySurface,
+  isVisibilityRightsStateAllowed,
 } from "../../functions/lib/visibility/surface-registry.mjs";
 
 test("registry uses exact surface identities and integer pricing", () => {
@@ -37,6 +40,38 @@ test("forecast permits priced APIs under contract review", () => {
   assert.equal(
     assertVisibilitySurfaceAllowed("gigachat_api", "forecast").id,
     "gigachat_api",
+  );
+});
+
+test("accepted supplier UI risk is bounded to closed beta and research", () => {
+  assert.deepEqual(VISIBILITY_PURPOSES, [
+    "forecast",
+    "closed_beta",
+    "production",
+    "verification",
+    "research",
+  ]);
+  assert.ok(VISIBILITY_RIGHTS_STATES.includes("supplier_ui_risk_accepted"));
+  assert.equal(isVisibilityRightsStateAllowed("supplier_ui_risk_accepted", "forecast"), true);
+  assert.equal(isVisibilityRightsStateAllowed("supplier_ui_risk_accepted", "closed_beta"), true);
+  assert.equal(isVisibilityRightsStateAllowed("supplier_ui_risk_accepted", "research"), true);
+  assert.equal(isVisibilityRightsStateAllowed("supplier_ui_risk_accepted", "production"), false);
+  assert.equal(isVisibilityRightsStateAllowed("supplier_ui_risk_accepted", "verification"), false);
+  assert.equal(isVisibilityRightsStateAllowed("research_only", "closed_beta"), false);
+  assert.equal(
+    Object.values(VISIBILITY_SURFACES).some(({ rightsState }) => rightsState === "supplier_ui_risk_accepted"),
+    false,
+  );
+});
+
+test("access matrix rejects unknown purposes and rights states", () => {
+  assert.throws(
+    () => isVisibilityRightsStateAllowed("supplier_ui_risk_accepted", "sales"),
+    (error) => error.code === "INVALID_PURPOSE",
+  );
+  assert.throws(
+    () => isVisibilityRightsStateAllowed("permission_assumed", "closed_beta"),
+    (error) => error.code === "INVALID_RIGHTS_STATE",
   );
 });
 

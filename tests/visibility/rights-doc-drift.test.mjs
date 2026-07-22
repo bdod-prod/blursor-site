@@ -18,6 +18,12 @@ function assertRegistryAligned(markdown) {
   }
   const normalized = markdown.replaceAll("`", "").replace(/\s+/g, " ");
   assert.ok(normalized.includes("Only production_authorized surfaces may be scheduled or included in paid reports"));
+  assert.ok(normalized.includes(
+    "supplier_ui_risk_accepted surfaces may be used only for a dated, bounded closed_beta run or isolated research",
+  ));
+  assert.ok(normalized.includes(
+    "No current executable surface is assigned supplier_ui_risk_accepted",
+  ));
 }
 
 test("executable surface states match the rights register", async () => {

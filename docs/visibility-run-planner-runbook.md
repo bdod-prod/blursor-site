@@ -59,6 +59,7 @@ Update a price only after checking the current primary pricing page. Change the 
 
 - `UNKNOWN_SURFACE`
 - `INVALID_PURPOSE`
+- `INVALID_RIGHTS_STATE`
 - `SURFACE_DISABLED`
 - `SURFACE_NOT_AUTHORIZED`
 - `INVALID_PANEL`

@@ -5,6 +5,23 @@ const defineSurface = (surface) => Object.freeze({
   pricing: surface.pricing ? Object.freeze({ ...surface.pricing }) : null,
 });
 
+export const VISIBILITY_RIGHTS_STATES = Object.freeze([
+  "production_authorized",
+  "supplier_ui_risk_accepted",
+  "contract_review",
+  "verification_only",
+  "research_only",
+  "disabled",
+]);
+
+export const VISIBILITY_PURPOSES = Object.freeze([
+  "forecast",
+  "closed_beta",
+  "production",
+  "verification",
+  "research",
+]);
+
 export const VISIBILITY_SURFACES = Object.freeze(Object.fromEntries([
   defineSurface({
     id: "yandex_gen_search_api_ru",
@@ -75,11 +92,33 @@ export const VISIBILITY_SURFACES = Object.freeze(Object.fromEntries([
 ].map((surface) => [surface.id, surface])));
 
 const PURPOSE_STATES = Object.freeze({
-  forecast: new Set(["contract_review", "production_authorized"]),
+  forecast: new Set(["contract_review", "supplier_ui_risk_accepted", "production_authorized"]),
+  closed_beta: new Set(["supplier_ui_risk_accepted", "production_authorized"]),
   production: new Set(["production_authorized"]),
   verification: new Set(["production_authorized", "verification_only"]),
-  research: new Set(["production_authorized", "verification_only", "research_only"]),
+  research: new Set([
+    "production_authorized",
+    "supplier_ui_risk_accepted",
+    "verification_only",
+    "research_only",
+  ]),
 });
+
+function getPurposeStates(purpose) {
+  const states = PURPOSE_STATES[purpose];
+  if (!states) {
+    throw new VisibilityError("INVALID_PURPOSE", "Unknown visibility run purpose.", { purpose });
+  }
+  return states;
+}
+
+export function isVisibilityRightsStateAllowed(rightsState, purpose) {
+  const states = getPurposeStates(purpose);
+  if (!VISIBILITY_RIGHTS_STATES.includes(rightsState)) {
+    throw new VisibilityError("INVALID_RIGHTS_STATE", "Unknown visibility rights state.", { rightsState });
+  }
+  return states.has(rightsState);
+}
 
 export function getVisibilitySurface(surfaceId) {
   const surface = VISIBILITY_SURFACES[surfaceId];
@@ -90,15 +129,12 @@ export function getVisibilitySurface(surfaceId) {
 }
 
 export function assertVisibilitySurfaceAllowed(surfaceId, purpose) {
-  const states = PURPOSE_STATES[purpose];
-  if (!states) {
-    throw new VisibilityError("INVALID_PURPOSE", "Unknown visibility run purpose.", { purpose });
-  }
+  getPurposeStates(purpose);
   const surface = getVisibilitySurface(surfaceId);
   if (surface.rightsState === "disabled" || surface.killSwitch) {
     throw new VisibilityError("SURFACE_DISABLED", "Visibility surface is disabled.", { surfaceId });
   }
-  if (!states.has(surface.rightsState)) {
+  if (!isVisibilityRightsStateAllowed(surface.rightsState, purpose)) {
     throw new VisibilityError("SURFACE_NOT_AUTHORIZED", "Visibility surface is not authorized for this purpose.", {
       surfaceId,
       purpose,
