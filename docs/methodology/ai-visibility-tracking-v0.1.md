@@ -1,5 +1,7 @@
 # BLURSOR AI Visibility Tracking Methodology v0.1
 
+> Historical document. Product framing and v1 presentation are superseded by `2026-07-22-investigation-first-ai-visibility-diagnostics-design.md`. Its observation, rights, budget, privacy, and surface-separation controls remain applicable where the newer design does not replace them.
+
 Status: publication draft; do not publish before provider-language and legal review
 Effective date: not yet active
 
@@ -75,4 +77,3 @@ Material methodology changes appear in a dated changelog before new and old peri
 ## Independence
 
 BLURSOR is an independent measurement service. It is not affiliated with, endorsed by, or acting on behalf of the measured AI or search providers unless a specific written partnership is stated.
-

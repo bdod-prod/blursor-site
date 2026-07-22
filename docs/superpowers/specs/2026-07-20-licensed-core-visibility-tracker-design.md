@@ -1,5 +1,7 @@
 # BLURSOR Licensed-Core AI Visibility Tracker
 
+> Historical document. Product framing and v1 presentation are superseded by `2026-07-22-investigation-first-ai-visibility-diagnostics-design.md`. Its observation, rights, budget, privacy, and surface-separation controls remain applicable where the newer design does not replace them.
+
 Date: 2026-07-20
 Status: approved direction under Alex's delegated authority; implementation and production activation remain separate reviewable change-sets
 

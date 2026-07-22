@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "test": "node --test",
+    "test:investigation": "node --test tests/investigation",
     "test:visibility": "node --test tests/visibility"
   },
   "engines": {
