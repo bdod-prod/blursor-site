@@ -51,6 +51,28 @@ test("dossier shell is private, responsive, and exposes robust loading and error
   assert.match(html, /@media \(max-width:800px\)/);
 });
 
+test("responsive dossier content can shrink and wrap long identifiers", async () => {
+  const html = await readFile(page, "utf8");
+  assert.match(html, /\.layout > \*,\.stack > \*,\.metric-grid > \*,\.evidence-top > \*,\.meta > \* \{ min-width:0; \}/);
+  assert.match(html, /\.pill,\.metric,\.evidence,\.rationale,\.plain-list li \{ overflow-wrap:anywhere; \}/);
+  assert.match(html, /@media \(max-width:800px\) \{ \.layout \{ grid-template-columns:1fr; \}/);
+});
+
+test("renderer uses polished deterministic evidence-state labels", async () => {
+  const html = await readFile(page, "utf8");
+  for (const label of [
+    "unresolved: 'Unresolved is a valid result.'",
+    "hypothesis_ready: 'Hypothesis ready'",
+    "supported_after_followup: 'Supported after follow-up'",
+    "weakened_after_followup: 'Weakened after follow-up'",
+    "unresolved_after_followup: 'Unresolved after follow-up'",
+  ]) {
+    assert.ok(html.includes(label), `expected evidence-state label ${label}`);
+  }
+  assert.ok(html.includes("byId('evidence-state').textContent = evidenceStateLabel(dossier.evidenceState)"));
+  assert.doesNotMatch(html, /dossier\.evidenceState\.replaceAll/);
+});
+
 test("renderer covers the complete client-safe dossier without raw observations", async () => {
   const html = await readFile(page, "utf8");
   for (const field of [

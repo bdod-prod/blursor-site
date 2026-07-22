@@ -24,6 +24,7 @@
     .pill,.label { display:inline-block; padding:5px 9px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:.75rem; }
     .layout { display:grid; grid-template-columns:minmax(0,2.1fr) minmax(260px,.9fr); gap:28px; margin-top:46px; }
     .stack { display:grid; gap:18px; }
+    .layout > *,.stack > *,.metric-grid > *,.evidence-top > *,.meta > * { min-width:0; }
     section,.aside-block { padding:24px; border:1px solid var(--line); background:var(--panel); }
     .section-number { color:var(--accent); margin-right:8px; }
     .metric-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:16px; }
@@ -35,6 +36,7 @@
     .evidence-top { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
     .relation { color:var(--muted); font-size:.78rem; }
     .rationale { padding:16px; background:var(--soft); }
+    .pill,.metric,.evidence,.rationale,.plain-list li { overflow-wrap:anywhere; }
     .status { min-height:28px; margin-top:20px; color:var(--muted); }
     .error { color:#ffaaa0; }
     .aside-block + .aside-block { margin-top:18px; }
@@ -124,6 +126,13 @@
       provider_rationale: 'Provider-supplied rationale',
       analyst_annotation: 'Analyst annotation',
     }[type] || 'Evidence');
+    const evidenceStateLabel = (state) => ({
+      unresolved: 'Unresolved is a valid result.',
+      hypothesis_ready: 'Hypothesis ready',
+      supported_after_followup: 'Supported after follow-up',
+      weakened_after_followup: 'Weakened after follow-up',
+      unresolved_after_followup: 'Unresolved after follow-up',
+    }[state] || 'Unresolved is a valid result.');
 
     function renderDossier(dossier) {
       byId('question').textContent = dossier.header.question;
@@ -172,7 +181,7 @@
       addList(byId('alternatives'), nextSection.alternatives, (item) => `${item.wording} — ${item.disposition}`);
       byId('next-test').textContent = nextSection.nextTest;
       byId('followup').textContent = nextSection.followup ? nextSection.followup.summary : 'No comparable follow-up yet.';
-      byId('evidence-state').textContent = dossier.evidenceState === 'unresolved' ? 'Unresolved is a valid result.' : dossier.evidenceState.replaceAll('_', ' ');
+      byId('evidence-state').textContent = evidenceStateLabel(dossier.evidenceState);
       byId('evidence-level').textContent = `${dossier.evidenceLevel} · ${dossier.evidenceTerm}`;
       byId('method').textContent = dossier.header.methodVersion;
       byId('review').textContent = `${dossier.review.analyst} · ${dossier.review.reviewedAt}`;
