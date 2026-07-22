@@ -1,5 +1,5 @@
 import { getStableReportPageResponse } from "../lib/report-handlers.mjs";
 
-export function onRequestGet(context) {
+export function onRequest(context) {
   return getStableReportPageResponse(context);
 }

@@ -148,7 +148,12 @@ test("readReport rejects invalid IDs and missing configuration before fetch", as
 
 test("readReport performs a bounded server-authorized lookup", async () => {
   let request;
-  const stored = { ok: true, url: "https://example.com/page", checkedAt: "2026-07-20T12:34:56.000Z" };
+  const stored = {
+    ok: true,
+    url: "https://example.com/page?private=1",
+    checkedAt: "2026-07-20T12:34:56.000Z",
+    screenshot: "data:image/jpeg;base64,do-not-return",
+  };
   const outcome = await readReport(REPORT_ID, ENV, {
     fetch: async (url, init) => {
       request = { url: String(url), init };
@@ -159,10 +164,12 @@ test("readReport performs a bounded server-authorized lookup", async () => {
     },
   });
 
-  assert.deepEqual(outcome, {
-    status: "found",
-    row: { id: REPORT_ID, result: stored, checked_at: stored.checkedAt },
-  });
+  assert.equal(outcome.status, "found");
+  assert.equal(outcome.row.id, REPORT_ID);
+  assert.equal(outcome.row.checked_at, stored.checkedAt);
+  assert.equal(outcome.row.result.url, "https://example.com/page");
+  assert.equal(outcome.row.result.screenshot, undefined);
+  assert.equal(outcome.row.result.version, 1);
   assert.match(request.url, /^https:\/\/project\.supabase\.co\/rest\/v1\/check_reports\?/);
   assert.match(request.url, /select=id%2Cresult%2Cchecked_at/);
   assert.match(request.url, new RegExp(`id=eq\\.${REPORT_ID}`));
@@ -217,10 +224,43 @@ test("readReport distinguishes missing rows from upstream failures", async () =>
   assert.deepEqual(failed, { status: "failed" });
 });
 
+test("readReport rejects malformed or inconsistent persisted snapshots", async () => {
+  const scenarios = [
+    {
+      result: { ok: true, url: "javascript:alert(1)", checkedAt: "2026-07-20T12:34:56.000Z" },
+      checked_at: "2026-07-20T12:34:56.000Z",
+    },
+    {
+      result: { ok: true, url: "https://example.com", checkedAt: "not-a-time" },
+      checked_at: "2026-07-20T12:34:56.000Z",
+    },
+    {
+      result: { ok: true, url: "https://example.com", checkedAt: "2026-07-20T12:34:56.000Z" },
+      checked_at: "2026-07-21T12:34:56.000Z",
+    },
+  ];
+
+  for (const row of scenarios) {
+    const outcome = await readReport(REPORT_ID, ENV, {
+      fetch: async () => new Response(JSON.stringify([{ id: REPORT_ID, ...row }]), { status: 200 }),
+      logger: { error: () => {} },
+    });
+    assert.deepEqual(outcome, { status: "failed" });
+  }
+});
+
 test("readReport accepts uppercase UUID paths returned in canonical lowercase", async () => {
-  const stored = { ok: true, url: "https://example.com/page" };
+  const stored = {
+    ok: true,
+    url: "https://example.com/page",
+    checkedAt: "2026-07-20T12:34:56.000Z",
+  };
   const outcome = await readReport(REPORT_ID.toUpperCase(), ENV, {
-    fetch: async () => new Response(JSON.stringify([{ id: REPORT_ID, result: stored }]), { status: 200 }),
+    fetch: async () => new Response(JSON.stringify([{
+      id: REPORT_ID,
+      result: stored,
+      checked_at: stored.checkedAt,
+    }]), { status: 200 }),
     logger: { error: () => {} },
   });
 

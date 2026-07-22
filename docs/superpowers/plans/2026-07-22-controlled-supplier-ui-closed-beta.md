@@ -130,7 +130,7 @@ Use this exact permission matrix:
 
 ```js
 const PURPOSE_STATES = Object.freeze({
-  forecast: new Set(["contract_review", "supplier_ui_risk_accepted", "production_authorized"]),
+  forecast: new Set(["contract_review", "production_authorized"]),
   closed_beta: new Set(["supplier_ui_risk_accepted", "production_authorized"]),
   production: new Set(["production_authorized"]),
   verification: new Set(["production_authorized", "verification_only"]),

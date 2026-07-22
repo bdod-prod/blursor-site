@@ -49,7 +49,7 @@ The visibility gate distinguishes the purpose of a run from the risk state of a 
 ### Relevant states
 
 - `production_authorized`: allowed for general production, closed beta, forecast, verification, and research as applicable;
-- `supplier_ui_risk_accepted`: allowed for closed beta, forecast, and research, but never ordinary production;
+- `supplier_ui_risk_accepted`: allowed only for closed beta and isolated research, but never forecasting or ordinary production;
 - `contract_review`: forecast only;
 - `verification_only`: verification and research only;
 - `research_only`: research only;
@@ -101,4 +101,3 @@ Every report must show the prompt panel, location, language, dates, cadence, val
 ## Delivery boundary
 
 This design authorizes the access-policy state and documentation amendment only. It does not authorize supplier signup, payment, credentials, provider calls, database migrations, scheduled workflows, deployment, client-data import, public methodology publication, or merging to `main`.
-

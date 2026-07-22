@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -11,6 +12,8 @@ const ENV = {
   SUPABASE_URL: "https://project.supabase.co",
   SUPABASE_SECRET_KEY: "sb_secret_test",
 };
+const jsonRoute = new URL("../functions/api/reports/[id].js", import.meta.url);
+const pageRoute = new URL("../functions/r/[id].js", import.meta.url);
 
 test("stored report handler returns the same 404 for invalid and unknown IDs", async () => {
   const request = new Request(`https://blursor.ai/api/reports/${REPORT_ID}`);
@@ -30,6 +33,29 @@ test("stored report handler returns the same 404 for invalid and unknown IDs", a
   assert.equal(invalid.status, 404);
   assert.equal(missing.status, 404);
   assert.deepEqual(await invalid.json(), await missing.json());
+});
+
+test("stored report handler owns non-GET methods without reading storage", async () => {
+  const expected = await getStoredReportResponse({
+    params: { id: "bad" },
+    request: new Request("https://blursor.ai/api/reports/bad"),
+    env: ENV,
+    fetch: async () => { throw new Error("should not fetch"); },
+  });
+  const expectedBody = await expected.text();
+
+  for (const method of ["POST", "HEAD", "OPTIONS"]) {
+    let calls = 0;
+    const response = await getStoredReportResponse({
+      params: { id: REPORT_ID },
+      request: new Request(`https://blursor.ai/api/reports/${REPORT_ID}`, { method }),
+      env: ENV,
+      fetch: async () => { calls += 1; },
+    });
+    assert.equal(response.status, 404, method);
+    assert.equal(await response.text(), expectedBody, method);
+    assert.equal(calls, 0, method);
+  }
 });
 
 test("stored report handler distinguishes unconfigured storage from upstream failure", async () => {
@@ -55,6 +81,7 @@ test("stored report handler returns the snapshot with stable metadata and privac
     ok: true,
     url: "https://example.com/page",
     checkedAt: "2026-07-20T12:34:56.000Z",
+    internalNote: "do not return",
   };
   const response = await getStoredReportResponse({
     params: { id: REPORT_ID },
@@ -71,11 +98,14 @@ test("stored report handler returns the snapshot with stable metadata and privac
   assert.equal(response.headers.get("Cache-Control"), "private, no-store");
   assert.equal(response.headers.get("X-Robots-Tag"), "noindex, nofollow, noarchive");
   assert.equal(response.headers.get("Referrer-Policy"), "no-referrer");
-  assert.deepEqual(await response.json(), {
-    ...result,
-    report: { id: REPORT_ID, url: `https://blursor.ai/r/${REPORT_ID}` },
-    capture: { status: "stored" },
-  });
+  const body = await response.json();
+  assert.equal(body.version, 1);
+  assert.equal(body.ok, true);
+  assert.equal(body.url, result.url);
+  assert.equal(body.checkedAt, result.checkedAt);
+  assert.equal(body.internalNote, undefined);
+  assert.deepEqual(body.report, { id: REPORT_ID, url: `https://blursor.ai/r/${REPORT_ID}` });
+  assert.deepEqual(body.capture, { status: "stored" });
 });
 
 test("stable report page rejects malformed IDs before loading an asset", async () => {
@@ -88,6 +118,20 @@ test("stable report page rejects malformed IDs before loading an asset", async (
 
   assert.equal(response.status, 404);
   assert.equal(calls, 0);
+});
+
+test("stable report page owns non-GET methods without loading an asset", async () => {
+  for (const method of ["POST", "HEAD", "OPTIONS"]) {
+    let calls = 0;
+    const response = await getStableReportPageResponse({
+      params: { id: REPORT_ID },
+      request: new Request(`https://blursor.ai/r/${REPORT_ID}`, { method }),
+      env: { ASSETS: { fetch: async () => { calls += 1; } } },
+    });
+    assert.equal(response.status, 404, method);
+    assert.equal(await response.text(), "Report not found.", method);
+    assert.equal(calls, 0, method);
+  }
 });
 
 test("stable report page serves the checker shell with noindex and no-referrer headers", async () => {
@@ -111,4 +155,16 @@ test("stable report page serves the checker shell with noindex and no-referrer h
   assert.equal(response.headers.get("X-Robots-Tag"), "noindex, nofollow, noarchive");
   assert.equal(response.headers.get("Referrer-Policy"), "no-referrer");
   assert.match(await response.text(), /<title>Checker<\/title>/);
+});
+
+test("Cloudflare report routes export catch-all request handlers", async () => {
+  const [jsonSource, pageSource] = await Promise.all([
+    readFile(jsonRoute, "utf8"),
+    readFile(pageRoute, "utf8"),
+  ]);
+
+  for (const source of [jsonSource, pageSource]) {
+    assert.match(source, /export function onRequest\(context\)/);
+    assert.doesNotMatch(source, /onRequestGet/);
+  }
 });

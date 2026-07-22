@@ -1,8 +1,8 @@
 # BLURSOR Investigation-First AI Visibility Diagnostics
 
-Date: 2026-07-22  
-Status: approved product direction; written specification awaiting Alex's review  
-Initial case: Dr. Kamran Aghayev, authorized site  
+Date: 2026-07-22
+Status: approved product direction; written specification awaiting Alex's review
+Initial case: Dr. Kamran Aghayev, authorized site
 
 ## Decision
 

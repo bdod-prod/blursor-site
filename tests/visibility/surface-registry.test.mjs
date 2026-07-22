@@ -63,7 +63,7 @@ test("accepted supplier UI risk is bounded to closed beta and research", () => {
     "research",
   ]);
   assert.ok(VISIBILITY_RIGHTS_STATES.includes("supplier_ui_risk_accepted"));
-  assert.equal(isVisibilityRightsStateAllowed("supplier_ui_risk_accepted", "forecast"), true);
+  assert.equal(isVisibilityRightsStateAllowed("supplier_ui_risk_accepted", "forecast"), false);
   assert.equal(isVisibilityRightsStateAllowed("supplier_ui_risk_accepted", "closed_beta"), true);
   assert.equal(isVisibilityRightsStateAllowed("supplier_ui_risk_accepted", "research"), true);
   assert.equal(isVisibilityRightsStateAllowed("supplier_ui_risk_accepted", "production"), false);

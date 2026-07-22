@@ -7,6 +7,7 @@ const PRIVATE_REPORT_HEADERS = {
 };
 
 export async function getStoredReportResponse(context) {
+  if (!isGet(context)) return json({ ok: false, error: "Report not found." }, 404);
   const id = context && context.params && context.params.id;
   const outcome = await readReport(id, context && context.env, {
     fetch: context && context.fetch,
@@ -33,6 +34,7 @@ export async function getStoredReportResponse(context) {
 }
 
 export async function getStableReportPageResponse(context) {
+  if (!isGet(context)) return text("Report not found.", 404);
   const id = context && context.params && context.params.id;
   if (!isReportId(id)) return text("Report not found.", 404);
   if (!context.env || !context.env.ASSETS || typeof context.env.ASSETS.fetch !== "function") {
@@ -48,6 +50,10 @@ export async function getStableReportPageResponse(context) {
     statusText: upstream.statusText,
     headers,
   });
+}
+
+function isGet(context) {
+  return Boolean(context && context.request && context.request.method === "GET");
 }
 
 function json(body, status) {

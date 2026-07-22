@@ -34,7 +34,7 @@ Planning permission does not itself authorize a provider call. Production adapte
 
 The planner recognizes five purposes: `forecast`, `closed_beta`, `production`, `verification`, and `research`.
 
-`supplier_ui_risk_accepted` is reserved for an exact third-party consumer-interface surface whose residual supplier, platform-enforcement, and continuity risk has been accepted for a dated closed beta. It is permitted for `closed_beta`, `forecast`, and `research`; it is never sufficient for ordinary `production`. The kill switch overrides every state.
+`supplier_ui_risk_accepted` is reserved for an exact third-party consumer-interface surface whose residual supplier, platform-enforcement, and continuity risk has been accepted for a dated closed beta. It is permitted only for `closed_beta` and isolated `research`; it is never sufficient for `forecast` or ordinary `production`. The kill switch overrides every state.
 
 No current runtime surface has this state. Do not create a generic `ChatGPT` supplier surface. Supplier activation must add an exact provider-specific ID, visible label, pricing, cost ceiling, dated rights/risk evidence, and tests in a separate reviewed change.
 

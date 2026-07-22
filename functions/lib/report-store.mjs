@@ -1,4 +1,4 @@
-import { buildReportRow } from "./report-model.mjs";
+import { buildReportRow, buildStoredResult } from "./report-model.mjs";
 
 const TABLE_PATH = "/rest/v1/check_reports";
 const REQUEST_TIMEOUT_MS = 8000;
@@ -76,7 +76,16 @@ export async function readReport(id, env, options = {}) {
     if (!row || String(row.id).toLowerCase() !== reportId || !row.result || typeof row.result !== "object") {
       throw storageError("read_shape");
     }
-    return { status: "found", row };
+    const result = buildStoredResult(row.result);
+    if (typeof row.checked_at !== "string") throw storageError("read_shape");
+    const checkedAt = new Date(row.checked_at);
+    if (Number.isNaN(checkedAt.getTime()) || checkedAt.toISOString() !== result.checkedAt) {
+      throw storageError("read_shape");
+    }
+    return {
+      status: "found",
+      row: { id: reportId, result, checked_at: result.checkedAt },
+    };
   } catch (error) {
     logStorageFailure(logger, "read", error);
     return { status: "failed" };

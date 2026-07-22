@@ -84,4 +84,3 @@ Counsel should flag any proposed production lane that lacks a written basis for:
 - continued lawful retention after termination.
 
 If one of these is absent, the surface remains `disabled`, `verification_only`, or `research_only`.
-

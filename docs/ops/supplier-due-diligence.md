@@ -63,4 +63,3 @@ The final order form or addendum must explicitly permit:
 - export on termination and advance notice of material collection-method changes.
 
 If the supplier will not identify the measured surface or will not grant downstream use in writing, keep the adapter `disabled`.
-
