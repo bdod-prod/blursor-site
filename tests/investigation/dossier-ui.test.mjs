@@ -34,6 +34,7 @@ test("dossier shell uses the approved investigation hierarchy", () => {
   const positions = headings.map((heading) => html.indexOf(`</span>${heading}</h2>`));
   assert.ok(positions.every((position) => position >= 0));
   assert.deepEqual(positions, [...positions].sort((left, right) => left - right));
+  assert.equal((html.match(/<h2\b/g) || []).length, 4);
   assert.equal((html.match(/<section\b/g) || []).length, 4);
 });
 

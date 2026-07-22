@@ -91,17 +91,17 @@ export const DOSSIER_PAGE_HTML = String.raw`<!doctype html>
       </div>
       <aside aria-label="Dossier metadata">
         <div class="aside-block">
-          <h2>Evidence state</h2>
+          <h3>Evidence state</h3>
           <p id="evidence-state">Unresolved is a valid result.</p>
           <dl><dt>Level</dt><dd id="evidence-level">—</dd><dt>Method</dt><dd id="method">—</dd><dt>Review</dt><dd id="review">—</dd></dl>
         </div>
         <div class="aside-block">
-          <h2>Surface provenance</h2>
+          <h3>Surface provenance</h3>
           <ul class="plain-list" id="surfaces"></ul>
           <p class="muted">Provider-supplied rationale is optional supporting evidence.</p>
         </div>
         <div class="aside-block">
-          <h2>Limitations</h2>
+          <h3>Limitations</h3>
           <ul class="plain-list" id="limitations"></ul>
         </div>
       </aside>
