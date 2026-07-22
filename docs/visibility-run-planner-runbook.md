@@ -22,7 +22,8 @@ The fixture must produce four observations and a projected Yandex cost of `20,32
 | `yandex_gen_search_api_ru` | `contract_review` | forecast only |
 | `yandex_webmaster_alice_native` | `verification_only` | verification, research |
 | `gigachat_api` | `contract_review` | forecast only |
-| `openai_responses_web_search` | `disabled` | none |
+| `openai_responses_web_search_auto` | `disabled` | none — natural web-search choice API experiment, rather than ChatGPT; before activation review model/configuration, cost, data-handling, and labels |
+| `openai_responses_web_search_required` | `disabled` | none — required-retrieval API experiment, rather than ChatGPT; before activation review model/configuration, cost, data-handling, and labels |
 | `alice_ai_consumer_ui` | `research_only` | research |
 | `alice_pro_ui` | `research_only` | research |
 | `rush_alice_supplier` | `disabled` | none |

@@ -58,8 +58,16 @@ export const VISIBILITY_SURFACES = Object.freeze(Object.fromEntries([
     },
   }),
   defineSurface({
-    id: "openai_responses_web_search",
-    publicLabel: "OpenAI Responses API · web search",
+    id: "openai_responses_web_search_auto",
+    publicLabel: "OpenAI Responses API · web search auto",
+    collectionClass: "official_api",
+    rightsState: "disabled",
+    killSwitch: true,
+    pricing: null,
+  }),
+  defineSurface({
+    id: "openai_responses_web_search_required",
+    publicLabel: "OpenAI Responses API · web search required",
     collectionClass: "official_api",
     rightsState: "disabled",
     killSwitch: true,

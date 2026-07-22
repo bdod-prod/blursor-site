@@ -15,7 +15,8 @@ test("registry uses exact surface identities and integer pricing", () => {
     "alice_ai_consumer_ui",
     "alice_pro_ui",
     "gigachat_api",
-    "openai_responses_web_search",
+    "openai_responses_web_search_auto",
+    "openai_responses_web_search_required",
     "rush_alice_supplier",
     "yandex_gen_search_api_ru",
     "yandex_webmaster_alice_native",
@@ -30,6 +31,14 @@ test("registry uses exact surface identities and integer pricing", () => {
   assert.equal(VISIBILITY_SURFACES.yandex_gen_search_api_ru.rightsState, "contract_review");
   assert.equal(VISIBILITY_SURFACES.gigachat_api.rightsState, "contract_review");
   assert.equal(VISIBILITY_SURFACES.gigachat_api.pricing.microrubPer1000Tokens, 65_000);
+  assert.ok(VISIBILITY_SURFACES.openai_responses_web_search_auto);
+  assert.ok(VISIBILITY_SURFACES.openai_responses_web_search_required);
+  assert.equal(VISIBILITY_SURFACES.openai_responses_web_search, undefined);
+  for (const id of ["openai_responses_web_search_auto", "openai_responses_web_search_required"]) {
+    assert.equal(VISIBILITY_SURFACES[id].rightsState, "disabled");
+    assert.equal(VISIBILITY_SURFACES[id].killSwitch, true);
+    assert.throws(() => assertVisibilitySurfaceAllowed(id, "research"), (error) => error.code === "SURFACE_DISABLED");
+  }
 });
 
 test("forecast permits priced APIs under contract review", () => {
@@ -88,7 +97,11 @@ test("production rejects every surface until downstream rights are approved", ()
       (error) => error.code === "SURFACE_NOT_AUTHORIZED",
     );
   }
-  for (const id of ["openai_responses_web_search", "rush_alice_supplier"]) {
+  for (const id of [
+    "openai_responses_web_search_auto",
+    "openai_responses_web_search_required",
+    "rush_alice_supplier",
+  ]) {
     assert.throws(
       () => assertVisibilitySurfaceAllowed(id, "production"),
       (error) => error.code === "SURFACE_DISABLED",
