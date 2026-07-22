@@ -1,3 +1,4 @@
+import { EVIDENCE_TERMS } from "./evidence-trace.mjs";
 import { VisibilityError } from "../visibility/visibility-error.mjs";
 
 const CLOSED_FOLLOWUP_OUTCOMES = Object.freeze({
@@ -6,13 +7,200 @@ const CLOSED_FOLLOWUP_OUTCOMES = Object.freeze({
   closed_unresolved: "unresolved_after_followup",
 });
 
-const clone = (value, seen = new WeakMap()) => {
-  if (!value || typeof value !== "object") return value;
-  if (seen.has(value)) return seen.get(value);
-  const copy = Array.isArray(value) ? [] : {};
-  seen.set(value, copy);
-  for (const [key, child] of Object.entries(value)) copy[key] = clone(child, seen);
-  return copy;
+const invalidField = (field, expected) => new VisibilityError(
+  "INVALID_DOSSIER_FIELD",
+  `${field} must be ${expected}.`,
+);
+
+const objectField = (value, field, nullable = false) => {
+  if (value == null && nullable) return null;
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw invalidField(field, nullable ? "an object or null" : "an object");
+  }
+  return value;
+};
+
+const stringField = (value, field, nullable = false) => {
+  if (value == null && nullable) return null;
+  if (typeof value !== "string") {
+    throw invalidField(field, nullable ? "a string or null" : "a string");
+  }
+  return value;
+};
+
+const integerField = (value, field) => {
+  if (!Number.isInteger(value)) throw invalidField(field, "an integer");
+  return value;
+};
+
+const booleanField = (value, field) => {
+  if (typeof value !== "boolean") throw invalidField(field, "a boolean");
+  return value;
+};
+
+const arrayField = (value, field) => {
+  if (!Array.isArray(value)) throw invalidField(field, "an array");
+  return value;
+};
+
+const stringList = (value, field) => arrayField(value, field).map((item, index) => (
+  stringField(item, `${field}[${index}]`)
+));
+
+const projectHeader = (input) => {
+  const record = objectField(input?.caseRecord, "caseRecord");
+  return {
+    investigationId: stringField(record.id, "caseRecord.id"),
+    project: stringField(input?.projectLabel, "projectLabel"),
+    question: stringField(record.question, "caseRecord.question"),
+    state: stringField(record.state, "caseRecord.state"),
+    language: stringField(record.language, "caseRecord.language"),
+    location: stringField(record.location, "caseRecord.location"),
+    panelId: stringField(record.panelId, "caseRecord.panelId"),
+    panelVersion: integerField(record.panelVersion, "caseRecord.panelVersion"),
+    methodVersion: stringField(record.methodVersion, "caseRecord.methodVersion"),
+    surfaces: stringList(input?.surfaceLabels, "surfaceLabels"),
+    baselineWindow: stringField(input?.baselineWindow, "baselineWindow"),
+    followupWindow: stringField(input?.followupWindow, "followupWindow"),
+    exampleOnly: booleanField(input?.exampleOnly, "exampleOnly"),
+  };
+};
+
+const projectAssessment = (value) => {
+  const assessment = objectField(value, "assessment");
+  const level = integerField(assessment.level, "assessment.level");
+  const canonicalTerm = EVIDENCE_TERMS[level];
+  if (!canonicalTerm) throw invalidField("assessment.level", "an integer from 1 through 5");
+  const term = stringField(assessment.term, "assessment.term");
+  if (term !== canonicalTerm) {
+    throw invalidField("assessment.term", `the canonical level ${level} term ${JSON.stringify(canonicalTerm)}`);
+  }
+  return { level, term: canonicalTerm };
+};
+
+const projectMetric = (value, index) => {
+  const metric = objectField(value, `observedPattern.metrics[${index}]`);
+  const prefix = `observedPattern.metrics[${index}]`;
+  return {
+    id: stringField(metric.id, `${prefix}.id`),
+    label: stringField(metric.label, `${prefix}.label`),
+    numerator: integerField(metric.numerator, `${prefix}.numerator`),
+    denominator: integerField(metric.denominator, `${prefix}.denominator`),
+    surfaceId: stringField(metric.surfaceId, `${prefix}.surfaceId`),
+    window: stringField(metric.window, `${prefix}.window`),
+  };
+};
+
+const projectObservedPattern = (value) => {
+  const observed = objectField(value, "observedPattern");
+  const coverage = objectField(observed.coverage, "observedPattern.coverage");
+  return {
+    summary: stringField(observed.summary, "observedPattern.summary"),
+    metrics: arrayField(observed.metrics, "observedPattern.metrics").map(projectMetric),
+    coverage: {
+      valid: integerField(coverage.valid, "observedPattern.coverage.valid"),
+      scheduled: integerField(coverage.scheduled, "observedPattern.coverage.scheduled"),
+      failed: integerField(coverage.failed, "observedPattern.coverage.failed"),
+    },
+  };
+};
+
+const projectEvidenceItem = (value, index) => {
+  const item = objectField(value, `evidenceItems[${index}]`);
+  const prefix = `evidenceItems[${index}]`;
+  const type = stringField(item.type, `${prefix}.type`);
+  return {
+    id: stringField(item.id, `${prefix}.id`),
+    type,
+    label: stringField(item.label, `${prefix}.label`),
+    excerpt: stringField(item.excerpt, `${prefix}.excerpt`, true),
+    provenance: stringField(item.provenance, `${prefix}.provenance`),
+    relation: stringField(item.relation, `${prefix}.relation`),
+    url: stringField(item.url, `${prefix}.url`, true),
+    optional: type === "provider_rationale",
+  };
+};
+
+const projectEvidenceItems = (value) => arrayField(value, "evidenceItems").map(projectEvidenceItem);
+
+const projectAlternative = (value, index) => {
+  const item = objectField(value, `alternatives[${index}]`);
+  return {
+    wording: stringField(item.wording, `alternatives[${index}].wording`),
+    disposition: stringField(item.disposition, `alternatives[${index}].disposition`),
+  };
+};
+
+const projectAlternatives = (value) => arrayField(value, "alternatives").map(projectAlternative);
+
+const projectHypothesis = (value) => {
+  if (value == null) return null;
+  const hypothesis = objectField(value, "hypothesis");
+  return {
+    wording: stringField(hypothesis.wording, "hypothesis.wording"),
+    confidence: stringField(hypothesis.confidence, "hypothesis.confidence"),
+    basis: stringList(hypothesis.basis, "hypothesis.basis"),
+    contradictions: stringList(hypothesis.contradictions, "hypothesis.contradictions"),
+    inferenceSteps: stringList(hypothesis.inferenceSteps, "hypothesis.inferenceSteps"),
+    falsifier: stringField(hypothesis.falsifier, "hypothesis.falsifier"),
+    reviewState: stringField(hypothesis.reviewState, "hypothesis.reviewState"),
+  };
+};
+
+const projectIntervention = (value) => {
+  if (value == null) return null;
+  const intervention = objectField(value, "intervention");
+  return {
+    label: stringField(intervention.label, "intervention.label"),
+    detail: stringField(intervention.detail, "intervention.detail", true),
+    deployedAt: stringField(intervention.deployedAt, "intervention.deployedAt", true),
+  };
+};
+
+const projectFollowup = (value) => {
+  if (value == null) return null;
+  const followup = objectField(value, "followup");
+  return {
+    comparable: booleanField(followup.comparable, "followup.comparable"),
+    outcome: stringField(followup.outcome, "followup.outcome", true),
+    summary: stringField(followup.summary, "followup.summary", true),
+  };
+};
+
+const projectReview = (value) => {
+  const review = objectField(value, "review");
+  return {
+    analyst: stringField(review.analyst, "review.analyst"),
+    reviewedAt: stringField(review.reviewedAt, "review.reviewedAt"),
+    extractorVersion: stringField(review.extractorVersion, "review.extractorVersion"),
+  };
+};
+
+const validateFollowupConsistency = ({ assessment, followup, state }) => {
+  const levelFive = assessment.level === 5;
+  const comparable = followup?.comparable === true;
+  if (levelFive && !comparable) {
+    throw new VisibilityError(
+      "LEVEL_FIVE_FOLLOWUP_REQUIRED",
+      "Evidence level 5 requires a comparable follow-up.",
+    );
+  }
+  if (!comparable) return null;
+
+  const expectedOutcome = CLOSED_FOLLOWUP_OUTCOMES[state];
+  if (!expectedOutcome) {
+    throw new VisibilityError(
+      "CLOSED_FOLLOWUP_REQUIRED",
+      "Comparable follow-up requires a closed follow-up state.",
+    );
+  }
+  if (followup.outcome !== expectedOutcome) {
+    throw new VisibilityError(
+      "FOLLOWUP_OUTCOME_MISMATCH",
+      `Follow-up outcome does not match ${state}.`,
+    );
+  }
+  return expectedOutcome;
 };
 
 const deepFreeze = (value, seen = new WeakSet()) => {
@@ -22,124 +210,48 @@ const deepFreeze = (value, seen = new WeakSet()) => {
   return Object.freeze(value);
 };
 
-const safeText = (value) => typeof value === "string" ? value : null;
-
-const projectMetric = (metric) => ({
-  id: safeText(metric?.id),
-  label: safeText(metric?.label),
-  numerator: Number.isInteger(metric?.numerator) ? metric.numerator : null,
-  denominator: Number.isInteger(metric?.denominator) ? metric.denominator : null,
-  surfaceId: safeText(metric?.surfaceId),
-  window: safeText(metric?.window),
-});
-
-const projectIntervention = (intervention) => intervention ? {
-  label: safeText(intervention.label),
-  detail: safeText(intervention.detail),
-  deployedAt: safeText(intervention.deployedAt),
-} : null;
-
-const projectFollowup = (followup, comparableOutcome) => followup ? {
-  comparable: followup.comparable === true,
-  outcome: comparableOutcome || safeText(followup.outcome),
-  summary: safeText(followup.summary),
-} : null;
-
-const validateFollowupConsistency = (input) => {
-  const levelFive = input?.assessment?.level === 5;
-  const comparable = input?.followup?.comparable === true;
-  if (levelFive && !comparable) {
-    throw new VisibilityError(
-      "LEVEL_FIVE_FOLLOWUP_REQUIRED",
-      "Evidence level 5 requires a comparable follow-up.",
-    );
-  }
-  if (!comparable) return null;
-
-  const state = input?.caseRecord?.state;
-  const expectedOutcome = CLOSED_FOLLOWUP_OUTCOMES[state];
-  if (!expectedOutcome) {
-    throw new VisibilityError(
-      "CLOSED_FOLLOWUP_REQUIRED",
-      "Comparable follow-up requires a closed follow-up state.",
-    );
-  }
-  if (input.followup.outcome !== expectedOutcome) {
-    throw new VisibilityError(
-      "FOLLOWUP_OUTCOME_MISMATCH",
-      `Follow-up outcome does not match ${state}.`,
-    );
-  }
-  return expectedOutcome;
-};
-
 export function buildInvestigationDossier(input) {
-  const evidenceItems = input?.evidenceItems || [];
-  const alternatives = input?.alternatives || [];
-  const comparableOutcome = validateFollowupConsistency(input);
+  const header = projectHeader(input);
+  const assessment = projectAssessment(input?.assessment);
+  const observedPattern = projectObservedPattern(input?.observedPattern);
+  const evidenceItems = projectEvidenceItems(input?.evidenceItems);
+  const hypothesis = projectHypothesis(input?.hypothesis);
+  const alternatives = projectAlternatives(input?.alternatives);
+  const nextTest = stringField(input?.nextTest, "nextTest");
+  const intervention = projectIntervention(input?.intervention);
+  const followup = projectFollowup(input?.followup);
+  const review = projectReview(input?.review);
+  const limitations = stringList(input?.limitations, "limitations");
+  const comparableOutcome = validateFollowupConsistency({ assessment, followup, state: header.state });
   const hasIndependentEvidence = evidenceItems.some(({ type }) => type !== "provider_rationale" && type !== "analyst_annotation");
-  const approved = input?.hypothesis?.reviewState === "approved"
+  const approved = hypothesis?.reviewState === "approved"
     && alternatives.length > 0
     && hasIndependentEvidence;
-  const comparable = input?.followup?.comparable === true;
   const evidenceState = approved
-    ? (comparable ? comparableOutcome : "hypothesis_ready")
+    ? (followup?.comparable === true ? comparableOutcome : "hypothesis_ready")
     : "unresolved";
   const rationale = approved ? {
-    wording: clone(input.hypothesis.wording),
-    confidence: clone(input.hypothesis.confidence),
-    basis: clone(input.hypothesis.basis),
-    contradictions: clone(input.hypothesis.contradictions),
-    inferenceSteps: clone(input.hypothesis.inferenceSteps),
-    falsifier: clone(input.hypothesis.falsifier),
+    ...hypothesis,
     reviewState: "approved",
-    alternatives: alternatives.map((item) => ({
-      wording: clone(item.wording),
-      disposition: clone(item.disposition),
-    })),
+    alternatives: alternatives.map((item) => ({ ...item })),
   } : null;
 
   return deepFreeze({
     schemaVersion: 1,
-    header: {
-      investigationId: clone(input.caseRecord.id),
-      project: clone(input.projectLabel),
-      question: clone(input.caseRecord.question),
-      state: clone(input.caseRecord.state),
-      language: clone(input.caseRecord.language),
-      location: clone(input.caseRecord.location),
-      panelId: clone(input.caseRecord.panelId),
-      panelVersion: clone(input.caseRecord.panelVersion),
-      methodVersion: clone(input.caseRecord.methodVersion),
-      surfaces: clone(input.surfaceLabels),
-      baselineWindow: clone(input.baselineWindow),
-      followupWindow: clone(input.followupWindow),
-      exampleOnly: input.exampleOnly === true,
-    },
-    evidenceState: clone(evidenceState),
-    evidenceLevel: clone(input.assessment.level),
-    evidenceTerm: clone(input.assessment.term),
+    header,
+    evidenceState,
+    evidenceLevel: assessment.level,
+    evidenceTerm: assessment.term,
     sections: [
       {
         id: "observed-pattern",
         title: "Observed pattern",
-        summary: clone(input.observedPattern.summary),
-        metrics: input.observedPattern.metrics.map(projectMetric),
-        coverage: clone(input.observedPattern.coverage),
+        ...observedPattern,
       },
       {
         id: "evidence-chain",
         title: "Evidence chain",
-        items: evidenceItems.map((item) => ({
-          id: clone(item.id),
-          type: clone(item.type),
-          label: clone(item.label),
-          excerpt: clone(item.excerpt),
-          provenance: clone(item.provenance),
-          relation: clone(item.relation),
-          url: clone(item.url),
-          optional: item.type === "provider_rationale",
-        })),
+        items: evidenceItems,
       },
       {
         id: "diagnostic-rationale",
@@ -150,20 +262,13 @@ export function buildInvestigationDossier(input) {
       {
         id: "alternatives-next-test",
         title: "Alternatives and next test",
-        alternatives: alternatives.map((item) => ({
-          wording: clone(item.wording),
-          disposition: clone(item.disposition),
-        })),
-        nextTest: clone(input.nextTest),
-        intervention: projectIntervention(input.intervention),
-        followup: projectFollowup(input.followup, comparableOutcome),
+        alternatives,
+        nextTest,
+        intervention,
+        followup: followup?.comparable === true ? { ...followup, outcome: comparableOutcome } : followup,
       },
     ],
-    review: {
-      analyst: clone(input.review.analyst),
-      reviewedAt: clone(input.review.reviewedAt),
-      extractorVersion: clone(input.review.extractorVersion),
-    },
-    limitations: clone(input.limitations),
+    review,
+    limitations,
   });
 }

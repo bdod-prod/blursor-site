@@ -144,12 +144,17 @@ test("whitelists client-safe metric, intervention, and follow-up fields", () => 
     secret: "PRIVATE_SENTINEL",
   };
   const input = minimalInput({
-    caseRecord: { ...minimalInput().caseRecord, state: "closed_supported" },
+    caseRecord: { ...minimalInput().caseRecord, state: "closed_supported", ...extraFields },
     assessment: { level: 5, term: "supported after follow-up" },
     observedPattern: {
       ...minimalInput().observedPattern,
+      coverage: { ...minimalInput().observedPattern.coverage, ...extraFields },
       metrics: [{ ...minimalInput().observedPattern.metrics[0], ...extraFields }],
+      ...extraFields,
     },
+    evidenceItems: minimalInput().evidenceItems.map((item) => ({ ...item, ...extraFields })),
+    hypothesis: { ...minimalInput().hypothesis, ...extraFields },
+    alternatives: minimalInput().alternatives.map((item) => ({ ...item, ...extraFields })),
     intervention: {
       label: "Synthetic intervention",
       detail: "Synthetic detail.",
@@ -162,6 +167,8 @@ test("whitelists client-safe metric, intervention, and follow-up fields", () => 
       summary: "Synthetic summary.",
       ...extraFields,
     },
+    review: { ...minimalInput().review, ...extraFields },
+    ...extraFields,
   });
   const original = structuredClone(input);
 
@@ -171,6 +178,8 @@ test("whitelists client-safe metric, intervention, and follow-up fields", () => 
   const serialized = JSON.stringify(dossier);
 
   assert.deepEqual(Object.keys(observed.metrics[0]), ["id", "label", "numerator", "denominator", "surfaceId", "window"]);
+  assert.deepEqual(Object.keys(observed.coverage), ["valid", "scheduled", "failed"]);
+  assert.deepEqual(Object.keys(dossier.sections[1].items[0]), ["id", "type", "label", "excerpt", "provenance", "relation", "url", "optional"]);
   assert.deepEqual(Object.keys(next.intervention), ["label", "detail", "deployedAt"]);
   assert.deepEqual(Object.keys(next.followup), ["comparable", "outcome", "summary"]);
   for (const field of Object.keys(extraFields)) assert.equal(serialized.includes(`\"${field}\"`), false);
@@ -178,6 +187,62 @@ test("whitelists client-safe metric, intervention, and follow-up fields", () => 
   assert.deepEqual(input, original);
   assert.equal(Object.isFrozen(input), false);
   assert.equal(Object.isFrozen(sentinel), false);
+});
+
+test("rejects nested objects anywhere the dossier schema expects scalars or string lists", () => {
+  const secret = { secret: "PRIVATE_SENTINEL" };
+  const cases = [
+    ["header investigation ID", (input) => { input.caseRecord.id = secret; }],
+    ["header project", (input) => { input.projectLabel = secret; }],
+    ["header state", (input) => { input.caseRecord.state = secret; }],
+    ["header surface", (input) => { input.surfaceLabels[1] = secret; }],
+    ["header panel version", (input) => { input.caseRecord.panelVersion = secret; }],
+    ["observed summary", (input) => { input.observedPattern.summary = secret; }],
+    ["coverage count", (input) => { input.observedPattern.coverage.valid = secret; }],
+    ["metric label", (input) => { input.observedPattern.metrics[0].label = secret; }],
+    ["metric numerator", (input) => { input.observedPattern.metrics[0].numerator = secret; }],
+    ["evidence label", (input) => { input.evidenceItems[0].label = secret; }],
+    ["evidence excerpt", (input) => { input.evidenceItems[0].excerpt = secret; }],
+    ["evidence URL", (input) => { input.evidenceItems[0].url = secret; }],
+    ["hypothesis wording", (input) => { input.hypothesis.wording = secret; }],
+    ["hypothesis confidence", (input) => { input.hypothesis.confidence = secret; }],
+    ["hypothesis basis", (input) => { input.hypothesis.basis = [secret]; }],
+    ["hypothesis contradiction", (input) => { input.hypothesis.contradictions = [secret]; }],
+    ["hypothesis inference", (input) => { input.hypothesis.inferenceSteps = [secret]; }],
+    ["hypothesis falsifier", (input) => { input.hypothesis.falsifier = secret; }],
+    ["alternative wording", (input) => { input.alternatives[0].wording = secret; }],
+    ["alternative disposition", (input) => { input.alternatives[0].disposition = secret; }],
+    ["next test", (input) => { input.nextTest = secret; }],
+    ["intervention detail", (input) => { input.intervention = { label: "Synthetic", detail: secret, deployedAt: null }; }],
+    ["follow-up summary", (input) => { input.followup = { comparable: false, outcome: null, summary: secret }; }],
+    ["review analyst", (input) => { input.review.analyst = secret; }],
+    ["limitation", (input) => { input.limitations = [secret]; }],
+  ];
+
+  for (const [label, mutate] of cases) {
+    const input = structuredClone(minimalInput());
+    mutate(input);
+    const original = structuredClone(input);
+    assert.throws(
+      () => buildInvestigationDossier(input),
+      (error) => error?.code === "INVALID_DOSSIER_FIELD",
+      label,
+    );
+    assert.deepEqual(input, original, label);
+    assert.equal(Object.isFrozen(secret), false, label);
+  }
+});
+
+test("preserves documented nulls while projecting the complete client schema", () => {
+  const dossier = buildInvestigationDossier(minimalInput({
+    intervention: { label: "Planned intervention", detail: null, deployedAt: null },
+    followup: { comparable: false, outcome: null, summary: null },
+  }));
+  const next = dossier.sections[3];
+
+  assert.equal(dossier.sections[1].items[0].url, null);
+  assert.deepEqual(next.intervention, { label: "Planned intervention", detail: null, deployedAt: null });
+  assert.deepEqual(next.followup, { comparable: false, outcome: null, summary: null });
 });
 
 test("requires level-five and comparable follow-up states to match the closed lifecycle", () => {
@@ -217,4 +282,19 @@ test("derives a safe comparable outcome from each closed follow-up state", () =>
     assert.equal(dossier.evidenceState, outcome);
     assert.equal(dossier.sections[3].followup.outcome, outcome);
   }
+});
+
+test("rejects noncanonical evidence terms, including caused at level five", () => {
+  assert.throws(
+    () => buildInvestigationDossier(minimalInput({ assessment: { level: 3, term: "likely" } })),
+    (error) => error?.code === "INVALID_DOSSIER_FIELD" && /assessment\.term/i.test(error.message),
+  );
+  assert.throws(
+    () => buildInvestigationDossier(minimalInput({
+      caseRecord: { ...minimalInput().caseRecord, state: "closed_supported" },
+      assessment: { level: 5, term: "caused" },
+      followup: { comparable: true, outcome: "supported_after_followup", summary: "Comparable." },
+    })),
+    (error) => error?.code === "INVALID_DOSSIER_FIELD" && /assessment\.term/i.test(error.message),
+  );
 });

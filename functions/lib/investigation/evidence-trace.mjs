@@ -16,7 +16,7 @@ export const EVIDENCE_RELATIONS = Object.freeze([
   "unclear",
 ]);
 
-const TERMS = Object.freeze({
+export const EVIDENCE_TERMS = Object.freeze({
   1: "observed",
   2: "repeated",
   3: "consistent with",
@@ -112,5 +112,5 @@ export function validateEvidenceAssessment(input) {
     throw new VisibilityError("COMPARABLE_FOLLOWUP_REQUIRED", "Evidence level 5 requires comparable follow-up.");
   }
 
-  return Object.freeze({ level, term: TERMS[level] });
+  return Object.freeze({ level, term: EVIDENCE_TERMS[level] });
 }

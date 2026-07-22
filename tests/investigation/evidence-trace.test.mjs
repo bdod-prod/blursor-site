@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  EVIDENCE_TERMS,
   buildEvidenceTrace,
   normalizeEvidenceItem,
   validateEvidenceAssessment,
@@ -52,6 +53,14 @@ test("normalizes evidence items and requires provenance outside provider rationa
 });
 
 test("returns the allowed assessment wording for each qualifying level", () => {
+  assert.deepEqual(EVIDENCE_TERMS, {
+    1: "observed",
+    2: "repeated",
+    3: "consistent with",
+    4: "likely",
+    5: "supported after follow-up",
+  });
+  assert.equal(Object.isFrozen(EVIDENCE_TERMS), true);
   assert.equal(validateEvidenceAssessment({ level: 1, repeated: false, observableLinks: 0, independentLinks: 0, alternativesReviewed: 0, followupComparable: false }).term, "observed");
   assert.equal(validateEvidenceAssessment({ level: 4, repeated: true, observableLinks: 3, independentLinks: 2, alternativesReviewed: 1, followupComparable: false }).term, "likely");
 });
