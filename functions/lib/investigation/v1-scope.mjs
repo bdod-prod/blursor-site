@@ -103,7 +103,12 @@ export function validateV1InvestigationScope(input) {
   if (panel.fingerprint !== V1_PROMPT_PANEL_FINGERPRINT) {
     throw new VisibilityError("V1_PANEL_FINGERPRINT_MISMATCH", "The v1 prompt content and order are frozen.");
   }
-  return Object.freeze({ projectId, location: input.location, cadenceDays: input.cadenceDays, panel });
+  return Object.freeze({
+    projectId,
+    location: input.location,
+    cadenceDays: input.cadenceDays,
+    panel: V1_PROMPT_PANEL,
+  });
 }
 
 export function calculateV1ObservationVolume({ cycles, surfaceCount }) {

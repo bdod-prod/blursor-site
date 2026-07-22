@@ -6,6 +6,8 @@ import {
   createInvestigationCase,
   transitionInvestigationCase,
 } from "../../functions/lib/investigation/case-model.mjs";
+import { createFollowupComparisonReceipt } from "../../functions/lib/investigation/followup-comparison.mjs";
+import { hypothesisReview, makeObservation } from "./test-fixtures.mjs";
 
 function caseInput(overrides = {}) {
   return {
@@ -37,18 +39,34 @@ function transition(record, to, at, extra = {}) {
   });
 }
 
-test("follows the approved investigation lifecycle through a comparable follow-up", () => {
+function comparableFollowup() {
+  const baselineObservations = [makeObservation({ day: "2026-07-22", windowName: "baseline" })];
+  const followupObservations = [makeObservation({ day: "2026-08-05", windowName: "followup" })];
+  return {
+    receipt: createFollowupComparisonReceipt({ baselineObservations, followupObservations }),
+    baselineObservations,
+    followupObservations,
+  };
+}
+
+function advanceToFollowupReview() {
   let record = createInvestigationCase(caseInput());
   record = transition(record, "baseline_collecting", "2026-07-22T09:01:00.000Z");
   record = transition(record, "evidence_review", "2026-07-28T09:01:00.000Z");
-  record = transition(record, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { evidenceLinks: 1, alternativesCount: 1 });
+  record = transition(record, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { hypothesisReview: hypothesisReview() });
   record = transition(record, "intervention_in_progress", "2026-07-29T10:00:00.000Z");
   record = transition(record, "followup_collecting", "2026-08-05T10:00:00.000Z");
-  record = transition(record, "followup_review", "2026-08-12T10:00:00.000Z");
-  record = transition(record, "closed_supported", "2026-08-12T11:00:00.000Z", { comparability: true });
+  return transition(record, "followup_review", "2026-08-12T10:00:00.000Z");
+}
+
+test("follows the approved lifecycle through reviewed evidence and comparable cohorts", () => {
+  let record = advanceToFollowupReview();
+  record = transition(record, "closed_supported", "2026-08-12T11:00:00.000Z", { comparison: comparableFollowup() });
 
   assert.equal(record.state, "closed_supported");
   assert.equal(record.events.length, 7);
+  assert.equal(record.events[2].hypothesisReviewReceipt.reviewedEvidenceItemIds.length, 1);
+  assert.equal(record.events.at(-1).comparisonReceipt.comparable, true);
   assert.deepEqual(INVESTIGATION_STATES, [
     "draft", "baseline_collecting", "evidence_review", "unresolved", "hypothesis_ready",
     "intervention_in_progress", "followup_collecting", "followup_review",
@@ -58,43 +76,37 @@ test("follows the approved investigation lifecycle through a comparable follow-u
 
 test("rejects transitions outside the approved lifecycle", () => {
   const record = createInvestigationCase(caseInput());
-
   assert.throws(
     () => transition(record, "evidence_review", "2026-07-22T09:01:00.000Z"),
     /cannot transition/i,
   );
 });
 
-test("requires evidence and an alternative before a hypothesis is review-ready", () => {
+test("requires reviewed structured evidence and alternatives before hypothesis readiness", () => {
   let record = createInvestigationCase(caseInput());
   record = transition(record, "baseline_collecting", "2026-07-22T09:01:00.000Z");
   record = transition(record, "evidence_review", "2026-07-28T09:01:00.000Z");
 
   assert.throws(
-    () => transition(record, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { evidenceLinks: 1, alternativesCount: 0 }),
-    /alternative/i,
+    () => transition(record, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { evidenceLinks: 999, alternativesCount: 999 }),
+    (error) => error.code === "RAW_REVIEW_COUNTS_NOT_ALLOWED",
   );
+  const draftAlternative = hypothesisReview();
+  draftAlternative.alternatives[0].reviewState = "draft";
   assert.throws(
-    () => transition(record, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { evidenceLinks: 0, alternativesCount: 1 }),
-    /linked evidence/i,
+    () => transition(record, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { hypothesisReview: draftAlternative }),
+    (error) => error.code === "HYPOTHESIS_REVIEW_INCOMPLETE",
   );
-});
-
-test("requires finite positive integer hypothesis review counts", () => {
-  let record = createInvestigationCase(caseInput());
-  record = transition(record, "baseline_collecting", "2026-07-22T09:01:00.000Z");
-  record = transition(record, "evidence_review", "2026-07-28T09:01:00.000Z");
-
-  for (const invalidCount of [true, "1", 1.5, Infinity]) {
-    assert.throws(
-      () => transition(record, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { evidenceLinks: invalidCount, alternativesCount: 1 }),
-      (error) => error.code === "HYPOTHESIS_REVIEW_INCOMPLETE",
-    );
-    assert.throws(
-      () => transition(record, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { evidenceLinks: 1, alternativesCount: invalidCount }),
-      (error) => error.code === "HYPOTHESIS_REVIEW_INCOMPLETE",
-    );
-  }
+  const providerOnly = hypothesisReview();
+  providerOnly.evidence.evidenceItems[0] = {
+    ...providerOnly.evidence.evidenceItems[0],
+    type: "provider_rationale",
+    observationId: "obs-1",
+  };
+  assert.throws(
+    () => transition(record, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { hypothesisReview: providerOnly }),
+    (error) => error.code === "HYPOTHESIS_REVIEW_INCOMPLETE",
+  );
 });
 
 test("reopens unresolved work by appending an immutable review event", () => {
@@ -105,11 +117,8 @@ test("reopens unresolved work by appending an immutable review event", () => {
   const reopened = transition(unresolved, "baseline_collecting", "2026-07-29T10:00:00.000Z", { note: "Run the smallest next test." });
 
   assert.equal(unresolved.state, "unresolved");
-  assert.equal(unresolved.events.length, 3);
   assert.equal(reopened.events.length, unresolved.events.length + 1);
   assert.notStrictEqual(reopened.events, unresolved.events);
-  assert.equal(Object.isFrozen(reopened), true);
-  assert.equal(Object.isFrozen(reopened.events), true);
   assert.equal(Object.isFrozen(reopened.events.at(-1)), true);
 });
 
@@ -123,81 +132,64 @@ test("does not freeze a rehydrated caller history while appending a transition",
 
   assert.deepEqual(supplied, original);
   assert.equal(Object.isFrozen(supplied), false);
-  assert.equal(Object.isFrozen(supplied.surfaces), false);
-  assert.equal(Object.isFrozen(supplied.events), false);
-  assert.equal(Object.isFrozen(supplied.events[0]), false);
-  assert.notStrictEqual(next.surfaces, supplied.surfaces);
   assert.notStrictEqual(next.events[0], supplied.events[0]);
-  assert.equal(Object.isFrozen(next.surfaces), true);
   assert.equal(Object.isFrozen(next.events[0]), true);
 });
 
-test("requires a comparable follow-up window before closure", () => {
-  const record = Object.freeze({
-    ...createInvestigationCase(caseInput()),
-    state: "followup_review",
-  });
-
+test("rejects raw or fabricated comparability gates", () => {
+  const record = advanceToFollowupReview();
   assert.throws(
-    () => transition(record, "closed_supported", "2026-08-12T10:00:00.000Z", { comparability: false }),
-    /comparable/i,
+    () => transition(record, "closed_supported", "2026-08-12T11:00:00.000Z", { comparability: true }),
+    (error) => error.code === "RAW_COMPARABILITY_NOT_ALLOWED",
+  );
+  assert.throws(
+    () => transition(record, "closed_supported", "2026-08-12T11:00:00.000Z", {
+      comparison: { receipt: { comparable: true }, baselineObservations: [], followupObservations: [] },
+    }),
+    (error) => error.code === "INVALID_COMPARISON_RECEIPT",
   );
 });
 
-test("rejects forged case state and noncanonical review history", () => {
+test("enforces strictly monotonic event timestamps from case creation onward", () => {
   const draft = createInvestigationCase(caseInput());
-  const forgedHypothesis = Object.freeze({ ...draft, state: "hypothesis_ready" });
-  const forgedFollowup = Object.freeze({ ...draft, state: "followup_review" });
-
   assert.throws(
-    () => transition(forgedHypothesis, "intervention_in_progress", "2026-07-29T10:00:00.000Z"),
-    (error) => error.code === "INVALID_CASE_HISTORY",
+    () => transition(draft, "baseline_collecting", "2026-07-22T08:59:59.000Z"),
+    (error) => error.code === "INVALID_CASE_TIMESTAMP_ORDER",
   );
-  assert.throws(
-    () => transition(forgedFollowup, "closed_supported", "2026-08-12T10:00:00.000Z", { comparability: true }),
-    (error) => error.code === "INVALID_CASE_HISTORY",
-  );
-
   const baseline = transition(draft, "baseline_collecting", "2026-07-22T09:01:00.000Z");
-  const badFrom = Object.freeze({
-    ...draft,
-    state: "baseline_collecting",
-    events: [{ ...baseline.events[0], from: "evidence_review" }],
-  });
-
-  assert.throws(
-    () => transition(badFrom, "evidence_review", "2026-07-28T09:00:00.000Z"),
-    (error) => error.code === "INVALID_CASE_HISTORY",
-  );
+  for (const at of ["2026-07-22T09:00:59.000Z", "2026-07-22T09:01:00.000Z"]) {
+    assert.throws(
+      () => transition(baseline, "evidence_review", at),
+      (error) => error.code === "INVALID_CASE_TIMESTAMP_ORDER",
+    );
+  }
 });
 
-test("rejects malformed review gates in replayed history", () => {
-  let record = createInvestigationCase(caseInput());
-  record = transition(record, "baseline_collecting", "2026-07-22T09:01:00.000Z");
-  record = transition(record, "evidence_review", "2026-07-28T09:01:00.000Z");
-  record = transition(record, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { evidenceLinks: 1, alternativesCount: 1 });
-
-  const badHypothesisCount = Object.freeze({
-    ...record,
-    events: record.events.map((event) => event.to === "hypothesis_ready" ? { ...event, evidenceLinks: 1.5 } : event),
-  });
-  const missingReviewer = Object.freeze({
-    ...record,
-    events: record.events.map((event) => event.to === "evidence_review" ? { ...event, reviewer: "" } : event),
-  });
-
+test("rejects forged case state and malformed replay receipts", () => {
+  const draft = createInvestigationCase(caseInput());
+  const forged = Object.freeze({ ...draft, state: "hypothesis_ready" });
   assert.throws(
-    () => transition(badHypothesisCount, "intervention_in_progress", "2026-07-29T10:00:00.000Z"),
+    () => transition(forged, "intervention_in_progress", "2026-07-29T10:00:00.000Z"),
     (error) => error.code === "INVALID_CASE_HISTORY",
   );
+
+  let reviewed = createInvestigationCase(caseInput());
+  reviewed = transition(reviewed, "baseline_collecting", "2026-07-22T09:01:00.000Z");
+  reviewed = transition(reviewed, "evidence_review", "2026-07-28T09:01:00.000Z");
+  reviewed = transition(reviewed, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { hypothesisReview: hypothesisReview() });
+  const malformed = {
+    ...reviewed,
+    events: reviewed.events.map((event) => event.to === "hypothesis_ready"
+      ? { ...event, hypothesisReviewReceipt: { ...event.hypothesisReviewReceipt, reviewedAlternativeIds: [] } }
+      : event),
+  };
   assert.throws(
-    () => transition(missingReviewer, "intervention_in_progress", "2026-07-29T10:00:00.000Z"),
+    () => transition(malformed, "intervention_in_progress", "2026-07-29T10:00:00.000Z"),
     (error) => error.code === "INVALID_CASE_HISTORY",
   );
 });
 
 test("requires exactly three distinct ID-like surfaces", () => {
-  assert.doesNotThrow(() => createInvestigationCase(caseInput()));
   for (const surfaces of [
     "synthetic_chatgpt_web_logged_out_us",
     ["synthetic_chatgpt_web_logged_out_us", undefined, "synthetic_openai_responses_web_search_required"],

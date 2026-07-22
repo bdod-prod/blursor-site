@@ -15,22 +15,23 @@ test("dossier shell exists only in the server bundle", async () => {
 test("dossier shell uses the approved investigation hierarchy", () => {
   const html = DOSSIER_PAGE_HTML;
   assert.match(html, /Investigation dossier/i);
-  assert.match(html, /Observed pattern/i);
-  assert.match(html, /Evidence chain/i);
+  assert.match(html, />Finding</i);
+  assert.match(html, />Evidence</i);
   assert.match(html, /BLURSOR diagnostic rationale/i);
-  assert.match(html, /Alternatives and next test/i);
+  assert.match(html, />Alternative explanations</i);
+  assert.match(html, />Follow-up verdict</i);
   assert.match(html, /Provider-supplied rationale/i);
   assert.match(html, /Unresolved is a valid result/i);
   assert.doesNotMatch(html, />\s*Tracker\s*</i);
   assert.doesNotMatch(html, /visibility score/i);
 
   const headings = [
-    "Observed pattern",
-    "Evidence chain",
-    "BLURSOR diagnostic rationale",
-    "Alternatives and next test",
+    "Finding",
+    "Evidence",
+    "Alternative explanations",
+    "Follow-up verdict",
   ];
-  const positions = headings.map((heading) => html.indexOf(heading));
+  const positions = headings.map((heading) => html.indexOf(`</span>${heading}</h2>`));
   assert.ok(positions.every((position) => position >= 0));
   assert.deepEqual(positions, [...positions].sort((left, right) => left - right));
   assert.equal((html.match(/<section\b/g) || []).length, 4);
@@ -104,9 +105,11 @@ test("renderer covers the complete client-safe dossier without raw observations"
     "observed.coverage.failed",
     "observed.metrics",
     "evidenceSection.items",
-    "rationaleSection.hypothesis",
-    "nextSection.alternatives",
-    "nextSection.nextTest",
+    "evidenceSection.hypothesis",
+    "alternativesSection.alternatives",
+    "alternativesSection.nextTest",
+    "followupSection.intervention",
+    "followupSection.followup",
     "dossier.limitations",
     "dossier.review.analyst",
     "dossier.review.reviewedAt",
@@ -114,4 +117,17 @@ test("renderer covers the complete client-safe dossier without raw observations"
     assert.ok(html.includes(field), `expected renderer field ${field}`);
   }
   assert.doesNotMatch(html, /dossier\.observations|body\.observations|\.rawAnswer|requestId|responseId/);
+});
+
+test("renderer exposes item-level surface, collection, and review provenance", () => {
+  const html = DOSSIER_PAGE_HTML;
+  for (const field of [
+    "item.surfaceId",
+    "item.surfaceLabel",
+    "item.collectedAt",
+    "item.reviewState",
+    "item.provenance",
+  ]) {
+    assert.ok(html.includes(field), field);
+  }
 });

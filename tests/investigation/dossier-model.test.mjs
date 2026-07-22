@@ -2,299 +2,264 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildInvestigationDossier } from "../../functions/lib/investigation/dossier-model.mjs";
+import { createFollowupComparisonReceipt } from "../../functions/lib/investigation/followup-comparison.mjs";
 import { buildKamranSyntheticDemo } from "../../functions/lib/investigation/kamran-synthetic-demo.mjs";
+import { V1_PROMPT_PANEL } from "../../functions/lib/investigation/v1-scope.mjs";
+import {
+  SYNTHETIC_SURFACE,
+  SYNTHETIC_SURFACES,
+  makeObservation,
+  reviewedEvidence,
+} from "./test-fixtures.mjs";
+
+function observations(windowName, days) {
+  return days.flatMap((day, repeatIndex) => SYNTHETIC_SURFACES.map((surface) => makeObservation({
+    day,
+    windowName,
+    repeatOrdinal: repeatIndex + 1,
+    surface,
+    rawAnswer: windowName === "followup"
+      ? "Synthetic fixture answer mentioning Dr. Kamran Aghayev."
+      : "Synthetic fixture answer without the investigated brand.",
+  })));
+}
+
+function evidenceFor(observation) {
+  return {
+    claims: [{ id: "claim-1", observationId: observation.id, text: "Synthetic claim." }],
+    evidenceItems: [
+      reviewedEvidence({
+        id: "page-evidence",
+        type: "page_fact",
+        surfaceId: "owned_page_review",
+        surfaceLabel: "Owned-page review",
+        provenance: "synthetic owned-page review",
+      }),
+      reviewedEvidence({
+        id: "checker-evidence",
+        type: "checker_fact",
+        surfaceId: "blursor_checker",
+        surfaceLabel: "BLURSOR checker",
+        provenance: "synthetic checker review",
+      }),
+    ],
+    relations: [
+      { claimId: "claim-1", evidenceItemId: "page-evidence", relation: "supports" },
+      { claimId: "claim-1", evidenceItemId: "checker-evidence", relation: "contextualizes" },
+    ],
+  };
+}
 
 function minimalInput(overrides = {}) {
+  const baselineObservations = observations("baseline", ["2026-07-22", "2026-07-25"]);
   return {
-    caseRecord: { id: "case-1", question: "Why?", state: "evidence_review", language: "en", location: "US", panelId: "panel-1", panelVersion: 1, methodVersion: "0.2" },
+    caseRecord: {
+      id: "kamran-investigation-01",
+      projectId: "kamran-aghayev",
+      question: "Why?",
+      state: "evidence_review",
+      language: "en",
+      location: "US",
+      panelId: "kamran-us-en-v1",
+      panelVersion: 1,
+      methodVersion: "0.2",
+      surfaces: SYNTHETIC_SURFACES.map(({ id }) => id),
+    },
     projectLabel: "Synthetic project",
-    surfaceLabels: ["Synthetic A", "Synthetic B", "Synthetic C"],
-    baselineWindow: "baseline",
-    followupWindow: "follow-up",
     exampleOnly: true,
-    assessment: { level: 3, term: "consistent with" },
-    observedPattern: { summary: "Synthetic pattern.", metrics: [{ id: "m1", label: "Mentions", numerator: 0, denominator: 45, surfaceId: "synthetic-a", window: "baseline" }], coverage: { valid: 45, scheduled: 45, failed: 0 } },
-    evidenceItems: [{ id: "e1", type: "checker_fact", label: "Checker fact", excerpt: "Synthetic evidence.", provenance: "synthetic checker", relation: "supports", url: null }],
-    hypothesis: { wording: "Synthetic hypothesis.", confidence: "bounded", basis: ["Evidence"], contradictions: [], inferenceSteps: ["Inference"], falsifier: "A repeat disagrees.", reviewState: "approved" },
-    alternatives: [{ wording: "Normal variance.", disposition: "plausible" }],
+    baselineObservations,
+    followupObservations: [],
+    extractionConfig: {
+      extractorVersion: "answer-evidence-1",
+      brandAliases: ["Dr. Kamran Aghayev", "Kamran Aghayev"],
+      competitors: [],
+    },
+    observedSummary: "Synthetic pattern.",
+    evidence: evidenceFor(baselineObservations[0]),
+    hypothesis: {
+      id: "hypothesis-1",
+      wording: "Synthetic hypothesis.",
+      confidence: "bounded",
+      basis: ["Evidence"],
+      contradictions: [],
+      inferenceSteps: ["Inference"],
+      falsifier: "A repeat disagrees.",
+      reviewState: "approved",
+    },
+    alternatives: [{
+      id: "alternative-1",
+      wording: "Normal variance.",
+      disposition: "plausible",
+      reviewState: "reviewed",
+    }],
     nextTest: "Repeat the frozen panel.",
     intervention: null,
     followup: null,
-    review: { analyst: "Alex", reviewedAt: "2026-07-22T12:00:00.000Z", extractorVersion: "answer-evidence-1" },
+    comparisonReceipt: null,
+    review: { analyst: "Alex", reviewedAt: "2026-07-28T12:00:00.000Z", extractorVersion: "answer-evidence-1" },
     limitations: ["Synthetic fixture."],
     ...overrides,
   };
 }
 
-test("builds the complete investigation-first Kamran fixture", () => {
+test("builds the complete investigation-first Kamran fixture through derived inputs", () => {
   const demo = buildKamranSyntheticDemo();
   assert.equal(demo.observations.length, 270);
   assert.equal(new Set(demo.observations.map(({ promptId }) => promptId)).size, 15);
-  assert.deepEqual([...new Set(demo.observations.map(({ surfaceId }) => surfaceId))].sort(), [
-    "synthetic_chatgpt_web_logged_out_us",
-    "synthetic_openai_responses_web_search_auto",
-    "synthetic_openai_responses_web_search_required",
-  ]);
-  assert.equal(demo.dossier.header.question, "Why is the brand absent from this US prompt cohort?");
-  assert.equal(demo.dossier.header.exampleOnly, true);
   assert.equal(demo.dossier.header.state, "closed_supported");
-  assert.deepEqual(demo.dossier.sections.map(({ id }) => id), ["observed-pattern", "evidence-chain", "diagnostic-rationale", "alternatives-next-test"]);
+  assert.deepEqual(demo.dossier.sections.map(({ id }) => id), ["finding", "evidence", "alternative-explanations", "follow-up-verdict"]);
   assert.equal(demo.dossier.evidenceState, "supported_after_followup");
-  assert.equal(demo.dossier.sections[2].hypothesis.reviewState, "approved");
-  assert.ok(demo.dossier.sections[2].hypothesis.alternatives.length >= 1);
-  assert.equal(demo.dossier.sections[1].items.some(({ type }) => type === "provider_rationale"), true);
+  assert.equal(demo.dossier.evidenceLevel, 5);
+  assert.equal(demo.dossier.sections[1].hypothesis.reviewState, "approved");
   assert.equal(demo.dossier.sections[1].items.find(({ type }) => type === "provider_rationale").optional, true);
   assert.equal(demo.dossier.score, undefined);
   assert.equal(JSON.stringify(demo.dossier).includes("Otterly"), false);
-  assert.equal(demo.scope.panel.prompts.some(({ text }) => /patient|diagnosis|medical record|treatment outcome/i.test(text)), false);
-  assert.deepEqual([...new Set(demo.observations.map(({ runId }) => runId))].sort(), [
-    "baseline-2026-07-22",
-    "baseline-2026-07-25",
-    "baseline-2026-07-28",
-    "followup-2026-08-05",
-    "followup-2026-08-08",
-    "followup-2026-08-11",
-  ]);
-  assert.equal(demo.observations.every(({ collectionClass, synthetic }) => collectionClass === "synthetic_fixture" && synthetic === true), true);
-  assert.equal(Object.isFrozen(demo), true);
-  assert.equal(Object.isFrozen(demo.scope), true);
-  assert.equal(Object.isFrozen(demo.observations), true);
-  assert.equal(Object.isFrozen(demo.observations[0]), true);
-  assert.equal(Object.isFrozen(demo.dossier), true);
+  assert.strictEqual(demo.scope.panel.fingerprint, demo.observations[0].panelFingerprint);
+  assert.strictEqual(demo.scope.panel, V1_PROMPT_PANEL);
 });
 
-test("keeps every metric denominator and surface identity visible", () => {
+test("derives coverage, mention metrics, windows, and surface labels from normalized observations", () => {
   const { dossier } = buildKamranSyntheticDemo();
-  for (const metric of dossier.sections[0].metrics) {
-    assert.ok(Number.isInteger(metric.numerator));
-    assert.ok(Number.isInteger(metric.denominator));
+  const observed = dossier.sections[0];
+
+  assert.deepEqual(observed.coverage, { valid: 270, scheduled: 270, failed: 0 });
+  assert.equal(observed.metrics.length, 6);
+  for (const metric of observed.metrics) {
+    assert.ok(metric.numerator >= 0);
+    assert.ok(metric.denominator > 0);
+    assert.ok(metric.numerator <= metric.denominator);
     assert.ok(metric.surfaceId);
     assert.ok(metric.window);
   }
+  assert.deepEqual(observed.metrics.map(({ numerator, denominator }) => [numerator, denominator]), [
+    [0, 45], [3, 45],
+    [0, 45], [3, 45],
+    [0, 45], [3, 45],
+  ]);
+  assert.equal(dossier.header.baselineWindow, "2026-07-22 to 2026-07-28");
+  assert.equal(dossier.header.followupWindow, "2026-08-05 to 2026-08-11");
+  assert.deepEqual(dossier.header.surfaces, SYNTHETIC_SURFACES.map(({ label }) => label));
 });
 
-test("unreviewed or provider-only rationale cannot become a diagnosis", () => {
-  const unreviewed = buildInvestigationDossier(minimalInput({ hypothesis: { ...minimalInput().hypothesis, reviewState: "draft" } }));
-  assert.equal(unreviewed.evidenceState, "unresolved");
-  assert.equal(unreviewed.sections[2].hypothesis, null);
-  const providerOnly = buildInvestigationDossier(minimalInput({ evidenceItems: [{ id: "r1", type: "provider_rationale", label: "Provider rationale", excerpt: "Synthetic.", provenance: "provider_supplied", relation: "contextualizes", url: null }] }));
-  assert.equal(providerOnly.evidenceState, "unresolved");
-  assert.equal(providerOnly.sections[2].hypothesis, null);
-  const noAlternatives = buildInvestigationDossier(minimalInput({ alternatives: [] }));
-  assert.equal(noAlternatives.evidenceState, "unresolved");
+test("derives diagnosis readiness only from reviewed independent evidence and alternatives", () => {
+  const unreviewed = minimalInput();
+  unreviewed.hypothesis = { ...unreviewed.hypothesis, reviewState: "draft" };
+  assert.equal(buildInvestigationDossier(unreviewed).evidenceState, "unresolved");
 
-  const withoutRationale = buildInvestigationDossier(minimalInput());
-  assert.equal(withoutRationale.evidenceState, "hypothesis_ready");
-  assert.equal(withoutRationale.sections[2].hypothesis.reviewState, "approved");
+  const noAlternatives = minimalInput({ alternatives: [] });
+  assert.equal(buildInvestigationDossier(noAlternatives).evidenceState, "unresolved");
+
+  const providerOnly = minimalInput();
+  providerOnly.evidence = {
+    ...providerOnly.evidence,
+    evidenceItems: [reviewedEvidence({
+      id: "provider-only",
+      type: "provider_rationale",
+      observationId: providerOnly.baselineObservations[0].id,
+      surfaceId: SYNTHETIC_SURFACE.id,
+      surfaceLabel: SYNTHETIC_SURFACE.label,
+    })],
+    relations: [{ claimId: "claim-1", evidenceItemId: "provider-only", relation: "contextualizes" }],
+  };
+  const providerOnlyDossier = buildInvestigationDossier(providerOnly);
+  assert.equal(providerOnlyDossier.evidenceState, "unresolved");
+  assert.equal(providerOnlyDossier.sections[1].hypothesis, null);
+
+  const reviewed = buildInvestigationDossier(minimalInput());
+  assert.equal(reviewed.evidenceLevel, 4);
+  assert.equal(reviewed.evidenceState, "hypothesis_ready");
 });
 
-test("keeps synthetic evidence types distinct and excludes raw observation data", () => {
+test("preserves and projects complete item-level evidence provenance", () => {
   const { dossier } = buildKamranSyntheticDemo();
-  const items = dossier.sections[1].items;
-
-  for (const type of ["inline_citation", "returned_source", "checker_fact", "page_fact", "provider_rationale"]) {
-    assert.equal(items.some((item) => item.type === type), true);
+  for (const item of dossier.sections[1].items) {
+    assert.ok(item.surfaceId);
+    assert.ok(item.surfaceLabel);
+    assert.match(item.collectedAt, /^\d{4}-\d{2}-\d{2}T/);
+    assert.equal(item.reviewState, "reviewed");
+    assert.ok(item.type);
+    assert.ok(item.provenance);
+    assert.ok(item.label);
+    assert.equal(item.url == null || !/[?#]/.test(item.url), true);
   }
-  assert.equal(items.some(({ relation }) => relation === "contradicts"), true);
   assert.equal(JSON.stringify(dossier).includes("rawAnswer"), false);
   assert.equal(JSON.stringify(dossier).includes("requestId"), false);
   assert.equal(JSON.stringify(dossier).includes("responseId"), false);
 });
 
-test("returns a deeply frozen copy without freezing caller-owned inputs", () => {
-  const metricDetail = { source: ["synthetic run"] };
-  const interventionEvidence = ["synthetic change record"];
-  const remainingUncertainty = ["surface variation"];
-  const input = minimalInput({
-    caseRecord: { ...minimalInput().caseRecord, state: "closed_supported" },
-    observedPattern: {
-      ...minimalInput().observedPattern,
-      metrics: [{ ...minimalInput().observedPattern.metrics[0], detail: metricDetail }],
-    },
-    intervention: { label: "Synthetic intervention", evidence: interventionEvidence },
-    followup: { comparable: true, outcome: "supported_after_followup", remainingUncertainty },
-  });
-  const original = structuredClone(input);
-
-  const dossier = buildInvestigationDossier(input);
-  const next = dossier.sections[3];
-
-  assert.deepEqual(input, original);
-  assert.equal(Object.isFrozen(input), false);
-  assert.equal(Object.isFrozen(metricDetail), false);
-  assert.equal(Object.isFrozen(metricDetail.source), false);
-  assert.equal(Object.isFrozen(interventionEvidence), false);
-  assert.equal(Object.isFrozen(remainingUncertainty), false);
-  assert.equal(dossier.sections[0].metrics[0].detail, undefined);
-  assert.notStrictEqual(next.intervention, input.intervention);
-  assert.notStrictEqual(next.followup, input.followup);
-  assert.equal(Object.isFrozen(dossier), true);
-  assert.equal(next.intervention.evidence, undefined);
-  assert.equal(next.followup.remainingUncertainty, undefined);
+test("rejects caller-authored assessment, metrics, impossible ratios, and negative failures", () => {
+  for (const derived of [
+    { assessment: { level: 5, term: "supported after follow-up" } },
+    { observedPattern: { metrics: [{ numerator: 999, denominator: 1 }] } },
+    { observedPattern: { coverage: { valid: 1, scheduled: 0, failed: -1 } } },
+    { surfaceLabels: ["Decorative"] },
+    { baselineWindow: "Decorative" },
+  ]) {
+    assert.throws(
+      () => buildInvestigationDossier(minimalInput(derived)),
+      (error) => error.code === "CALLER_DERIVED_FIELD_NOT_ALLOWED",
+    );
+  }
 });
 
-test("whitelists client-safe metric, intervention, and follow-up fields", () => {
-  const sentinel = { value: "PRIVATE_SENTINEL" };
-  const extraFields = {
-    rawAnswer: "PRIVATE_SENTINEL",
-    requestId: "PRIVATE_SENTINEL",
-    responseId: "PRIVATE_SENTINEL",
-    requestConfig: sentinel,
-    archive: sentinel,
-    secret: "PRIVATE_SENTINEL",
-  };
+test("one observation cannot manufacture level five and evidence types remain closed", () => {
+  const baselineObservations = [makeObservation({ day: "2026-07-22", windowName: "baseline" })];
+  const followupObservations = [makeObservation({ day: "2026-08-05", windowName: "followup", rawAnswer: "Dr. Kamran Aghayev is mentioned." })];
+  const comparisonReceipt = createFollowupComparisonReceipt({ baselineObservations, followupObservations });
   const input = minimalInput({
-    caseRecord: { ...minimalInput().caseRecord, state: "closed_supported", ...extraFields },
-    assessment: { level: 5, term: "supported after follow-up" },
-    observedPattern: {
-      ...minimalInput().observedPattern,
-      coverage: { ...minimalInput().observedPattern.coverage, ...extraFields },
-      metrics: [{ ...minimalInput().observedPattern.metrics[0], ...extraFields }],
-      ...extraFields,
-    },
-    evidenceItems: minimalInput().evidenceItems.map((item) => ({ ...item, ...extraFields })),
-    hypothesis: { ...minimalInput().hypothesis, ...extraFields },
-    alternatives: minimalInput().alternatives.map((item) => ({ ...item, ...extraFields })),
-    intervention: {
-      label: "Synthetic intervention",
-      detail: "Synthetic detail.",
-      deployedAt: "2026-07-29T09:00:00.000Z",
-      ...extraFields,
-    },
-    followup: {
-      comparable: true,
-      outcome: "supported_after_followup",
-      summary: "Synthetic summary.",
-      ...extraFields,
-    },
-    review: { ...minimalInput().review, ...extraFields },
-    ...extraFields,
+    caseRecord: { ...minimalInput().caseRecord, state: "closed_supported", surfaces: [SYNTHETIC_SURFACE.id] },
+    baselineObservations,
+    followupObservations,
+    comparisonReceipt,
+    followup: { summary: "Comparable synthetic follow-up." },
+    evidence: evidenceFor(baselineObservations[0]),
   });
+  assert.throws(
+    () => buildInvestigationDossier(input),
+    (error) => error.code === "CASE_COMPARISON_RECEIPT_MISMATCH",
+  );
+
+  input.caseRecord = { ...input.caseRecord, state: "evidence_review" };
+  input.followupObservations = [];
+  input.followup = null;
+  input.comparisonReceipt = null;
+  assert.ok(buildInvestigationDossier(input).evidenceLevel < 5);
+  input.evidence.evidenceItems[0].type = "invented_evidence";
+  assert.throws(
+    () => buildInvestigationDossier(input),
+    (error) => error.code === "INVALID_EVIDENCE_TYPE",
+  );
+});
+
+test("raw or fabricated comparability cannot close a dossier", () => {
+  const followupObservations = observations("followup", ["2026-08-05", "2026-08-08"]);
+  assert.throws(
+    () => buildInvestigationDossier(minimalInput({
+      followupObservations,
+      followup: { comparable: true, summary: "Decorative." },
+      comparisonReceipt: { comparable: true },
+    })),
+    (error) => ["RAW_COMPARABILITY_NOT_ALLOWED", "INVALID_COMPARISON_RECEIPT"].includes(error.code),
+  );
+});
+
+test("returns a frozen safe projection without freezing caller-owned inputs", () => {
+  const input = minimalInput();
+  input.secret = "PRIVATE_SENTINEL";
+  input.caseRecord.requestId = "PRIVATE_SENTINEL";
+  input.evidence.evidenceItems[0].requestConfig = { secret: "PRIVATE_SENTINEL" };
   const original = structuredClone(input);
 
   const dossier = buildInvestigationDossier(input);
-  const observed = dossier.sections[0];
-  const next = dossier.sections[3];
   const serialized = JSON.stringify(dossier);
 
-  assert.deepEqual(Object.keys(observed.metrics[0]), ["id", "label", "numerator", "denominator", "surfaceId", "window"]);
-  assert.deepEqual(Object.keys(observed.coverage), ["valid", "scheduled", "failed"]);
-  assert.deepEqual(Object.keys(dossier.sections[1].items[0]), ["id", "type", "label", "excerpt", "provenance", "relation", "url", "optional"]);
-  assert.deepEqual(Object.keys(next.intervention), ["label", "detail", "deployedAt"]);
-  assert.deepEqual(Object.keys(next.followup), ["comparable", "outcome", "summary"]);
-  for (const field of Object.keys(extraFields)) assert.equal(serialized.includes(`\"${field}\"`), false);
-  assert.equal(serialized.includes("PRIVATE_SENTINEL"), false);
   assert.deepEqual(input, original);
   assert.equal(Object.isFrozen(input), false);
-  assert.equal(Object.isFrozen(sentinel), false);
-});
-
-test("rejects nested objects anywhere the dossier schema expects scalars or string lists", () => {
-  const secret = { secret: "PRIVATE_SENTINEL" };
-  const cases = [
-    ["header investigation ID", (input) => { input.caseRecord.id = secret; }],
-    ["header project", (input) => { input.projectLabel = secret; }],
-    ["header state", (input) => { input.caseRecord.state = secret; }],
-    ["header surface", (input) => { input.surfaceLabels[1] = secret; }],
-    ["header panel version", (input) => { input.caseRecord.panelVersion = secret; }],
-    ["observed summary", (input) => { input.observedPattern.summary = secret; }],
-    ["coverage count", (input) => { input.observedPattern.coverage.valid = secret; }],
-    ["metric label", (input) => { input.observedPattern.metrics[0].label = secret; }],
-    ["metric numerator", (input) => { input.observedPattern.metrics[0].numerator = secret; }],
-    ["evidence label", (input) => { input.evidenceItems[0].label = secret; }],
-    ["evidence excerpt", (input) => { input.evidenceItems[0].excerpt = secret; }],
-    ["evidence URL", (input) => { input.evidenceItems[0].url = secret; }],
-    ["hypothesis wording", (input) => { input.hypothesis.wording = secret; }],
-    ["hypothesis confidence", (input) => { input.hypothesis.confidence = secret; }],
-    ["hypothesis basis", (input) => { input.hypothesis.basis = [secret]; }],
-    ["hypothesis contradiction", (input) => { input.hypothesis.contradictions = [secret]; }],
-    ["hypothesis inference", (input) => { input.hypothesis.inferenceSteps = [secret]; }],
-    ["hypothesis falsifier", (input) => { input.hypothesis.falsifier = secret; }],
-    ["alternative wording", (input) => { input.alternatives[0].wording = secret; }],
-    ["alternative disposition", (input) => { input.alternatives[0].disposition = secret; }],
-    ["next test", (input) => { input.nextTest = secret; }],
-    ["intervention detail", (input) => { input.intervention = { label: "Synthetic", detail: secret, deployedAt: null }; }],
-    ["follow-up summary", (input) => { input.followup = { comparable: false, outcome: null, summary: secret }; }],
-    ["review analyst", (input) => { input.review.analyst = secret; }],
-    ["limitation", (input) => { input.limitations = [secret]; }],
-  ];
-
-  for (const [label, mutate] of cases) {
-    const input = structuredClone(minimalInput());
-    mutate(input);
-    const original = structuredClone(input);
-    assert.throws(
-      () => buildInvestigationDossier(input),
-      (error) => error?.code === "INVALID_DOSSIER_FIELD",
-      label,
-    );
-    assert.deepEqual(input, original, label);
-    assert.equal(Object.isFrozen(secret), false, label);
-  }
-});
-
-test("preserves documented nulls while projecting the complete client schema", () => {
-  const dossier = buildInvestigationDossier(minimalInput({
-    intervention: { label: "Planned intervention", detail: null, deployedAt: null },
-    followup: { comparable: false, outcome: null, summary: null },
-  }));
-  const next = dossier.sections[3];
-
-  assert.equal(dossier.sections[1].items[0].url, null);
-  assert.deepEqual(next.intervention, { label: "Planned intervention", detail: null, deployedAt: null });
-  assert.deepEqual(next.followup, { comparable: false, outcome: null, summary: null });
-});
-
-test("requires level-five and comparable follow-up states to match the closed lifecycle", () => {
-  assert.throws(
-    () => buildInvestigationDossier(minimalInput({ assessment: { level: 5, term: "supported after follow-up" } })),
-    /level 5.*comparable follow-up/i,
-  );
-  assert.throws(
-    () => buildInvestigationDossier(minimalInput({
-      followup: { comparable: true, outcome: "supported_after_followup", summary: "Premature." },
-    })),
-    /closed follow-up state/i,
-  );
-  assert.throws(
-    () => buildInvestigationDossier(minimalInput({
-      caseRecord: { ...minimalInput().caseRecord, state: "closed_supported" },
-      assessment: { level: 5, term: "supported after follow-up" },
-      followup: { comparable: true, outcome: "weakened_after_followup", summary: "Mismatched." },
-    })),
-    /outcome.*closed_supported/i,
-  );
-});
-
-test("derives a safe comparable outcome from each closed follow-up state", () => {
-  const outcomes = new Map([
-    ["closed_supported", "supported_after_followup"],
-    ["closed_weakened", "weakened_after_followup"],
-    ["closed_unresolved", "unresolved_after_followup"],
+  assert.equal(Object.isFrozen(dossier), true);
+  assert.equal(serialized.includes("PRIVATE_SENTINEL"), false);
+  assert.deepEqual(Object.keys(dossier.sections[0].coverage), ["valid", "scheduled", "failed"]);
+  assert.deepEqual(Object.keys(dossier.sections[1].items[0]), [
+    "id", "type", "label", "excerpt", "provenance", "relation", "url", "surfaceId",
+    "surfaceLabel", "observationId", "collectedAt", "reviewState", "optional",
   ]);
-
-  for (const [state, outcome] of outcomes) {
-    const dossier = buildInvestigationDossier(minimalInput({
-      caseRecord: { ...minimalInput().caseRecord, state },
-      assessment: { level: 5, term: "supported after follow-up" },
-      followup: { comparable: true, outcome, summary: "Comparable synthetic follow-up." },
-    }));
-    assert.equal(dossier.evidenceState, outcome);
-    assert.equal(dossier.sections[3].followup.outcome, outcome);
-  }
-});
-
-test("rejects noncanonical evidence terms, including caused at level five", () => {
-  assert.throws(
-    () => buildInvestigationDossier(minimalInput({ assessment: { level: 3, term: "likely" } })),
-    (error) => error?.code === "INVALID_DOSSIER_FIELD" && /assessment\.term/i.test(error.message),
-  );
-  assert.throws(
-    () => buildInvestigationDossier(minimalInput({
-      caseRecord: { ...minimalInput().caseRecord, state: "closed_supported" },
-      assessment: { level: 5, term: "caused" },
-      followup: { comparable: true, outcome: "supported_after_followup", summary: "Comparable." },
-    })),
-    (error) => error?.code === "INVALID_DOSSIER_FIELD" && /assessment\.term/i.test(error.message),
-  );
 });

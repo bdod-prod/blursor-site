@@ -1,11 +1,23 @@
-import { EVIDENCE_TERMS } from "./evidence-trace.mjs";
 import { VisibilityError } from "../visibility/visibility-error.mjs";
+import { extractAnswerEvidence } from "./answer-extractor.mjs";
+import { EVIDENCE_TERMS, buildEvidenceTrace } from "./evidence-trace.mjs";
+import { validateFollowupComparisonReceipt } from "./followup-comparison.mjs";
+import { normalizeObservation } from "./observation-model.mjs";
 
 const CLOSED_FOLLOWUP_OUTCOMES = Object.freeze({
   closed_supported: "supported_after_followup",
   closed_weakened: "weakened_after_followup",
   closed_unresolved: "unresolved_after_followup",
 });
+
+const CALLER_DERIVED_FIELDS = Object.freeze([
+  "assessment",
+  "observedPattern",
+  "evidenceItems",
+  "surfaceLabels",
+  "baselineWindow",
+  "followupWindow",
+]);
 
 const invalidField = (field, expected) => new VisibilityError(
   "INVALID_DOSSIER_FIELD",
@@ -22,9 +34,7 @@ const objectField = (value, field, nullable = false) => {
 
 const stringField = (value, field, nullable = false) => {
   if (value == null && nullable) return null;
-  if (typeof value !== "string") {
-    throw invalidField(field, nullable ? "a string or null" : "a string");
-  }
+  if (typeof value !== "string") throw invalidField(field, nullable ? "a string or null" : "a string");
   return value;
 };
 
@@ -47,96 +57,115 @@ const stringList = (value, field) => arrayField(value, field).map((item, index) 
   stringField(item, `${field}[${index}]`)
 ));
 
-const projectHeader = (input) => {
-  const record = objectField(input?.caseRecord, "caseRecord");
-  return {
-    investigationId: stringField(record.id, "caseRecord.id"),
-    project: stringField(input?.projectLabel, "projectLabel"),
-    question: stringField(record.question, "caseRecord.question"),
-    state: stringField(record.state, "caseRecord.state"),
-    language: stringField(record.language, "caseRecord.language"),
-    location: stringField(record.location, "caseRecord.location"),
-    panelId: stringField(record.panelId, "caseRecord.panelId"),
-    panelVersion: integerField(record.panelVersion, "caseRecord.panelVersion"),
-    methodVersion: stringField(record.methodVersion, "caseRecord.methodVersion"),
-    surfaces: stringList(input?.surfaceLabels, "surfaceLabels"),
-    baselineWindow: stringField(input?.baselineWindow, "baselineWindow"),
-    followupWindow: stringField(input?.followupWindow, "followupWindow"),
-    exampleOnly: booleanField(input?.exampleOnly, "exampleOnly"),
-  };
+const deepFreeze = (value, seen = new WeakSet()) => {
+  if (!value || typeof value !== "object" || seen.has(value)) return value;
+  seen.add(value);
+  for (const child of Object.values(value)) deepFreeze(child, seen);
+  return Object.freeze(value);
 };
 
-const projectAssessment = (value) => {
-  const assessment = objectField(value, "assessment");
-  const level = integerField(assessment.level, "assessment.level");
-  const canonicalTerm = EVIDENCE_TERMS[level];
-  if (!canonicalTerm) throw invalidField("assessment.level", "an integer from 1 through 5");
-  const term = stringField(assessment.term, "assessment.term");
-  if (term !== canonicalTerm) {
-    throw invalidField("assessment.term", `the canonical level ${level} term ${JSON.stringify(canonicalTerm)}`);
+const normalizeCohort = (value, field, required) => {
+  const observations = arrayField(value, field).map((observation) => normalizeObservation(observation));
+  if (required && observations.length === 0) throw invalidField(field, "a non-empty observation array");
+  const ids = observations.map(({ id }) => id);
+  if (new Set(ids).size !== ids.length) {
+    throw new VisibilityError("DUPLICATE_DOSSIER_OBSERVATION", `${field} contains duplicate observation IDs.`);
   }
-  return { level, term: canonicalTerm };
+  return observations;
 };
 
-const projectMetric = (value, index) => {
-  const metric = objectField(value, `observedPattern.metrics[${index}]`);
-  const prefix = `observedPattern.metrics[${index}]`;
-  return {
-    id: stringField(metric.id, `${prefix}.id`),
-    label: stringField(metric.label, `${prefix}.label`),
-    numerator: integerField(metric.numerator, `${prefix}.numerator`),
-    denominator: integerField(metric.denominator, `${prefix}.denominator`),
-    surfaceId: stringField(metric.surfaceId, `${prefix}.surfaceId`),
-    window: stringField(metric.window, `${prefix}.window`),
-  };
+const assertCohortScope = (observations, record, extractionConfig, field) => {
+  const surfaceLabels = new Map();
+  for (const observation of observations) {
+    if (
+      observation.investigationId !== record.id
+      || observation.projectId !== record.projectId
+      || observation.panelId !== record.panelId
+      || observation.panelVersion !== record.panelVersion
+      || observation.methodologyVersion !== record.methodVersion
+      || observation.requestConfig.language !== record.language
+      || observation.requestConfig.country !== record.location
+      || !record.surfaces.includes(observation.surfaceId)
+      || observation.extractorVersion !== extractionConfig.extractorVersion
+    ) {
+      throw new VisibilityError("DOSSIER_SCOPE_MISMATCH", `${field} contains an observation outside the frozen case scope.`);
+    }
+    const priorLabel = surfaceLabels.get(observation.surfaceId);
+    if (priorLabel && priorLabel !== observation.surfaceLabel) {
+      throw new VisibilityError("DOSSIER_SURFACE_MISMATCH", "A dossier surface ID has conflicting labels.");
+    }
+    surfaceLabels.set(observation.surfaceId, observation.surfaceLabel);
+  }
+  if (observations.length && record.surfaces.some((surfaceId) => !surfaceLabels.has(surfaceId))) {
+    throw new VisibilityError("DOSSIER_SCOPE_MISMATCH", `${field} does not cover every case surface.`);
+  }
+  return surfaceLabels;
 };
 
-const projectObservedPattern = (value) => {
-  const observed = objectField(value, "observedPattern");
-  const coverage = objectField(observed.coverage, "observedPattern.coverage");
-  return {
-    summary: stringField(observed.summary, "observedPattern.summary"),
-    metrics: arrayField(observed.metrics, "observedPattern.metrics").map(projectMetric),
-    coverage: {
-      valid: integerField(coverage.valid, "observedPattern.coverage.valid"),
-      scheduled: integerField(coverage.scheduled, "observedPattern.coverage.scheduled"),
-      failed: integerField(coverage.failed, "observedPattern.coverage.failed"),
-    },
-  };
+const windowLabel = (observations) => {
+  if (observations.length === 0) return "No follow-up collected";
+  const dates = observations.map(({ observationCompletedAt }) => observationCompletedAt.slice(0, 10)).sort();
+  return dates[0] === dates.at(-1) ? dates[0] : `${dates[0]} to ${dates.at(-1)}`;
 };
 
-const projectEvidenceItem = (value, index) => {
-  const item = objectField(value, `evidenceItems[${index}]`);
-  const prefix = `evidenceItems[${index}]`;
-  const type = stringField(item.type, `${prefix}.type`);
-  return {
-    id: stringField(item.id, `${prefix}.id`),
-    type,
-    label: stringField(item.label, `${prefix}.label`),
-    excerpt: stringField(item.excerpt, `${prefix}.excerpt`, true),
-    provenance: stringField(item.provenance, `${prefix}.provenance`),
-    relation: stringField(item.relation, `${prefix}.relation`),
-    url: stringField(item.url, `${prefix}.url`, true),
-    optional: type === "provider_rationale",
-  };
-};
+const extractionRecords = (observations, config) => observations.map((observation) => ({
+  observation,
+  extraction: extractAnswerEvidence(observation, config),
+}));
 
-const projectEvidenceItems = (value) => arrayField(value, "evidenceItems").map(projectEvidenceItem);
+const mentionsBrand = ({ extraction }) => extraction.mentions.some(({ entityId }) => entityId === "brand");
+
+const deriveMetrics = (record, baseline, followup) => record.surfaces.flatMap((surfaceId) => {
+  const metrics = [];
+  for (const [window, records] of [["baseline", baseline], ["follow-up", followup]]) {
+    if (records.length === 0) continue;
+    const surfaceRecords = records.filter(({ observation }) => observation.surfaceId === surfaceId);
+    const numerator = surfaceRecords.filter(mentionsBrand).length;
+    const denominator = surfaceRecords.length;
+    if (numerator < 0 || denominator < 0 || numerator > denominator) {
+      throw new VisibilityError("INVALID_DERIVED_METRIC", "Derived dossier metric is internally inconsistent.");
+    }
+    metrics.push({
+      id: `${surfaceId}-${window}`,
+      label: "Brand mentions",
+      numerator,
+      denominator,
+      surfaceId,
+      window,
+    });
+  }
+  return metrics;
+});
+
+const hasRepeatedPattern = (baseline) => {
+  const groups = new Map();
+  for (const record of baseline.filter(({ extraction }) => extraction.extractionState === "complete")) {
+    const key = `${record.observation.surfaceId}|${record.observation.promptId}`;
+    const values = groups.get(key) || [];
+    values.push({ repeatOrdinal: record.observation.repeatOrdinal, mentioned: mentionsBrand(record) });
+    groups.set(key, values);
+  }
+  return [...groups.values()].some((values) => (
+    new Set(values.map(({ repeatOrdinal }) => repeatOrdinal)).size >= 2
+    && new Set(values.map(({ mentioned }) => mentioned)).size === 1
+  ));
+};
 
 const projectAlternative = (value, index) => {
-  const item = objectField(value, `alternatives[${index}]`);
+  const alternative = objectField(value, `alternatives[${index}]`);
   return {
-    wording: stringField(item.wording, `alternatives[${index}].wording`),
-    disposition: stringField(item.disposition, `alternatives[${index}].disposition`),
+    id: stringField(alternative.id, `alternatives[${index}].id`),
+    wording: stringField(alternative.wording, `alternatives[${index}].wording`),
+    disposition: stringField(alternative.disposition, `alternatives[${index}].disposition`),
+    reviewState: stringField(alternative.reviewState, `alternatives[${index}].reviewState`),
   };
 };
-
-const projectAlternatives = (value) => arrayField(value, "alternatives").map(projectAlternative);
 
 const projectHypothesis = (value) => {
   if (value == null) return null;
   const hypothesis = objectField(value, "hypothesis");
   return {
+    id: stringField(hypothesis.id, "hypothesis.id"),
     wording: stringField(hypothesis.wording, "hypothesis.wording"),
     confidence: stringField(hypothesis.confidence, "hypothesis.confidence"),
     basis: stringList(hypothesis.basis, "hypothesis.basis"),
@@ -157,16 +186,6 @@ const projectIntervention = (value) => {
   };
 };
 
-const projectFollowup = (value) => {
-  if (value == null) return null;
-  const followup = objectField(value, "followup");
-  return {
-    comparable: booleanField(followup.comparable, "followup.comparable"),
-    outcome: stringField(followup.outcome, "followup.outcome", true),
-    summary: stringField(followup.summary, "followup.summary", true),
-  };
-};
-
 const projectReview = (value) => {
   const review = objectField(value, "review");
   return {
@@ -176,99 +195,212 @@ const projectReview = (value) => {
   };
 };
 
-const validateFollowupConsistency = ({ assessment, followup, state }) => {
-  const levelFive = assessment.level === 5;
-  const comparable = followup?.comparable === true;
-  if (levelFive && !comparable) {
-    throw new VisibilityError(
-      "LEVEL_FIVE_FOLLOWUP_REQUIRED",
-      "Evidence level 5 requires a comparable follow-up.",
-    );
+const flattenEvidence = (trace) => {
+  const projected = [];
+  const seen = new Set();
+  for (const claim of trace.claims) {
+    for (const { relation, item } of claim.evidence) {
+      const key = `${item.id}|${relation}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      projected.push({
+        id: item.id,
+        type: item.type,
+        label: item.label,
+        excerpt: item.excerpt,
+        provenance: item.provenance,
+        relation,
+        url: item.url,
+        surfaceId: item.surfaceId,
+        surfaceLabel: item.surfaceLabel,
+        observationId: item.observationId,
+        collectedAt: item.collectedAt,
+        reviewState: item.reviewState,
+        optional: item.type === "provider_rationale",
+      });
+    }
   }
-  if (!comparable) return null;
-
-  const expectedOutcome = CLOSED_FOLLOWUP_OUTCOMES[state];
-  if (!expectedOutcome) {
-    throw new VisibilityError(
-      "CLOSED_FOLLOWUP_REQUIRED",
-      "Comparable follow-up requires a closed follow-up state.",
-    );
-  }
-  if (followup.outcome !== expectedOutcome) {
-    throw new VisibilityError(
-      "FOLLOWUP_OUTCOME_MISMATCH",
-      `Follow-up outcome does not match ${state}.`,
-    );
-  }
-  return expectedOutcome;
+  return projected;
 };
 
-const deepFreeze = (value, seen = new WeakSet()) => {
-  if (!value || typeof value !== "object" || seen.has(value)) return value;
-  seen.add(value);
-  for (const child of Object.values(value)) deepFreeze(child, seen);
-  return Object.freeze(value);
+const deriveAssessment = ({ baseline, evidenceItems, hypothesis, alternatives, comparable }) => {
+  const repeated = hasRepeatedPattern(baseline);
+  const reviewedObservable = evidenceItems.filter(({ relation, reviewState, type }) => (
+    reviewState === "reviewed"
+    && ["supports", "contextualizes"].includes(relation)
+    && !["provider_rationale", "analyst_annotation"].includes(type)
+  ));
+  const independentSources = new Set(reviewedObservable.map(({ type, provenance, surfaceId }) => `${type}|${provenance}|${surfaceId}`));
+  const reviewedAlternatives = alternatives.filter(({ reviewState }) => reviewState === "reviewed");
+  const hypothesisApproved = hypothesis?.reviewState === "approved";
+  let level = 1;
+  if (repeated) level = 2;
+  if (reviewedObservable.length >= 1) level = Math.max(level, 3);
+  if (repeated && independentSources.size >= 2 && hypothesisApproved && reviewedAlternatives.length >= 1) level = 4;
+  if (level === 4 && comparable) level = 5;
+  return { level, term: EVIDENCE_TERMS[level], reviewedAlternatives };
+};
+
+const assertNoCallerDerivedFields = (input) => {
+  for (const field of CALLER_DERIVED_FIELDS) {
+    if (Object.hasOwn(input || {}, field)) {
+      throw new VisibilityError("CALLER_DERIVED_FIELD_NOT_ALLOWED", `${field} is derived by the dossier boundary.`);
+    }
+  }
+  if (input?.followup && (Object.hasOwn(input.followup, "comparable") || Object.hasOwn(input.followup, "outcome"))) {
+    throw new VisibilityError("RAW_COMPARABILITY_NOT_ALLOWED", "Follow-up comparability and outcome are derived, not caller fields.");
+  }
 };
 
 export function buildInvestigationDossier(input) {
-  const header = projectHeader(input);
-  const assessment = projectAssessment(input?.assessment);
-  const observedPattern = projectObservedPattern(input?.observedPattern);
-  const evidenceItems = projectEvidenceItems(input?.evidenceItems);
+  assertNoCallerDerivedFields(input);
+  const record = objectField(input?.caseRecord, "caseRecord");
+  const surfaces = stringList(record.surfaces, "caseRecord.surfaces");
+  const scopedRecord = {
+    id: stringField(record.id, "caseRecord.id"),
+    projectId: stringField(record.projectId, "caseRecord.projectId"),
+    question: stringField(record.question, "caseRecord.question"),
+    state: stringField(record.state, "caseRecord.state"),
+    language: stringField(record.language, "caseRecord.language"),
+    location: stringField(record.location, "caseRecord.location"),
+    panelId: stringField(record.panelId, "caseRecord.panelId"),
+    panelVersion: integerField(record.panelVersion, "caseRecord.panelVersion"),
+    methodVersion: stringField(record.methodVersion, "caseRecord.methodVersion"),
+    surfaces,
+  };
+  const extractionConfig = objectField(input?.extractionConfig, "extractionConfig");
+  stringField(extractionConfig.extractorVersion, "extractionConfig.extractorVersion");
+  const baselineObservations = normalizeCohort(input?.baselineObservations, "baselineObservations", true);
+  const followupObservations = normalizeCohort(input?.followupObservations, "followupObservations", false);
+  const baselineLabels = assertCohortScope(baselineObservations, scopedRecord, extractionConfig, "baselineObservations");
+  const followupLabels = assertCohortScope(followupObservations, scopedRecord, extractionConfig, "followupObservations");
+  for (const [surfaceId, label] of followupLabels) {
+    if (baselineLabels.get(surfaceId) !== label) throw new VisibilityError("DOSSIER_SURFACE_MISMATCH", "Baseline and follow-up surface labels differ.");
+  }
+  const allObservationIds = new Set([...baselineObservations, ...followupObservations].map(({ id }) => id));
+  const trace = buildEvidenceTrace(objectField(input?.evidence, "evidence"));
+  for (const claim of trace.claims) {
+    if (claim.observationId && !allObservationIds.has(claim.observationId)) {
+      throw new VisibilityError("UNKNOWN_DOSSIER_OBSERVATION", "Evidence claim references an observation outside the dossier cohorts.");
+    }
+    for (const { item } of claim.evidence) {
+      if (item.observationId && !allObservationIds.has(item.observationId)) {
+        throw new VisibilityError("UNKNOWN_DOSSIER_OBSERVATION", "Evidence item references an observation outside the dossier cohorts.");
+      }
+    }
+  }
+  const baselineExtractions = extractionRecords(baselineObservations, extractionConfig);
+  const followupExtractions = extractionRecords(followupObservations, extractionConfig);
+  const metrics = deriveMetrics(scopedRecord, baselineExtractions, followupExtractions);
+  const scheduled = baselineObservations.length + followupObservations.length;
+  const failed = [...baselineObservations, ...followupObservations].filter(({ state }) => state === "failed").length;
+  const valid = scheduled - failed;
+  if (failed < 0 || valid < 0 || valid + failed !== scheduled) {
+    throw new VisibilityError("INVALID_DERIVED_COVERAGE", "Derived dossier coverage is internally inconsistent.");
+  }
+  const evidenceItems = flattenEvidence(trace);
   const hypothesis = projectHypothesis(input?.hypothesis);
-  const alternatives = projectAlternatives(input?.alternatives);
-  const nextTest = stringField(input?.nextTest, "nextTest");
-  const intervention = projectIntervention(input?.intervention);
-  const followup = projectFollowup(input?.followup);
-  const review = projectReview(input?.review);
-  const limitations = stringList(input?.limitations, "limitations");
-  const comparableOutcome = validateFollowupConsistency({ assessment, followup, state: header.state });
-  const hasIndependentEvidence = evidenceItems.some(({ type }) => type !== "provider_rationale" && type !== "analyst_annotation");
-  const approved = hypothesis?.reviewState === "approved"
-    && alternatives.length > 0
-    && hasIndependentEvidence;
+  const alternatives = arrayField(input?.alternatives, "alternatives").map(projectAlternative);
+  let comparisonReceipt = null;
+  if (input?.comparisonReceipt != null) {
+    comparisonReceipt = validateFollowupComparisonReceipt(input.comparisonReceipt, {
+      baselineObservations,
+      followupObservations,
+    });
+  }
+  const closedOutcome = CLOSED_FOLLOWUP_OUTCOMES[scopedRecord.state] || null;
+  if (closedOutcome) {
+    const storedReceipt = record.events?.at(-1)?.comparisonReceipt;
+    if (
+      !storedReceipt
+      || !comparisonReceipt
+      || storedReceipt.baselineFingerprint !== comparisonReceipt.baselineFingerprint
+      || storedReceipt.followupFingerprint !== comparisonReceipt.followupFingerprint
+      || !comparisonReceipt.comparable
+    ) {
+      throw new VisibilityError("CASE_COMPARISON_RECEIPT_MISMATCH", "Closed dossier state requires the case's validated comparison receipt.");
+    }
+  }
+  const assessment = deriveAssessment({
+    baseline: baselineExtractions,
+    evidenceItems,
+    hypothesis,
+    alternatives,
+    comparable: comparisonReceipt?.comparable === true && Boolean(closedOutcome),
+  });
+  const approved = assessment.level >= 4;
   const evidenceState = approved
-    ? (followup?.comparable === true ? comparableOutcome : "hypothesis_ready")
+    ? (assessment.level === 5 ? closedOutcome : "hypothesis_ready")
     : "unresolved";
   const rationale = approved ? {
-    ...hypothesis,
+    wording: hypothesis.wording,
+    confidence: hypothesis.confidence,
+    basis: [...hypothesis.basis],
+    contradictions: [...hypothesis.contradictions],
+    inferenceSteps: [...hypothesis.inferenceSteps],
+    falsifier: hypothesis.falsifier,
     reviewState: "approved",
-    alternatives: alternatives.map((item) => ({ ...item })),
+    alternatives: assessment.reviewedAlternatives.map(({ wording, disposition, reviewState }) => ({ wording, disposition, reviewState })),
   } : null;
+  const projectedFollowup = input?.followup == null ? null : {
+    comparable: comparisonReceipt?.comparable === true,
+    outcome: comparisonReceipt?.comparable === true ? closedOutcome : null,
+    summary: stringField(objectField(input.followup, "followup").summary, "followup.summary", true),
+  };
+  const review = projectReview(input?.review);
+  if (review.extractorVersion !== extractionConfig.extractorVersion) {
+    throw new VisibilityError("DOSSIER_EXTRACTOR_MISMATCH", "Dossier review and observation extractor versions must match.");
+  }
 
   return deepFreeze({
     schemaVersion: 1,
-    header,
+    header: {
+      investigationId: scopedRecord.id,
+      project: stringField(input?.projectLabel, "projectLabel"),
+      question: scopedRecord.question,
+      state: scopedRecord.state,
+      language: scopedRecord.language,
+      location: scopedRecord.location,
+      panelId: scopedRecord.panelId,
+      panelVersion: scopedRecord.panelVersion,
+      methodVersion: scopedRecord.methodVersion,
+      surfaces: scopedRecord.surfaces.map((surfaceId) => baselineLabels.get(surfaceId)),
+      baselineWindow: windowLabel(baselineObservations),
+      followupWindow: windowLabel(followupObservations),
+      exampleOnly: booleanField(input?.exampleOnly, "exampleOnly"),
+    },
     evidenceState,
     evidenceLevel: assessment.level,
     evidenceTerm: assessment.term,
     sections: [
       {
-        id: "observed-pattern",
-        title: "Observed pattern",
-        ...observedPattern,
+        id: "finding",
+        title: "Finding",
+        summary: stringField(input?.observedSummary, "observedSummary"),
+        metrics,
+        coverage: { valid, scheduled, failed },
       },
       {
-        id: "evidence-chain",
-        title: "Evidence chain",
+        id: "evidence",
+        title: "Evidence",
         items: evidenceItems,
-      },
-      {
-        id: "diagnostic-rationale",
-        title: "BLURSOR diagnostic rationale",
         status: rationale ? "reviewed" : "unresolved",
         hypothesis: rationale,
       },
       {
-        id: "alternatives-next-test",
-        title: "Alternatives and next test",
-        alternatives,
-        nextTest,
-        intervention,
-        followup: followup?.comparable === true ? { ...followup, outcome: comparableOutcome } : followup,
+        id: "alternative-explanations",
+        title: "Alternative explanations",
+        alternatives: assessment.reviewedAlternatives.map(({ wording, disposition, reviewState }) => ({ wording, disposition, reviewState })),
+        nextTest: stringField(input?.nextTest, "nextTest"),
+      },
+      {
+        id: "follow-up-verdict",
+        title: "Follow-up verdict",
+        intervention: projectIntervention(input?.intervention),
+        followup: projectedFollowup,
       },
     ],
     review,
-    limitations,
+    limitations: stringList(input?.limitations, "limitations"),
   });
 }

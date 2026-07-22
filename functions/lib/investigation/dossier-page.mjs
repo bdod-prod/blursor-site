@@ -60,29 +60,32 @@ export const DOSSIER_PAGE_HTML = String.raw`<!doctype html>
     </header>
     <div class="layout">
       <div class="stack">
-        <section aria-labelledby="observed-title">
-          <h2 id="observed-title"><span class="section-number">01</span>Observed pattern</h2>
+        <section aria-labelledby="finding-title">
+          <h2 id="finding-title"><span class="section-number">01</span>Finding</h2>
           <span class="label">Observed fact</span>
           <p id="observed-summary"></p>
           <p class="muted" id="coverage"></p>
           <div class="metric-grid" id="metrics"></div>
         </section>
         <section aria-labelledby="evidence-title">
-          <h2 id="evidence-title"><span class="section-number">02</span>Evidence chain</h2>
+          <h2 id="evidence-title"><span class="section-number">02</span>Evidence</h2>
           <p class="muted">Citations, returned sources, page facts, and checker facts remain distinct.</p>
           <div class="evidence-list" id="evidence"></div>
-        </section>
-        <section aria-labelledby="rationale-title">
-          <h2 id="rationale-title"><span class="section-number">03</span>BLURSOR diagnostic rationale</h2>
+          <h3 id="rationale-title">BLURSOR diagnostic rationale</h3>
           <span class="label">BLURSOR inference</span>
           <div class="rationale" id="rationale"></div>
         </section>
-        <section aria-labelledby="next-title">
-          <h2 id="next-title"><span class="section-number">04</span>Alternatives and next test</h2>
+        <section aria-labelledby="alternatives-title">
+          <h2 id="alternatives-title"><span class="section-number">03</span>Alternative explanations</h2>
           <ul class="plain-list" id="alternatives"></ul>
           <h3>Next test</h3>
           <p id="next-test"></p>
-          <h3>Follow-up</h3>
+        </section>
+        <section aria-labelledby="followup-title">
+          <h2 id="followup-title"><span class="section-number">04</span>Follow-up verdict</h2>
+          <h3>Intervention</h3>
+          <p id="intervention"></p>
+          <h3>Verdict</h3>
           <p id="followup"></p>
         </section>
       </div>
@@ -144,7 +147,7 @@ export const DOSSIER_PAGE_HTML = String.raw`<!doctype html>
       const meta = byId('scope-meta');
       clear(meta);
       for (const value of [dossier.header.language.toUpperCase(), dossier.header.location, 'Panel ' + dossier.header.panelId + ' v' + dossier.header.panelVersion, dossier.header.baselineWindow, dossier.header.followupWindow]) meta.append(element('span', 'pill', value));
-      const observed = dossier.sections.find((section) => section.id === 'observed-pattern');
+      const observed = dossier.sections.find((section) => section.id === 'finding');
       byId('observed-summary').textContent = observed.summary;
       byId('coverage').textContent = observed.coverage.valid + ' valid of ' + observed.coverage.scheduled + ' scheduled samples · ' + observed.coverage.failed + ' failed';
       const metrics = byId('metrics');
@@ -156,7 +159,7 @@ export const DOSSIER_PAGE_HTML = String.raw`<!doctype html>
         card.append(element('span', 'muted', metric.surfaceId));
         metrics.append(card);
       }
-      const evidenceSection = dossier.sections.find((section) => section.id === 'evidence-chain');
+      const evidenceSection = dossier.sections.find((section) => section.id === 'evidence');
       const evidence = byId('evidence');
       clear(evidence);
       for (const item of evidenceSection.items) {
@@ -165,25 +168,32 @@ export const DOSSIER_PAGE_HTML = String.raw`<!doctype html>
         const top = element('div', 'evidence-top');
         top.append(element('span', 'label', evidenceLabel(item.type)));
         top.append(element('span', 'relation', item.relation));
-        row.append(top, element('h3', '', item.label), element('p', '', item.excerpt || 'No excerpt retained.'), element('p', 'muted', item.provenance + (item.optional ? ' · optional' : '')));
+        row.append(
+          top,
+          element('h3', '', item.label),
+          element('p', '', item.excerpt || 'No excerpt retained.'),
+          element('p', 'muted', item.surfaceLabel + ' (' + item.surfaceId + ') · ' + item.collectedAt + ' · ' + item.reviewState),
+          element('p', 'muted', item.provenance + (item.optional ? ' · optional' : '')),
+        );
         evidence.append(row);
       }
-      const rationaleSection = dossier.sections.find((section) => section.id === 'diagnostic-rationale');
       const rationale = byId('rationale');
       clear(rationale);
-      if (!rationaleSection.hypothesis) rationale.append(element('p', '', 'Unresolved — the evidence does not yet support a diagnosis.'));
+      if (!evidenceSection.hypothesis) rationale.append(element('p', '', 'Unresolved — the evidence does not yet support a diagnosis.'));
       else {
-        const hypothesis = rationaleSection.hypothesis;
+        const hypothesis = evidenceSection.hypothesis;
         rationale.append(element('h3', '', hypothesis.wording), element('p', 'muted', 'Confidence: ' + hypothesis.confidence));
         const basis = element('ul', 'plain-list');
         rationale.append(basis);
         addList(basis, hypothesis.basis);
         rationale.append(element('p', 'muted', 'Falsifier: ' + hypothesis.falsifier));
       }
-      const nextSection = dossier.sections.find((section) => section.id === 'alternatives-next-test');
-      addList(byId('alternatives'), nextSection.alternatives, (item) => item.wording + ' — ' + item.disposition);
-      byId('next-test').textContent = nextSection.nextTest;
-      byId('followup').textContent = nextSection.followup ? nextSection.followup.summary : 'No comparable follow-up yet.';
+      const alternativesSection = dossier.sections.find((section) => section.id === 'alternative-explanations');
+      addList(byId('alternatives'), alternativesSection.alternatives, (item) => item.wording + ' — ' + item.disposition);
+      byId('next-test').textContent = alternativesSection.nextTest;
+      const followupSection = dossier.sections.find((section) => section.id === 'follow-up-verdict');
+      byId('intervention').textContent = followupSection.intervention ? followupSection.intervention.detail || followupSection.intervention.label : 'No intervention recorded.';
+      byId('followup').textContent = followupSection.followup ? followupSection.followup.summary : 'No comparable follow-up yet.';
       byId('evidence-state').textContent = evidenceStateLabel(dossier.evidenceState);
       byId('evidence-level').textContent = dossier.evidenceLevel + ' · ' + dossier.evidenceTerm;
       byId('method').textContent = dossier.header.methodVersion;

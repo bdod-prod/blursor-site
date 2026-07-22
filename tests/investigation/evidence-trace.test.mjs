@@ -5,17 +5,38 @@ import {
   EVIDENCE_TERMS,
   buildEvidenceTrace,
   normalizeEvidenceItem,
-  validateEvidenceAssessment,
+  validateLowLevelEvidenceAssessment,
 } from "../../functions/lib/investigation/evidence-trace.mjs";
+import { reviewedEvidence } from "./test-fixtures.mjs";
 
-const claims = [
-  { id: "claim-1", text: "The brand is recommended." },
-];
+const claims = [{ id: "claim-1", observationId: "obs-1", text: "The brand is recommended." }];
 
 const evidenceItems = [
-  { id: "e1", type: "inline_citation", provenance: "returned_answer", label: "Citation" },
-  { id: "e2", type: "checker_fact", provenance: "independent_checker", label: "Checker" },
-  { id: "e3", type: "provider_rationale", label: "Provider rationale" },
+  reviewedEvidence({
+    id: "e1",
+    type: "inline_citation",
+    provenance: "returned_answer",
+    label: "Citation",
+    observationId: "obs-1",
+    surfaceId: "synthetic_api_auto",
+    surfaceLabel: "Synthetic API auto fixture",
+  }),
+  reviewedEvidence({
+    id: "e2",
+    type: "checker_fact",
+    provenance: "independent_checker",
+    label: "Checker",
+    surfaceId: "blursor_checker",
+    surfaceLabel: "BLURSOR checker",
+  }),
+  reviewedEvidence({
+    id: "e3",
+    type: "provider_rationale",
+    label: "Provider rationale",
+    observationId: "obs-1",
+    surfaceId: "synthetic_api_auto",
+    surfaceLabel: "Synthetic API auto fixture",
+  }),
 ];
 
 test("builds an immutable trace without hiding contradictory or provider-supplied evidence", () => {
@@ -36,23 +57,29 @@ test("builds an immutable trace without hiding contradictory or provider-supplie
   assert.equal(Object.isFrozen(trace.claims[0].evidence), true);
 });
 
-test("normalizes evidence items and requires provenance outside provider rationale", () => {
-  const item = normalizeEvidenceItem({ id: " e1 ", type: "page_fact", provenance: "site_capture", excerpt: 42 });
+test("normalizes complete item-level provenance and safe URLs", () => {
+  const item = normalizeEvidenceItem(reviewedEvidence({ id: " e1 ", excerpt: 42 }));
 
   assert.deepEqual(item, {
     id: "e1",
     type: "page_fact",
-    provenance: "site_capture",
-    label: "",
+    provenance: "synthetic owned-page review",
+    label: "Synthetic owned-page fact",
     excerpt: "42",
-    url: null,
-    collectedAt: null,
-    reviewState: "unreviewed",
+    url: "https://example.org/page",
+    surfaceId: "owned_page_review",
+    surfaceLabel: "Owned-page review",
+    observationId: null,
+    collectedAt: "2026-07-28T10:00:00.000Z",
+    reviewState: "reviewed",
   });
-  assert.throws(() => normalizeEvidenceItem({ id: "e2", type: "page_fact" }), /provenance/i);
+  assert.throws(() => normalizeEvidenceItem(reviewedEvidence({ provenance: "" })), /provenance/i);
+  assert.throws(() => normalizeEvidenceItem(reviewedEvidence({ type: "invented_evidence" })), (error) => error.code === "INVALID_EVIDENCE_TYPE");
+  assert.throws(() => normalizeEvidenceItem(reviewedEvidence({ reviewState: "approved" })), (error) => error.code === "INVALID_EVIDENCE_REVIEW_STATE");
+  assert.throws(() => normalizeEvidenceItem(reviewedEvidence({ collectedAt: "invalid" })), (error) => error.code === "INVALID_EVIDENCE_TIMESTAMP");
 });
 
-test("returns the allowed assessment wording for each qualifying level", () => {
+test("keeps the low-level assessment validator explicitly non-authoritative", () => {
   assert.deepEqual(EVIDENCE_TERMS, {
     1: "observed",
     2: "repeated",
@@ -60,19 +87,23 @@ test("returns the allowed assessment wording for each qualifying level", () => {
     4: "likely",
     5: "supported after follow-up",
   });
-  assert.equal(Object.isFrozen(EVIDENCE_TERMS), true);
-  assert.equal(validateEvidenceAssessment({ level: 1, repeated: false, observableLinks: 0, independentLinks: 0, alternativesReviewed: 0, followupComparable: false }).term, "observed");
-  assert.equal(validateEvidenceAssessment({ level: 4, repeated: true, observableLinks: 3, independentLinks: 2, alternativesReviewed: 1, followupComparable: false }).term, "likely");
-});
-
-test("rejects level three wording when only provider rationale is linked", () => {
+  assert.equal(validateLowLevelEvidenceAssessment({ level: 1, repeated: false, observableLinks: 0, independentLinks: 0, alternativesReviewed: 0, followupComparable: false }).term, "observed");
+  assert.equal(validateLowLevelEvidenceAssessment({ level: 4, repeated: true, observableLinks: 3, independentLinks: 2, alternativesReviewed: 1, followupComparable: false }).term, "likely");
   assert.throws(
-    () => validateEvidenceAssessment({ level: 3, repeated: true, observableLinks: 1, independentLinks: 0, providerRationaleLinks: 1, alternativesReviewed: 0, followupComparable: false }),
+    () => validateLowLevelEvidenceAssessment({ level: 3, repeated: true, observableLinks: 1, independentLinks: 0, providerRationaleLinks: 1, alternativesReviewed: 0, followupComparable: false }),
     /independent observable evidence/i,
   );
 });
 
-test("rejects evidence relations that point at an unknown claim", () => {
+test("rejects duplicate identities and dangling evidence relations", () => {
+  assert.throws(
+    () => buildEvidenceTrace({ claims: [...claims, { ...claims[0] }], evidenceItems, relations: [] }),
+    (error) => error.code === "DUPLICATE_EVIDENCE_CLAIM",
+  );
+  assert.throws(
+    () => buildEvidenceTrace({ claims, evidenceItems: [...evidenceItems, { ...evidenceItems[0] }], relations: [] }),
+    (error) => error.code === "DUPLICATE_EVIDENCE_ITEM",
+  );
   assert.throws(
     () => buildEvidenceTrace({ claims, evidenceItems, relations: [{ claimId: "missing", evidenceItemId: "e1", relation: "supports" }] }),
     /unknown claim/i,

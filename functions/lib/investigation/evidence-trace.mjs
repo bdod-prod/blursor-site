@@ -16,6 +16,46 @@ export const EVIDENCE_RELATIONS = Object.freeze([
   "unclear",
 ]);
 
+export const EVIDENCE_REVIEW_STATES = Object.freeze(["unreviewed", "reviewed", "excluded"]);
+
+const OBSERVATION_EVIDENCE_TYPES = new Set([
+  "inline_citation",
+  "returned_source",
+  "provider_rationale",
+]);
+
+const required = (value, code, message) => {
+  const text = String(value ?? "").trim();
+  if (!text) throw new VisibilityError(code, message);
+  return text;
+};
+
+const safeUrl = (value) => {
+  if (value == null) return null;
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new VisibilityError("INVALID_EVIDENCE_URL", "Evidence URL must use http or https.");
+  }
+  if (!["http:", "https:"].includes(parsed.protocol)) {
+    throw new VisibilityError("INVALID_EVIDENCE_URL", "Evidence URL must use http or https.");
+  }
+  parsed.username = "";
+  parsed.password = "";
+  parsed.search = "";
+  parsed.hash = "";
+  return parsed.href;
+};
+
+const evidenceTimestamp = (value) => {
+  const parsed = new Date(value);
+  if (!value || Number.isNaN(parsed.getTime())) {
+    throw new VisibilityError("INVALID_EVIDENCE_TIMESTAMP", "Evidence collection timestamp is invalid.");
+  }
+  return parsed.toISOString();
+};
+
 export const EVIDENCE_TERMS = Object.freeze({
   1: "observed",
   2: "repeated",
@@ -25,34 +65,53 @@ export const EVIDENCE_TERMS = Object.freeze({
 });
 
 export function normalizeEvidenceItem(input) {
-  const id = String(input?.id || "").trim();
+  const id = required(input?.id, "INVALID_EVIDENCE_ID", "Evidence ID is required.");
   const type = String(input?.type || "").trim();
-  if (!id) throw new VisibilityError("INVALID_EVIDENCE_ID", "Evidence ID is required.");
   if (!EVIDENCE_TYPES.includes(type)) throw new VisibilityError("INVALID_EVIDENCE_TYPE", "Unknown evidence type.");
 
   const provenance = type === "provider_rationale"
     ? "provider_supplied"
     : String(input?.provenance || "").trim();
   if (!provenance) throw new VisibilityError("INVALID_EVIDENCE_PROVENANCE", "Evidence provenance is required.");
+  const reviewState = String(input?.reviewState || "").trim();
+  if (!EVIDENCE_REVIEW_STATES.includes(reviewState)) {
+    throw new VisibilityError("INVALID_EVIDENCE_REVIEW_STATE", "Unknown evidence review state.");
+  }
+  const observationId = input?.observationId == null
+    ? null
+    : required(input.observationId, "INVALID_EVIDENCE_OBSERVATION", "Evidence observation ID cannot be blank.");
+  if (OBSERVATION_EVIDENCE_TYPES.has(type) && !observationId) {
+    throw new VisibilityError("EVIDENCE_OBSERVATION_REQUIRED", "Observation evidence requires an observation ID.");
+  }
 
   return Object.freeze({
     id,
     type,
     provenance,
-    label: String(input?.label || "").trim(),
+    label: required(input?.label, "INVALID_EVIDENCE_LABEL", "Evidence label is required."),
     excerpt: input?.excerpt == null ? null : String(input.excerpt),
-    url: input?.url || null,
-    collectedAt: input?.collectedAt || null,
-    reviewState: input?.reviewState || "unreviewed",
+    url: safeUrl(input?.url),
+    surfaceId: required(input?.surfaceId, "INVALID_EVIDENCE_SURFACE", "Evidence surface ID is required."),
+    surfaceLabel: required(input?.surfaceLabel, "INVALID_EVIDENCE_SURFACE_LABEL", "Evidence surface label is required."),
+    observationId,
+    collectedAt: evidenceTimestamp(input?.collectedAt),
+    reviewState,
   });
 }
 
 export function buildEvidenceTrace({ claims, evidenceItems, relations }) {
-  const claimMap = new Map((claims || []).map((claim) => [claim.id, claim]));
-  const itemMap = new Map((evidenceItems || []).map((item) => {
+  const claimMap = new Map();
+  for (const claim of claims || []) {
+    const claimId = required(claim?.id, "INVALID_EVIDENCE_CLAIM", "Evidence claim ID is required.");
+    if (claimMap.has(claimId)) throw new VisibilityError("DUPLICATE_EVIDENCE_CLAIM", "Evidence claim IDs must be unique.");
+    claimMap.set(claimId, Object.freeze({ ...claim, id: claimId }));
+  }
+  const itemMap = new Map();
+  for (const item of evidenceItems || []) {
     const normalized = normalizeEvidenceItem(item);
-    return [normalized.id, normalized];
-  }));
+    if (itemMap.has(normalized.id)) throw new VisibilityError("DUPLICATE_EVIDENCE_ITEM", "Evidence item IDs must be unique.");
+    itemMap.set(normalized.id, normalized);
+  }
   const grouped = new Map([...claimMap.keys()].map((id) => [id, []]));
 
   for (const relation of relations || []) {
@@ -79,7 +138,7 @@ export function buildEvidenceTrace({ claims, evidenceItems, relations }) {
   });
 }
 
-export function validateEvidenceAssessment(input) {
+export function validateLowLevelEvidenceAssessment(input) {
   const level = input?.level;
   if (!Number.isInteger(level) || level < 1 || level > 5) {
     throw new VisibilityError("INVALID_EVIDENCE_LEVEL", "Evidence level must be 1 through 5.");
