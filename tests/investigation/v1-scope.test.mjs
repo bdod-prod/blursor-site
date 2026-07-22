@@ -50,8 +50,30 @@ test("calculates the approved collection volume", () => {
     "openai_responses_web_search_required",
   ]);
   assert.equal(V1_INVESTIGATION_SCOPE.consumerSurfaceStatus, "supplier_pending");
-  assert.equal(V1_INVESTIGATION_SCOPE.plannedSurfaceCount, 3);
+  assert.equal(V1_INVESTIGATION_SCOPE.plannedSurfaceCount, V1_INVESTIGATION_SCOPE.plannedSurfaces.length);
+  assert.deepEqual(V1_INVESTIGATION_SCOPE.plannedSurfaces.map(({ surfaceId }) => surfaceId), [
+    "openai_responses_web_search_auto",
+    "openai_responses_web_search_required",
+    null,
+  ]);
+  assert.deepEqual(V1_INVESTIGATION_SCOPE.plannedSurfaces.map(({ publicLabel }) => publicLabel), [
+    "OpenAI Responses API · web search auto",
+    "OpenAI Responses API · web search required",
+    "Consumer web surface · supplier pending",
+  ]);
+  for (const surface of V1_INVESTIGATION_SCOPE.plannedSurfaces) {
+    assert.equal(Object.isFrozen(surface), true);
+    assert.equal(surface.executable, false);
+  }
+  assert.equal(V1_INVESTIGATION_SCOPE.plannedSurfaces[2].status, "supplier_pending");
+  assert.equal(Object.isFrozen(V1_INVESTIGATION_SCOPE.plannedSurfaces), true);
   assert.equal(calculateV1ObservationVolume({ cycles: 1, surfaceCount: 3 }), 45);
   assert.equal(calculateV1ObservationVolume({ cycles: 10, surfaceCount: 3 }), 450);
   assert.throws(() => calculateV1ObservationVolume({ cycles: 0, surfaceCount: 3 }), /positive integers/i);
+  for (const surfaceCount of [1, 2, 4]) {
+    assert.throws(
+      () => calculateV1ObservationVolume({ cycles: 1, surfaceCount }),
+      (error) => error.code === "V1_SURFACE_COUNT_MISMATCH",
+    );
+  }
 });

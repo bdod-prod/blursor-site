@@ -35,6 +35,8 @@ test("registry uses exact surface identities and integer pricing", () => {
   assert.ok(VISIBILITY_SURFACES.openai_responses_web_search_required);
   assert.equal(VISIBILITY_SURFACES.openai_responses_web_search, undefined);
   for (const id of ["openai_responses_web_search_auto", "openai_responses_web_search_required"]) {
+    assert.equal(VISIBILITY_SURFACES[id].collectionClass, "official_api");
+    assert.equal(VISIBILITY_SURFACES[id].pricing, null);
     assert.equal(VISIBILITY_SURFACES[id].rightsState, "disabled");
     assert.equal(VISIBILITY_SURFACES[id].killSwitch, true);
     assert.throws(() => assertVisibilitySurfaceAllowed(id, "research"), (error) => error.code === "SURFACE_DISABLED");

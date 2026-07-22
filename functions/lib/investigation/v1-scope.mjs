@@ -1,13 +1,35 @@
 import { validatePromptPanel } from "../visibility/prompt-panel.mjs";
 import { VisibilityError } from "../visibility/visibility-error.mjs";
 
+const plannedSurfaces = Object.freeze([
+  Object.freeze({
+    surfaceId: "openai_responses_web_search_auto",
+    publicLabel: "OpenAI Responses API · web search auto",
+    status: "disabled",
+    executable: false,
+  }),
+  Object.freeze({
+    surfaceId: "openai_responses_web_search_required",
+    publicLabel: "OpenAI Responses API · web search required",
+    status: "disabled",
+    executable: false,
+  }),
+  Object.freeze({
+    surfaceId: null,
+    publicLabel: "Consumer web surface · supplier pending",
+    status: "supplier_pending",
+    executable: false,
+  }),
+]);
+
 export const V1_INVESTIGATION_SCOPE = Object.freeze({
   projectId: "kamran-aghayev",
   promptCount: 15,
   language: "en",
   location: "US",
   cadenceDays: 3,
-  plannedSurfaceCount: 3,
+  plannedSurfaces,
+  plannedSurfaceCount: plannedSurfaces.length,
   apiSurfaceIds: Object.freeze([
     "openai_responses_web_search_auto",
     "openai_responses_web_search_required",
@@ -39,6 +61,12 @@ export function validateV1InvestigationScope(input) {
 export function calculateV1ObservationVolume({ cycles, surfaceCount }) {
   if (!Number.isInteger(cycles) || cycles < 1 || !Number.isInteger(surfaceCount) || surfaceCount < 1) {
     throw new VisibilityError("INVALID_V1_VOLUME", "Cycles and surface count must be positive integers.");
+  }
+  if (surfaceCount !== V1_INVESTIGATION_SCOPE.plannedSurfaceCount) {
+    throw new VisibilityError(
+      "V1_SURFACE_COUNT_MISMATCH",
+      "The v1 surface count must match the frozen planned surfaces.",
+    );
   }
   return V1_INVESTIGATION_SCOPE.promptCount * cycles * surfaceCount;
 }
