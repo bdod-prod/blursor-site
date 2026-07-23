@@ -1,5 +1,6 @@
 import { VisibilityError } from "../visibility/visibility-error.mjs";
 import { validateCohortCadence } from "./cohort-cadence.mjs";
+import { validateClosureUsability } from "./cohort-usability.mjs";
 import {
   assertStoredComparisonReceipt,
   validateFollowupComparisonReceipt,
@@ -305,6 +306,12 @@ export function transitionInvestigationCase(record, transition) {
       cadenceDays: record.cadenceDays,
       repeatOrdinals: record.expectedCohortReceipt.repeatOrdinals,
       field: "followupObservations",
+    });
+    validateClosureUsability({
+      closureState: to,
+      baselineRecords: comparison?.baselineObservations,
+      followupRecords: comparison?.followupObservations,
+      receipt: record.expectedCohortReceipt,
     });
     comparisonReceipt = validateFollowupComparisonReceipt(comparison?.receipt, {
       baselineObservations: comparison?.baselineObservations,

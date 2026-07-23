@@ -86,7 +86,9 @@ export function normalizeObservation(input) {
     }
   }
   const rawAnswer = input?.rawAnswer == null ? null : String(input.rawAnswer);
-  if ((state === "success" || state === "refused") && !rawAnswer) throw new VisibilityError("ANSWER_REQUIRED", "Successful and refused observations require answer text.");
+  if ((state === "success" || state === "refused") && !rawAnswer?.trim()) {
+    throw new VisibilityError("ANSWER_REQUIRED", "Successful and refused observations require non-whitespace answer text.");
+  }
   if (state === "failed" && rawAnswer) throw new VisibilityError("FAILED_OBSERVATION_HAS_ANSWER", "A failed observation cannot contain answer text.");
   if (state === "missing_answer" && rawAnswer) throw new VisibilityError("MISSING_ANSWER_HAS_ANSWER", "A missing-answer observation cannot contain answer text.");
   if (state === "failed" && !input?.failure?.code) throw new VisibilityError("FAILURE_REQUIRED", "A failed observation requires a failure record.");

@@ -152,6 +152,16 @@ test("does not collapse missing answer, refusal, provider failure, and brand abs
   })), /cannot contain evidence links/i);
 });
 
+test("rejects whitespace-only success and refusal answers", () => {
+  for (const state of ["success", "refused"]) {
+    assert.throws(
+      () => normalizeObservation(validObservation({ state, rawAnswer: " \n\t " })),
+      (error) => error.code === "ANSWER_REQUIRED",
+      state,
+    );
+  }
+});
+
 test("enforces immutable identity, version, review, and timestamp invariants", () => {
   for (const [field, value, code] of [
     ["projectId", "", "INVALID_PROJECT_ID"],

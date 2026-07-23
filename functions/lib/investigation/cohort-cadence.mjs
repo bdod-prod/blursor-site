@@ -22,6 +22,15 @@ export function validateCohortCadence(
       throw new VisibilityError("INVALID_COHORT_CADENCE", `${field} contains an unexpected repeat ordinal.`);
     }
     const scheduledMs = new Date(observation.scheduledAt).getTime();
+    const windowEndMs = scheduledMs + (cadenceDays * DAY_MS);
+    const startedMs = new Date(observation.observationStartedAt).getTime();
+    const completedMs = new Date(observation.observationCompletedAt).getTime();
+    if (startedMs >= windowEndMs || completedMs >= windowEndMs) {
+      throw new VisibilityError(
+        "INVALID_COHORT_EXECUTION_WINDOW",
+        `${field} contains an observation executed outside its half-open scheduled cadence window.`,
+      );
+    }
     const prior = scheduledByOrdinal.get(observation.repeatOrdinal);
     if (prior != null && prior !== scheduledMs) {
       throw new VisibilityError(

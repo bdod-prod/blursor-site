@@ -278,7 +278,7 @@ function closedInput(overrides = {}) {
   caseRecord = transitionInvestigationCase(caseRecord, { to: "followup_review", at: "2026-08-12T08:00:00.000Z", reviewer: "alex" });
   const comparisonReceipt = createFollowupComparisonReceipt({ baselineObservations, followupObservations });
   caseRecord = transitionInvestigationCase(caseRecord, {
-    to: "closed_supported",
+    to: overrides.closureState || "closed_supported",
     at: "2026-08-12T09:00:00.000Z",
     reviewer: "alex",
     comparison: { receipt: comparisonReceipt, baselineObservations, followupObservations },
@@ -294,6 +294,28 @@ function closedInput(overrides = {}) {
     },
     followup: { summary: "Synthetic follow-up changed." },
     comparisonReceipt,
+  };
+}
+
+function failureHeavyCohorts() {
+  const sparseSuccesses = ({ repeatIndex, surface, prompt }) => (
+    surface.id === SYNTHETIC_SURFACES[0].id
+    && prompt.id === V1_PROMPT_PANEL.prompts[0].id
+    && repeatIndex < 2
+      ? {}
+      : { state: "failed", rawAnswer: null }
+  );
+  return {
+    baselineObservations: completeObservations(
+      "baseline",
+      ["2026-07-22", "2026-07-25", "2026-07-28"],
+      sparseSuccesses,
+    ),
+    followupObservations: completeObservations(
+      "followup",
+      ["2026-08-05", "2026-08-08", "2026-08-11"],
+      () => ({ state: "failed", rawAnswer: null }),
+    ),
   };
 }
 
@@ -381,26 +403,10 @@ test("separates unusable observations from valid mention denominators and expect
   assert.equal(finding.metrics.reduce((sum, metric) => sum + metric.denominator, 0), 1);
 });
 
-test("does not award level five to structurally complete failure-heavy cohorts", () => {
-  const sparseSuccesses = ({ repeatIndex, surface, prompt }) => (
-    surface.id === SYNTHETIC_SURFACES[0].id
-    && prompt.id === V1_PROMPT_PANEL.prompts[0].id
-    && repeatIndex < 2
-      ? {}
-      : { state: "failed", rawAnswer: null }
-  );
-  const allFailures = () => ({ state: "failed", rawAnswer: null });
+test("keeps a failure-heavy unresolved closure below level five", () => {
   const input = closedInput({
-    baselineObservations: completeObservations(
-      "baseline",
-      ["2026-07-22", "2026-07-25", "2026-07-28"],
-      sparseSuccesses,
-    ),
-    followupObservations: completeObservations(
-      "followup",
-      ["2026-08-05", "2026-08-08", "2026-08-11"],
-      allFailures,
-    ),
+    ...failureHeavyCohorts(),
+    closureState: "closed_unresolved",
   });
 
   const dossier = buildInvestigationDossier(input);
@@ -409,7 +415,41 @@ test("does not award level five to structurally complete failure-heavy cohorts",
   assert.equal(dossier.sections[0].coverage.failed, 268);
   assert.ok(dossier.evidenceLevel < 5);
   assert.equal(dossier.evidenceState, "hypothesis_ready");
+  assert.equal(dossier.header.state, "closed_unresolved");
   assert.equal(dossier.sections[3].followup.outcome, null);
+});
+
+test("rejects supported and weakened dossier replay with unusable cohorts", () => {
+  for (const closureState of ["closed_supported", "closed_weakened"]) {
+    const input = closedInput({ closureState });
+    Object.assign(input, failureHeavyCohorts());
+    assert.throws(
+      () => buildInvestigationDossier(input),
+      (error) => error.code === "INSUFFICIENT_USABLE_CYCLES",
+      closureState,
+    );
+  }
+});
+
+test("rejects whitespace-only successful cohorts before they inflate evidence strength", () => {
+  const whitespace = (observations) => observations.map((observation) => ({
+    ...observation,
+    rawAnswer: " \n\t ",
+  }));
+
+  assert.throws(
+    () => buildInvestigationDossier(closedInput({
+      baselineObservations: whitespace(completeObservations(
+        "baseline",
+        ["2026-07-22", "2026-07-25", "2026-07-28"],
+      )),
+      followupObservations: whitespace(completeObservations(
+        "followup",
+        ["2026-08-05", "2026-08-08", "2026-08-11"],
+      )),
+    })),
+    (error) => error.code === "ANSWER_REQUIRED",
+  );
 });
 
 test("does not derive repetition or level three from refused, unreviewed, or excluded rows", () => {
@@ -473,6 +513,22 @@ test("revalidates cadence and closure-time boundaries at the dossier boundary", 
   assert.throws(
     () => buildInvestigationDossier(sameTimestamp),
     (error) => error.code === "INVALID_COHORT_CADENCE",
+  );
+
+  const delayedExecution = closedInput();
+  delayedExecution.baselineObservations = delayedExecution.baselineObservations.map((observation) => ({
+    ...observation,
+    observationStartedAt: "2026-07-28T12:00:00.000Z",
+    observationCompletedAt: "2026-07-28T12:00:02.000Z",
+  }));
+  delayedExecution.followupObservations = delayedExecution.followupObservations.map((observation) => ({
+    ...observation,
+    observationStartedAt: "2026-08-11T12:00:00.000Z",
+    observationCompletedAt: "2026-08-11T12:00:02.000Z",
+  }));
+  assert.throws(
+    () => buildInvestigationDossier(delayedExecution),
+    (error) => error.code === "INVALID_COHORT_EXECUTION_WINDOW",
   );
 
   const afterClosure = closedInput();

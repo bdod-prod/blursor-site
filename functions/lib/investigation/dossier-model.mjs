@@ -2,6 +2,7 @@ import { VisibilityError } from "../visibility/visibility-error.mjs";
 import { extractAnswerEvidence } from "./answer-extractor.mjs";
 import { validateInvestigationCase } from "./case-model.mjs";
 import { validateCohortCadence } from "./cohort-cadence.mjs";
+import { isUsableObservation, validateClosureUsability } from "./cohort-usability.mjs";
 import { EVIDENCE_TERMS, buildEvidenceTrace } from "./evidence-trace.mjs";
 import { evaluateCohortAgainstExpectation } from "./expected-cohort.mjs";
 import { validateFollowupComparisonReceipt } from "./followup-comparison.mjs";
@@ -214,8 +215,7 @@ const assertObservationEvidenceProvenance = ({ trace, observations, extractions 
 const mentionsBrand = ({ extraction }) => extraction.mentions.some(({ entityId }) => entityId === "brand");
 
 const isValidMentionObservation = ({ observation }) => (
-  observation.state === "success"
-  && observation.reviewStatus === "reviewed"
+  isUsableObservation(observation)
 );
 
 const deriveMetrics = (record, baseline, followup) => record.surfaces.flatMap((surfaceId) => {
@@ -257,17 +257,6 @@ const hasRepeatedPattern = (baseline) => {
     && new Set(values.map(({ mentioned }) => mentioned)).size === 1
   ));
 };
-
-const usableCycleCount = (records, receipt) => receipt.repeatOrdinals.filter((repeatOrdinal) => {
-  const usable = new Set(records.filter(({ observation, extraction }) => (
-    observation.repeatOrdinal === repeatOrdinal
-    && isValidMentionObservation({ observation })
-    && extraction.extractionState === "complete"
-  )).map(({ observation }) => `${observation.surfaceId}|${observation.promptId}`));
-  return receipt.surfaceIds.every((surfaceId) => receipt.promptIds.every((promptId) => (
-    usable.has(`${surfaceId}|${promptId}`)
-  )));
-}).length;
 
 const projectAlternative = (value, index) => {
   const alternative = objectField(value, `alternatives[${index}]`);
@@ -512,6 +501,13 @@ export function buildInvestigationDossier(input) {
     });
   }
   const closedOutcome = CLOSED_FOLLOWUP_OUTCOMES[scopedRecord.state] || null;
+  const closureUsability = closedOutcome ? validateClosureUsability({
+    closureState: scopedRecord.state,
+    baselineRecords: baselineExtractions,
+    followupRecords: followupExtractions,
+    receipt: record.expectedCohortReceipt,
+    requireCompleteExtraction: true,
+  }) : null;
   if (closedOutcome) {
     const storedReceipt = record.events?.at(-1)?.comparisonReceipt;
     if (
@@ -559,15 +555,12 @@ export function buildInvestigationDossier(input) {
       );
     }
   }
-  const baselineUsableCycles = usableCycleCount(baselineExtractions, record.expectedCohortReceipt);
-  const followupUsableCycles = usableCycleCount(followupExtractions, record.expectedCohortReceipt);
   const levelFiveReady = Boolean(
     closedOutcome
     && comparisonReceipt?.comparable
     && baselineExpected.complete
     && followupExpected?.complete
-    && baselineUsableCycles >= 3
-    && followupUsableCycles >= 3
+    && closureUsability?.sufficient
     && storedIntervention,
   );
   const assessment = deriveAssessment({

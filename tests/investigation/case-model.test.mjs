@@ -45,9 +45,16 @@ function transition(record, to, at, extra = {}) {
   });
 }
 
-function cohort(windowName, days, prompts = V1_PROMPT_PANEL.prompts) {
+function cohort(windowName, days, prompts = V1_PROMPT_PANEL.prompts, observationOverrides = () => ({})) {
   return days.flatMap((day, repeatIndex) => SYNTHETIC_SURFACES.flatMap((surface) => prompts.map((prompt) => (
-    makeObservation({ day, windowName, repeatOrdinal: repeatIndex + 1, surface, prompt })
+    makeObservation({
+      day,
+      windowName,
+      repeatOrdinal: repeatIndex + 1,
+      surface,
+      prompt,
+      ...observationOverrides({ day, repeatIndex, surface, prompt }),
+    })
   ))));
 }
 
@@ -55,9 +62,11 @@ function comparableFollowup({
   baselineDays = ["2026-07-22", "2026-07-25", "2026-07-28"],
   followupDays = ["2026-08-05", "2026-08-08", "2026-08-11"],
   prompts = V1_PROMPT_PANEL.prompts,
+  baselineOverrides,
+  followupOverrides,
 } = {}) {
-  const baselineObservations = cohort("baseline", baselineDays, prompts);
-  const followupObservations = cohort("followup", followupDays, prompts);
+  const baselineObservations = cohort("baseline", baselineDays, prompts, baselineOverrides);
+  const followupObservations = cohort("followup", followupDays, prompts, followupOverrides);
   return {
     receipt: createFollowupComparisonReceipt({ baselineObservations, followupObservations }),
     baselineObservations,
@@ -205,6 +214,50 @@ test("rejects nominal cycles that do not preserve the frozen three-day cadence",
       windowName,
     );
   }
+});
+
+test("rejects cycles executed outside their half-open scheduled cadence windows", () => {
+  const record = advanceToFollowupReview();
+  const comparison = comparableFollowup({
+    baselineOverrides: () => ({
+      observationStartedAt: "2026-07-28T12:00:00.000Z",
+      observationCompletedAt: "2026-07-28T12:00:02.000Z",
+    }),
+    followupOverrides: () => ({
+      observationStartedAt: "2026-08-11T12:00:00.000Z",
+      observationCompletedAt: "2026-08-11T12:00:02.000Z",
+    }),
+  });
+
+  assert.throws(
+    () => transition(record, "closed_supported", "2026-08-12T11:00:00.000Z", { comparison }),
+    (error) => error.code === "INVALID_COHORT_EXECUTION_WINDOW",
+  );
+});
+
+test("allows unusable complete cohorts to close only as unresolved", () => {
+  const sparseSuccesses = ({ repeatIndex, surface, prompt }) => (
+    surface.id === SYNTHETIC_SURFACES[0].id
+    && prompt.id === V1_PROMPT_PANEL.prompts[0].id
+    && repeatIndex < 2
+      ? {}
+      : { state: "failed", rawAnswer: null }
+  );
+  const comparison = comparableFollowup({
+    baselineOverrides: sparseSuccesses,
+    followupOverrides: () => ({ state: "failed", rawAnswer: null }),
+  });
+  const record = advanceToFollowupReview();
+
+  for (const closureState of ["closed_supported", "closed_weakened"]) {
+    assert.throws(
+      () => transition(record, closureState, "2026-08-12T11:00:00.000Z", { comparison }),
+      (error) => error.code === "INSUFFICIENT_USABLE_CYCLES",
+      closureState,
+    );
+  }
+  const unresolved = transition(record, "closed_unresolved", "2026-08-12T11:00:00.000Z", { comparison });
+  assert.equal(unresolved.state, "closed_unresolved");
 });
 
 test("rejects closure observations that finish after the closure event", () => {
