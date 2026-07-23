@@ -6,7 +6,12 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
-const { compileResearch, discoverArticles } = require('../scripts/lib/research-publication');
+const {
+  compileResearch,
+  discoverArticles,
+  normalizeArticleHtml,
+  selectRelatedArticles,
+} = require('../scripts/lib/research-publication');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 
@@ -81,8 +86,10 @@ function validArticleHtml(metaOverrides = {}) {
   })}</script>
 </head>
 <body>
-  <div class="article-header__meta"></div>
-  <a href="https://arxiv.org/abs/${meta.arxiv_id}">arXiv</a>
+  <div class="article-header__meta">
+    <span class="sep">·</span>
+    <a href="https://arxiv.org/abs/${meta.arxiv_id}" class="arxiv-link">arXiv</a>
+  </div>
   <div class="more-articles__grid"></div>
 </body>
 </html>`;
@@ -94,6 +101,83 @@ function writeArticle(rootDir, fileName, metaOverrides = {}) {
     validArticleHtml({ slug: path.basename(fileName, '.html'), ...metaOverrides }),
   );
 }
+
+function articleRecord(slug, metaOverrides = {}) {
+  const meta = {
+    slug,
+    title: `${slug} title`,
+    published_date: '2026-07-23',
+    reading_time_min: 5,
+    category_label: 'AI Visibility',
+    summary_for_card: `${slug} summary.`,
+    arxiv_id: '2607.12345',
+    ...metaOverrides,
+  };
+  return {
+    fileName: `${slug}.html`,
+    filePath: `/research/${slug}.html`,
+    html: validArticleHtml(meta),
+    meta,
+  };
+}
+
+test('normalization inserts one linked byline before the arXiv link', () => {
+  const current = articleRecord('new-a');
+  const articles = [
+    current,
+    articleRecord('new-b'),
+    articleRecord('old', { published_date: '2026-07-22' }),
+  ];
+  const normalized = normalizeArticleHtml(current, articles);
+
+  assert.equal((normalized.match(/class="article-byline"/g) || []).length, 1);
+  assert.match(normalized, /By <a href="\/author\/alex-rostovtsev" rel="author" class="article-byline__link">Alex Rostovtsev<\/a>/);
+  assert.ok(normalized.indexOf('article-byline') < normalized.indexOf('class="arxiv-link"'));
+});
+
+test('normalization replaces an existing compiler-managed byline idempotently', () => {
+  const current = articleRecord('new-a');
+  const articles = [
+    current,
+    articleRecord('new-b'),
+    articleRecord('old', { published_date: '2026-07-22' }),
+  ];
+  const once = normalizeArticleHtml(current, articles);
+  const twice = normalizeArticleHtml({ ...current, html: once }, articles);
+
+  assert.equal(twice, once);
+});
+
+test('related selection uses newest non-self articles with slug tie-breaks', () => {
+  const articles = [
+    articleRecord('new-a', { published_date: '2026-07-23' }),
+    articleRecord('new-b', { published_date: '2026-07-23' }),
+    articleRecord('old', { published_date: '2026-07-22' }),
+  ];
+
+  assert.deepEqual(
+    selectRelatedArticles(articles, 'new-a').map(article => article.meta.slug),
+    ['new-b', 'old'],
+  );
+});
+
+test('normalization writes two unique canonical related cards and is idempotent', () => {
+  const current = articleRecord('new-a', { published_date: '2026-07-23' });
+  const articles = [
+    current,
+    articleRecord('new-b', { published_date: '2026-07-23' }),
+    articleRecord('old', { published_date: '2026-07-22' }),
+  ];
+  const once = normalizeArticleHtml(current, articles);
+  const targets = [...once.matchAll(/<a href="\/research\/([^"]+)" class="more-card">/g)]
+    .map(match => match[1]);
+
+  assert.deepEqual(targets, ['new-b', 'old']);
+  assert.equal(new Set(targets).size, 2);
+  assert.ok(!targets.includes(current.meta.slug));
+  assert.doesNotMatch(once, /rag-ranking-signal-amplification|brand-mention-llm-recommendation/);
+  assert.equal(normalizeArticleHtml({ ...current, html: once }, articles), once);
+});
 
 test('discovery reports all invalid candidates before writing', t => {
   const rootDir = makeFixture();
@@ -138,15 +222,46 @@ test('discovery orders equal dates by slug and otherwise newest first', t => {
   );
 });
 
-test('compileResearch reports the validated article count and slugs', t => {
+test('compileResearch writes normalized articles and reports the validated count and slugs', t => {
   const rootDir = makeFixture();
   t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
-  writeArticle(rootDir, 'article.html');
+  writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-22' });
 
   assert.deepEqual(compileResearch({ rootDir }), {
-    articleCount: 1,
-    articleSlugs: ['article'],
+    articleCount: 3,
+    writtenArticleCount: 3,
+    articleSlugs: ['new-a', 'new-b', 'old'],
   });
+  const normalized = fs.readFileSync(path.join(rootDir, 'research/new-a.html'), 'utf8');
+  assert.equal((normalized.match(/class="article-byline"/g) || []).length, 1);
+  assert.deepEqual(
+    [...normalized.matchAll(/<a href="\/research\/([^"]+)" class="more-card">/g)]
+      .map(match => match[1]),
+    ['new-b', 'old'],
+  );
+});
+
+test('compileResearch does not write any article until all normalizations succeed', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-22' });
+  const newAPath = path.join(rootDir, 'research/new-a.html');
+  const before = fs.readFileSync(newAPath, 'utf8');
+  const oldPath = path.join(rootDir, 'research/old.html');
+  fs.writeFileSync(oldPath, fs.readFileSync(oldPath, 'utf8').replace(
+    'class="arxiv-link"',
+    'class="broken-link"',
+  ));
+
+  assert.throws(
+    () => compileResearch({ rootDir }),
+    /old\.html: ambiguous byline insertion point/,
+  );
+  assert.equal(fs.readFileSync(newAPath, 'utf8'), before);
 });
 
 test('discovery requires the canonical RSS feed URL', t => {

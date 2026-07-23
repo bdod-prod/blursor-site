@@ -31,6 +31,138 @@ function findTags(html, name) {
   return html.match(new RegExp(`<${name}\\b[^>]*>`, 'gi')) || [];
 }
 
+function findBalancedDivBlock(html, openTag, fileName) {
+  const openStart = html.indexOf(openTag);
+  const contentStart = openStart + openTag.length;
+  const tagRe = /<\/?div\b[^>]*>/gi;
+  let depth = 1;
+  let match;
+  tagRe.lastIndex = contentStart;
+
+  while ((match = tagRe.exec(html))) {
+    if (/^<\/div\b/i.test(match[0])) depth -= 1;
+    else depth += 1;
+    if (depth === 0) {
+      return {
+        contentStart,
+        contentEnd: match.index,
+      };
+    }
+  }
+
+  throw new PublicationValidationError([
+    `${fileName}: unbalanced div starting ${openTag}`,
+  ]);
+}
+
+function findSingleClassTag(html, className, fileName) {
+  const classPattern = `\\bclass\\s*=\\s*(["'])[^"']*\\b${className}\\b[^"']*\\1`;
+  const matches = [...html.matchAll(new RegExp(`<div\\b(?=[^>]*${classPattern})[^>]*>`, 'gi'))];
+  if (matches.length !== 1) {
+    throw new PublicationValidationError([
+      `${fileName}: expected exactly one ${className} block`,
+    ]);
+  }
+  return matches[0][0];
+}
+
+function renderByline() {
+  return `<span class="sep">·</span>
+          <span class="article-byline">By <a href="${AUTHOR_PATH}" rel="author" class="article-byline__link">${AUTHOR_NAME}</a></span>`;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function fmtDate(value) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${value}T00:00:00Z`));
+}
+
+function selectRelatedArticles(articles, currentSlug, count = 2) {
+  const selected = articles
+    .filter(article => article.meta.slug !== currentSlug)
+    .slice(0, count);
+  if (selected.length !== count) {
+    throw new PublicationValidationError([
+      `${currentSlug}: expected ${count} non-self related articles, found ${selected.length}`,
+    ]);
+  }
+  return selected;
+}
+
+function renderRelatedCard(article) {
+  const meta = article.meta;
+  return `        <a href="/research/${escapeHtml(meta.slug)}" class="more-card">
+          <div class="more-card__meta">${escapeHtml(fmtDate(meta.published_date))} &middot; ${escapeHtml(meta.reading_time_min)} min read</div>
+          <h3 class="more-card__title">${escapeHtml(meta.title)}</h3>
+          <div class="more-card__source">arXiv:${escapeHtml(meta.arxiv_id)}</div>
+        </a>`;
+}
+
+function replaceBalancedDivContents(html, openTag, replacement, fileName) {
+  const { contentStart, contentEnd } = findBalancedDivBlock(html, openTag, fileName);
+  return `${html.slice(0, contentStart)}${replacement}${html.slice(contentEnd)}`;
+}
+
+function stripManagedBylines(contents) {
+  const bylineRe = /<span\b(?=[^>]*\bclass\s*=\s*(["'])[^"']*\barticle-byline\b[^"']*\1)[^>]*>[\s\S]*?<\/span>/gi;
+  const attachedSeparatorRe = /<span\b(?=[^>]*\bclass\s*=\s*(["'])[^"']*\bsep\b[^"']*\1)[^>]*>\s*·\s*<\/span>\s*$/i;
+  let result = '';
+  let cursor = 0;
+  let match;
+
+  while ((match = bylineRe.exec(contents))) {
+    result += contents.slice(cursor, match.index).replace(attachedSeparatorRe, '');
+    cursor = match.index + match[0].length;
+  }
+  return result + contents.slice(cursor);
+}
+
+function normalizeArticleHtml(article, articles) {
+  const fileName = article.fileName || path.basename(article.filePath || article.meta.slug);
+  const headerTag = findSingleClassTag(article.html, 'article-header__meta', fileName);
+  const { contentStart, contentEnd } = findBalancedDivBlock(article.html, headerTag, fileName);
+  const contents = stripManagedBylines(article.html.slice(contentStart, contentEnd));
+  const arxivRe = /<a\b(?=[^>]*\bclass\s*=\s*(["'])[^"']*\barxiv-link\b[^"']*\1)[^>]*>/gi;
+  const arxivMatches = [...contents.matchAll(arxivRe)];
+  if (arxivMatches.length !== 1) {
+    throw new PublicationValidationError([
+      `${fileName}: ambiguous byline insertion point (expected one arXiv link)`,
+    ]);
+  }
+
+  const arxiv = arxivMatches[0];
+  const beforeArxiv = contents.slice(0, arxiv.index);
+  const separatorRe = /<span\b(?=[^>]*\bclass\s*=\s*(["'])[^"']*\bsep\b[^"']*\1)[^>]*>\s*·\s*<\/span>\s*$/i;
+  const separator = separatorRe.exec(beforeArxiv);
+  if (!separator) {
+    throw new PublicationValidationError([
+      `${fileName}: ambiguous byline insertion point (expected separator before arXiv link)`,
+    ]);
+  }
+
+  const separatorStart = arxiv.index - (beforeArxiv.length - separator.index);
+  const separatorWhitespace = /\s*$/.exec(contents.slice(0, separatorStart))[0];
+  const normalizedContents = `${contents.slice(0, separatorStart - separatorWhitespace.length)}${renderByline()}
+          <span class="sep">·</span>${contents.slice(arxiv.index)}`;
+  const bylineHtml = `${article.html.slice(0, contentStart)}${normalizedContents}${article.html.slice(contentEnd)}`;
+  const related = selectRelatedArticles(articles, article.meta.slug);
+  const gridTag = findSingleClassTag(bylineHtml, 'more-articles__grid', fileName);
+  const gridContents = `\n${related.map(renderRelatedCard).join('\n')}\n      `;
+  return replaceBalancedDivContents(bylineHtml, gridTag, gridContents, fileName);
+}
+
 function isRealDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [year, month, day] = value.split('-').map(Number);
@@ -211,8 +343,21 @@ function discoverArticles({ rootDir }) {
 
 function compileResearch({ rootDir }) {
   const articles = discoverArticles({ rootDir });
+  const renderedArticles = articles.map(article => ({
+    filePath: article.filePath,
+    html: normalizeArticleHtml(article, articles),
+  }));
+  const changedArticles = renderedArticles.filter(({ filePath, html }) =>
+    fs.readFileSync(filePath, 'utf8') !== html,
+  );
+
+  for (const article of changedArticles) {
+    fs.writeFileSync(article.filePath, article.html);
+  }
+
   return {
     articleCount: articles.length,
+    writtenArticleCount: changedArticles.length,
     articleSlugs: articles.map(article => article.meta.slug),
   };
 }
@@ -224,4 +369,7 @@ module.exports = {
   PublicationValidationError,
   discoverArticles,
   compileResearch,
+  normalizeArticleHtml,
+  renderByline,
+  selectRelatedArticles,
 };
