@@ -258,7 +258,7 @@ function buildReviewedRecords(observations) {
   return { evidence, hypothesis, alternatives };
 }
 
-function closeSyntheticCase({ evidence, hypothesis, alternatives, comparison, baselineObservations, followupObservations }) {
+function closeSyntheticCase({ evidence, hypothesis, alternatives, comparison, baselineObservations, followupObservations, closureState }) {
   let record = createInvestigationCase({
     id: "kamran-investigation-01",
     projectId: "kamran-aghayev",
@@ -266,6 +266,8 @@ function closeSyntheticCase({ evidence, hypothesis, alternatives, comparison, ba
     methodVersion: V1_PROMPT_PANEL.methodologyVersion,
     panelId: V1_PROMPT_PANEL.id,
     panelVersion: V1_PROMPT_PANEL.version,
+    panelFingerprint: V1_PROMPT_PANEL.fingerprint,
+    cycleCount: WINDOWS[0].dates.length,
     language: "en",
     location: "US",
     surfaces: DEMO_SURFACES.map(({ id }) => id),
@@ -280,11 +282,20 @@ function closeSyntheticCase({ evidence, hypothesis, alternatives, comparison, ba
       note: "Synthetic hypothesis approved.",
       hypothesisReview: { evidence, hypothesis, alternatives },
     },
-    { to: "intervention_in_progress", at: "2026-07-29T09:00:00.000Z", note: "Synthetic intervention recorded." },
+    {
+      to: "intervention_in_progress",
+      at: "2026-07-29T09:00:00.000Z",
+      note: "Synthetic intervention recorded.",
+      intervention: {
+        label: "Synthetic intervention",
+        detail: "Add one consolidated public service statement to the fabricated example page.",
+        deployedAt: "2026-07-29T09:00:00.000Z",
+      },
+    },
     { to: "followup_collecting", at: "2026-08-05T09:00:00.000Z", note: "Synthetic follow-up opened." },
     { to: "followup_review", at: "2026-08-11T10:00:00.000Z", note: "Three synthetic follow-up cycles complete." },
     {
-      to: "closed_supported",
+      to: closureState,
       at: "2026-08-11T12:00:00.000Z",
       note: "Synthetic follow-up supports the test hypothesis without proving cause.",
       comparison: { receipt: comparison, baselineObservations, followupObservations },
@@ -294,7 +305,10 @@ function closeSyntheticCase({ evidence, hypothesis, alternatives, comparison, ba
   return record;
 }
 
-export function buildKamranSyntheticDemo() {
+export function buildKamranSyntheticDemo({ closureState = "closed_supported" } = {}) {
+  if (!["closed_supported", "closed_weakened", "closed_unresolved"].includes(closureState)) {
+    throw new Error("Unknown synthetic closure state.");
+  }
   const scope = validateV1InvestigationScope({
     projectId: "kamran-aghayev",
     location: "US",
@@ -311,6 +325,7 @@ export function buildKamranSyntheticDemo() {
     comparison: comparisonReceipt,
     baselineObservations,
     followupObservations,
+    closureState,
   });
   const dossier = buildInvestigationDossier({
     caseRecord,

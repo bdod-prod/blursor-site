@@ -4,6 +4,13 @@ import {
   assertStoredComparisonReceipt,
   validateFollowupComparisonReceipt,
 } from "./followup-comparison.mjs";
+import {
+  createExpectedCohortReceipt,
+  evaluateCohortAgainstExpectation,
+  validateExpectedCohortReceipt,
+} from "./expected-cohort.mjs";
+import { validatePanelFingerprint } from "./panel-identity.mjs";
+import { V1_PROMPT_PANEL } from "./v1-panel.mjs";
 
 export const INVESTIGATION_STATES = Object.freeze([
   "draft", "baseline_collecting", "evidence_review", "unresolved", "hypothesis_ready",
@@ -57,6 +64,70 @@ const validSurfaces = (surfaces) => Array.isArray(surfaces)
   && new Set(surfaces).size === surfaces.length;
 
 const historyError = (message) => new VisibilityError("INVALID_CASE_HISTORY", message);
+
+const normalizeIntervention = (value, eventAt, stored = false) => {
+  const error = (message) => {
+    if (stored) throw historyError(message);
+    throw new VisibilityError("INVALID_INTERVENTION", message);
+  };
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    if (stored) throw historyError("A structured intervention receipt is required.");
+    throw new VisibilityError("INTERVENTION_REQUIRED", "A structured intervention is required before follow-up.");
+  }
+  const label = String(value.label || "").trim();
+  if (!label) error("Intervention label is required.");
+  let deployedAt;
+  try {
+    deployedAt = date(value.deployedAt);
+  } catch {
+    error("Intervention deployment timestamp is invalid.");
+  }
+  if (new Date(deployedAt).getTime() > new Date(eventAt).getTime()) {
+    error("Intervention deployment cannot occur after its lifecycle event.");
+  }
+  return freeze({
+    schemaVersion: 1,
+    label,
+    detail: value.detail == null ? null : String(value.detail),
+    deployedAt,
+  });
+};
+
+const validateCaseScope = (record) => {
+  const identityFields = ["id", "projectId", "question", "methodVersion", "panelId", "language", "location"];
+  if (
+    record?.schemaVersion !== 1
+    || identityFields.some((field) => !String(record?.[field] || "").trim())
+    || !Number.isInteger(record?.panelVersion)
+    || record.panelVersion < 1
+    || !Number.isInteger(record?.cycleCount)
+    || record.cycleCount < 1
+    || !validSurfaces(record?.surfaces)
+  ) {
+    throw historyError("Case scope is invalid.");
+  }
+  try {
+    validatePanelFingerprint(record.panelFingerprint, {
+      panelId: record.panelId,
+      panelVersion: record.panelVersion,
+      methodologyVersion: record.methodVersion,
+    });
+    if (record.panelId === V1_PROMPT_PANEL.id && record.cycleCount < 3) {
+      throw new VisibilityError("INVALID_EXPECTED_COHORT", "The v1 case requires at least three cycles.");
+    }
+    validateExpectedCohortReceipt(record.expectedCohortReceipt, {
+      panelId: record.panelId,
+      panelVersion: record.panelVersion,
+      methodologyVersion: record.methodVersion,
+      panelFingerprint: record.panelFingerprint,
+      surfaces: record.surfaces,
+      cycleCount: record.cycleCount,
+    });
+  } catch (error) {
+    if (error?.code === "INVALID_CASE_HISTORY") throw error;
+    throw historyError(error?.message || "Case panel and expected cohort are invalid.");
+  }
+};
 
 const validateStoredHypothesisReceipt = (receipt, error) => {
   const evidenceIds = receipt?.reviewedEvidenceItemIds;
@@ -127,12 +198,16 @@ const validateHistoryGate = (from, event) => {
       throw historyError("A follow-up conclusion requires a valid comparable cohort receipt.");
     }
   }
+  if (event.to === "intervention_in_progress") {
+    normalizeIntervention(event.interventionReceipt, event.at, true);
+  }
 };
 
 const validateCaseHistory = (record) => {
   if (!record || typeof record !== "object" || !Array.isArray(record.events)) {
     throw historyError("Case history must contain an event array.");
   }
+  validateCaseScope(record);
   let previousAt;
   try {
     previousAt = new Date(date(record.createdAt)).getTime();
@@ -174,6 +249,8 @@ export function createInvestigationCase(input) {
     methodVersion: String(input?.methodVersion || "").trim(),
     panelId: String(input?.panelId || "").trim(),
     panelVersion: input?.panelVersion,
+    panelFingerprint: String(input?.panelFingerprint || "").trim(),
+    cycleCount: input?.cycleCount,
     language: String(input?.language || "").trim(),
     location: String(input?.location || "").trim(),
     surfaces: Array.isArray(suppliedSurfaces) ? [...suppliedSurfaces] : suppliedSurfaces,
@@ -187,7 +264,31 @@ export function createInvestigationCase(input) {
   if (!Number.isInteger(record.panelVersion) || record.panelVersion < 1 || !validSurfaces(record.surfaces)) {
     throw new VisibilityError("INVALID_CASE_SCOPE", "Case panel version and three distinct surface IDs are required.");
   }
+  validatePanelFingerprint(record.panelFingerprint, {
+    panelId: record.panelId,
+    panelVersion: record.panelVersion,
+    methodologyVersion: record.methodVersion,
+  });
+  if (!Number.isInteger(record.cycleCount) || record.cycleCount < 1) {
+    throw new VisibilityError("INVALID_CASE_SCOPE", "Case cycle count must be a positive integer.");
+  }
+  if (record.panelId === V1_PROMPT_PANEL.id && record.cycleCount < 3) {
+    throw new VisibilityError("INVALID_CASE_SCOPE", "The v1 case requires at least three cycles.");
+  }
+  record.expectedCohortReceipt = createExpectedCohortReceipt({
+    panelId: record.panelId,
+    panelVersion: record.panelVersion,
+    methodologyVersion: record.methodVersion,
+    panelFingerprint: record.panelFingerprint,
+    surfaces: record.surfaces,
+    cycleCount: record.cycleCount,
+  });
   return freeze(record);
+}
+
+export function validateInvestigationCase(record) {
+  validateCaseHistory(record);
+  return freeze(clone(record));
 }
 
 export function transitionInvestigationCase(record, transition) {
@@ -211,15 +312,40 @@ export function transitionInvestigationCase(record, transition) {
   const hypothesisReviewReceipt = to === "hypothesis_ready"
     ? createHypothesisReviewReceipt(transition?.hypothesisReview)
     : null;
+  const interventionReceipt = to === "intervention_in_progress"
+    ? normalizeIntervention(transition?.intervention, eventAt)
+    : null;
   let comparisonReceipt = null;
   if (to.startsWith("closed_") && record.state === "followup_review") {
     const comparison = transition?.comparison;
+    evaluateCohortAgainstExpectation(comparison?.baselineObservations, record.expectedCohortReceipt, {
+      field: "baselineObservations",
+      requireComplete: true,
+    });
+    evaluateCohortAgainstExpectation(comparison?.followupObservations, record.expectedCohortReceipt, {
+      field: "followupObservations",
+      requireComplete: true,
+    });
     comparisonReceipt = validateFollowupComparisonReceipt(comparison?.receipt, {
       baselineObservations: comparison?.baselineObservations,
       followupObservations: comparison?.followupObservations,
     });
     if (!comparisonReceipt.comparable) {
       throw new VisibilityError("FOLLOWUP_NOT_COMPARABLE", "A follow-up conclusion requires comparable observation cohorts.");
+    }
+    const intervention = record.events.find(({ to: priorTo }) => priorTo === "intervention_in_progress")?.interventionReceipt;
+    if (!intervention) {
+      throw new VisibilityError("INTERVENTION_REQUIRED", "A stored structured intervention is required before closure.");
+    }
+    const deployedMs = new Date(intervention.deployedAt).getTime();
+    const baselineBefore = comparison.baselineObservations.every((observation) => (
+      new Date(observation.observationCompletedAt).getTime() < deployedMs
+    ));
+    const followupAfter = comparison.followupObservations.every((observation) => (
+      new Date(observation.observationStartedAt).getTime() > deployedMs
+    ));
+    if (!baselineBefore || !followupAfter) {
+      throw new VisibilityError("INVALID_INTERVENTION_TIME_BOUNDARY", "Baseline must precede and follow-up must follow the intervention.");
     }
   }
   const reviewer = reviewName(transition?.reviewer);
@@ -231,6 +357,7 @@ export function transitionInvestigationCase(record, transition) {
     reviewer,
     note: String(transition?.note || "").trim(),
     hypothesisReviewReceipt,
+    interventionReceipt,
     comparisonReceipt,
   };
   const history = record.events.map((previousEvent) => clone(previousEvent));

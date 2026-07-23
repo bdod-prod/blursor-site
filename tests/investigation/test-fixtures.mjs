@@ -23,7 +23,14 @@ export function makeObservation(overrides = {}) {
   const windowName = overrides.windowName || "baseline";
   const prompt = overrides.prompt || V1_PROMPT_PANEL.prompts[0];
   const surface = overrides.surface || SYNTHETIC_SURFACE;
-  const rawAnswer = overrides.rawAnswer ?? "Synthetic fixture answer without the investigated brand.";
+  const state = overrides.state || "success";
+  const rawAnswer = overrides.rawAnswer !== undefined
+    ? overrides.rawAnswer
+    : state === "success"
+      ? "Synthetic fixture answer without the investigated brand."
+      : state === "refused"
+        ? "Synthetic fixture refusal."
+        : null;
   return normalizeObservation({
     id: overrides.id || `${windowName}-${day}-${surface.id}-${prompt.id}`,
     investigationId: "kamran-investigation-01",
@@ -32,26 +39,30 @@ export function makeObservation(overrides = {}) {
     panelId: V1_PROMPT_PANEL.id,
     panelVersion: V1_PROMPT_PANEL.version,
     methodologyVersion: V1_PROMPT_PANEL.methodologyVersion,
-    panelFingerprint: V1_PROMPT_PANEL.fingerprint,
+    panelFingerprint: overrides.panelFingerprint || V1_PROMPT_PANEL.fingerprint,
     runId: `${windowName}-${day}`,
     repeatOrdinal: overrides.repeatOrdinal || 1,
-    state: "success",
+    state,
     surfaceId: surface.id,
     surfaceLabel: surface.label,
     collectionClass: "synthetic_fixture",
     synthetic: true,
-    scheduledAt: `${day}T09:00:00.000Z`,
-    observationStartedAt: `${day}T09:00:00.000Z`,
-    observationCompletedAt: `${day}T09:00:02.000Z`,
+    scheduledAt: overrides.scheduledAt || `${day}T09:00:00.000Z`,
+    observationStartedAt: overrides.observationStartedAt || `${day}T09:00:00.000Z`,
+    observationCompletedAt: overrides.observationCompletedAt || `${day}T09:00:02.000Z`,
     adapterVersion: "synthetic-adapter-1",
     supplierVersion: null,
     extractorVersion: "answer-evidence-1",
-    reviewStatus: "reviewed",
+    reviewStatus: overrides.reviewStatus || "reviewed",
     retryCount: 0,
     cost: { currency: "USD", microAmount: 0 },
     requestId: null,
     responseId: null,
-    responseHash: "68ed3796366768f986f8d7196479e15063b9814473578b2212c2fb6ec21146a6",
+    responseHash: overrides.responseHash !== undefined
+      ? overrides.responseHash
+      : ["success", "refused"].includes(state)
+        ? "68ed3796366768f986f8d7196479e15063b9814473578b2212c2fb6ec21146a6"
+        : null,
     requestConfig: {
       promptText: prompt.text,
       wrapper: "Synthetic US-English investigation fixture.",
@@ -69,10 +80,13 @@ export function makeObservation(overrides = {}) {
       ...(overrides.requestConfig || {}),
     },
     rawAnswer,
-    citations: [],
-    sources: [],
-    providerRationale: null,
+    citations: overrides.citations || [],
+    sources: overrides.sources || [],
+    providerRationale: overrides.providerRationale || null,
     featureFlags: { fabricated: true },
+    failure: state === "failed"
+      ? (overrides.failure || { code: "synthetic_failure", message: "Synthetic failure.", retryable: false })
+      : null,
   });
 }
 

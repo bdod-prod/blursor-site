@@ -1,5 +1,6 @@
 import { getVisibilitySurface } from "../visibility/surface-registry.mjs";
 import { VisibilityError } from "../visibility/visibility-error.mjs";
+import { validatePanelFingerprint } from "./panel-identity.mjs";
 
 export const OBSERVATION_STATES = Object.freeze(["success", "refused", "missing_answer", "failed"]);
 export const COLLECTION_CLASSES = Object.freeze(["official_api", "supplier", "consumer_interface", "native_dashboard", "synthetic_fixture"]);
@@ -18,26 +19,6 @@ const timestamp = (value, field) => {
 };
 
 const version = (value, code, message) => required(value, code, message);
-
-const normalizePanelFingerprint = (value, identity) => {
-  const fingerprint = required(value, "INVALID_PANEL_FINGERPRINT", "Prompt-panel fingerprint is required.");
-  let parsed;
-  try {
-    parsed = JSON.parse(fingerprint);
-  } catch {
-    throw new VisibilityError("INVALID_PANEL_FINGERPRINT", "Prompt-panel fingerprint must use the canonical identity serialization.");
-  }
-  if (
-    parsed?.schema !== "prompt-panel-identity-v1"
-    || parsed.id !== identity.panelId
-    || parsed.version !== identity.panelVersion
-    || parsed.methodologyVersion !== identity.methodologyVersion
-    || !Array.isArray(parsed.prompts)
-  ) {
-    throw new VisibilityError("PANEL_IDENTITY_MISMATCH", "Observation prompt-panel identity does not match its canonical fingerprint.");
-  }
-  return { fingerprint, parsed };
-};
 
 const normalizeCost = (input) => {
   if (input == null) return null;
@@ -118,8 +99,8 @@ export function normalizeObservation(input) {
   const methodologyVersion = required(input?.methodologyVersion, "INVALID_METHODOLOGY_VERSION", "Observation methodology version is required.");
   if (!/^\d+\.\d+$/.test(methodologyVersion)) throw new VisibilityError("INVALID_METHODOLOGY_VERSION", "Observation methodology version must use major.minor format.");
   const promptId = required(input?.promptId, "INVALID_PROMPT_ID", "Prompt ID is required.");
-  const panelIdentity = normalizePanelFingerprint(input?.panelFingerprint, { panelId, panelVersion, methodologyVersion });
-  const promptIdentity = panelIdentity.parsed.prompts.find((prompt) => prompt?.id === promptId);
+  const panelIdentity = validatePanelFingerprint(input?.panelFingerprint, { panelId, panelVersion, methodologyVersion });
+  const promptIdentity = panelIdentity.panel.prompts.find((prompt) => prompt.id === promptId);
   const promptText = required(config.promptText, "PROMPT_TEXT_REQUIRED", "Exact prompt text is required.");
   if (!promptIdentity || promptIdentity.text !== promptText) {
     throw new VisibilityError("PROMPT_IDENTITY_MISMATCH", "Observation prompt does not match the canonical panel fingerprint.");

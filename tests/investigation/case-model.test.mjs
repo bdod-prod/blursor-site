@@ -6,8 +6,11 @@ import {
   createInvestigationCase,
   transitionInvestigationCase,
 } from "../../functions/lib/investigation/case-model.mjs";
+import { createExpectedCohortReceipt } from "../../functions/lib/investigation/expected-cohort.mjs";
 import { createFollowupComparisonReceipt } from "../../functions/lib/investigation/followup-comparison.mjs";
-import { hypothesisReview, makeObservation } from "./test-fixtures.mjs";
+import { V1_PROMPT_PANEL } from "../../functions/lib/investigation/v1-scope.mjs";
+import { validatePromptPanel } from "../../functions/lib/visibility/prompt-panel.mjs";
+import { SYNTHETIC_SURFACES, hypothesisReview, makeObservation } from "./test-fixtures.mjs";
 
 function caseInput(overrides = {}) {
   return {
@@ -17,6 +20,8 @@ function caseInput(overrides = {}) {
     methodVersion: "0.2",
     panelId: "kamran-us-en-v1",
     panelVersion: 1,
+    panelFingerprint: V1_PROMPT_PANEL.fingerprint,
+    cycleCount: 3,
     language: "en",
     location: "US",
     surfaces: [
@@ -39,9 +44,19 @@ function transition(record, to, at, extra = {}) {
   });
 }
 
-function comparableFollowup() {
-  const baselineObservations = [makeObservation({ day: "2026-07-22", windowName: "baseline" })];
-  const followupObservations = [makeObservation({ day: "2026-08-05", windowName: "followup" })];
+function cohort(windowName, days, prompts = V1_PROMPT_PANEL.prompts) {
+  return days.flatMap((day, repeatIndex) => SYNTHETIC_SURFACES.flatMap((surface) => prompts.map((prompt) => (
+    makeObservation({ day, windowName, repeatOrdinal: repeatIndex + 1, surface, prompt })
+  ))));
+}
+
+function comparableFollowup({
+  baselineDays = ["2026-07-22", "2026-07-25", "2026-07-28"],
+  followupDays = ["2026-08-05", "2026-08-08", "2026-08-11"],
+  prompts = V1_PROMPT_PANEL.prompts,
+} = {}) {
+  const baselineObservations = cohort("baseline", baselineDays, prompts);
+  const followupObservations = cohort("followup", followupDays, prompts);
   return {
     receipt: createFollowupComparisonReceipt({ baselineObservations, followupObservations }),
     baselineObservations,
@@ -54,7 +69,13 @@ function advanceToFollowupReview() {
   record = transition(record, "baseline_collecting", "2026-07-22T09:01:00.000Z");
   record = transition(record, "evidence_review", "2026-07-28T09:01:00.000Z");
   record = transition(record, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { hypothesisReview: hypothesisReview() });
-  record = transition(record, "intervention_in_progress", "2026-07-29T10:00:00.000Z");
+  record = transition(record, "intervention_in_progress", "2026-07-29T10:00:00.000Z", {
+    intervention: {
+      label: "Synthetic intervention",
+      detail: "Add one consolidated public service statement.",
+      deployedAt: "2026-07-29T09:00:00.000Z",
+    },
+  });
   record = transition(record, "followup_collecting", "2026-08-05T10:00:00.000Z");
   return transition(record, "followup_review", "2026-08-12T10:00:00.000Z");
 }
@@ -66,12 +87,102 @@ test("follows the approved lifecycle through reviewed evidence and comparable co
   assert.equal(record.state, "closed_supported");
   assert.equal(record.events.length, 7);
   assert.equal(record.events[2].hypothesisReviewReceipt.reviewedEvidenceItemIds.length, 1);
+  assert.equal(record.events[3].interventionReceipt.deployedAt, "2026-07-29T09:00:00.000Z");
   assert.equal(record.events.at(-1).comparisonReceipt.comparable, true);
   assert.deepEqual(INVESTIGATION_STATES, [
     "draft", "baseline_collecting", "evidence_review", "unresolved", "hypothesis_ready",
     "intervention_in_progress", "followup_collecting", "followup_review",
     "closed_supported", "closed_weakened", "closed_unresolved",
   ]);
+});
+
+test("freezes the canonical panel fingerprint and complete expected v1 cohort on the case", () => {
+  const record = createInvestigationCase(caseInput());
+
+  assert.equal(record.panelFingerprint, V1_PROMPT_PANEL.fingerprint);
+  assert.equal(record.cycleCount, 3);
+  assert.equal(record.expectedCohortReceipt.expectedCount, 135);
+  assert.deepEqual(record.expectedCohortReceipt.promptIds, V1_PROMPT_PANEL.prompts.map(({ id }) => id));
+  assert.deepEqual(record.expectedCohortReceipt.surfaceIds, caseInput().surfaces);
+  assert.deepEqual(record.expectedCohortReceipt.repeatOrdinals, [1, 2, 3]);
+  assert.equal(Object.isFrozen(record.expectedCohortReceipt), true);
+});
+
+test("rejects a self-consistent mutation of the frozen v1 panel", () => {
+  const mutated = JSON.parse(V1_PROMPT_PANEL.fingerprint);
+  mutated.prompts[0].text = "Mutated but internally consistent prompt.";
+
+  assert.throws(
+    () => createInvestigationCase(caseInput({ panelFingerprint: JSON.stringify(mutated) })),
+    (error) => error.code === "V1_PANEL_FINGERPRINT_MISMATCH",
+  );
+});
+
+test("rejects an expected cohort derived from a different case fingerprint", () => {
+  const panel = (text) => validatePromptPanel({
+    id: "custom-test-panel",
+    version: 1,
+    methodologyVersion: "0.2",
+    prompts: [{ id: "prompt-01", text, language: "en", intent: "discovery" }],
+  });
+  const casePanel = panel("Canonical case prompt.");
+  const differentPanel = panel("Different prompt with the same public identity.");
+  const record = createInvestigationCase(caseInput({
+    panelId: casePanel.id,
+    panelVersion: casePanel.version,
+    methodVersion: casePanel.methodologyVersion,
+    panelFingerprint: casePanel.fingerprint,
+  }));
+  const forged = {
+    ...record,
+    expectedCohortReceipt: createExpectedCohortReceipt({
+      panelId: differentPanel.id,
+      panelVersion: differentPanel.version,
+      methodologyVersion: differentPanel.methodologyVersion,
+      panelFingerprint: differentPanel.fingerprint,
+      surfaces: record.surfaces,
+      cycleCount: record.cycleCount,
+    }),
+  };
+
+  assert.throws(
+    () => transition(forged, "baseline_collecting", "2026-07-22T09:01:00.000Z"),
+    (error) => error.code === "INVALID_CASE_HISTORY",
+  );
+});
+
+test("requires and stores a structured intervention before follow-up", () => {
+  let record = createInvestigationCase(caseInput());
+  record = transition(record, "baseline_collecting", "2026-07-22T09:01:00.000Z");
+  record = transition(record, "evidence_review", "2026-07-28T09:01:00.000Z");
+  record = transition(record, "hypothesis_ready", "2026-07-28T10:00:00.000Z", { hypothesisReview: hypothesisReview() });
+
+  assert.throws(
+    () => transition(record, "intervention_in_progress", "2026-07-29T10:00:00.000Z"),
+    (error) => error.code === "INTERVENTION_REQUIRED",
+  );
+  assert.throws(
+    () => transition(record, "intervention_in_progress", "2026-07-29T10:00:00.000Z", {
+      intervention: { label: "Synthetic", deployedAt: "not-a-time" },
+    }),
+    (error) => error.code === "INVALID_INTERVENTION",
+  );
+});
+
+test("rejects sparse and temporally invalid follow-up closure cohorts", () => {
+  const record = advanceToFollowupReview();
+  assert.throws(
+    () => transition(record, "closed_supported", "2026-08-12T11:00:00.000Z", {
+      comparison: comparableFollowup({ prompts: [V1_PROMPT_PANEL.prompts[0]] }),
+    }),
+    (error) => error.code === "INCOMPLETE_EXPECTED_COHORT",
+  );
+  assert.throws(
+    () => transition(record, "closed_supported", "2026-08-12T11:00:00.000Z", {
+      comparison: comparableFollowup({ followupDays: ["2026-07-20", "2026-07-23", "2026-07-26"] }),
+    }),
+    (error) => error.code === "INVALID_INTERVENTION_TIME_BOUNDARY",
+  );
 });
 
 test("rejects transitions outside the approved lifecycle", () => {
@@ -144,7 +255,7 @@ test("rejects raw or fabricated comparability gates", () => {
   );
   assert.throws(
     () => transition(record, "closed_supported", "2026-08-12T11:00:00.000Z", {
-      comparison: { receipt: { comparable: true }, baselineObservations: [], followupObservations: [] },
+      comparison: { ...comparableFollowup(), receipt: { comparable: true } },
     }),
     (error) => error.code === "INVALID_COMPARISON_RECEIPT",
   );
