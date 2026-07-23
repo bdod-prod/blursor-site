@@ -150,6 +150,7 @@ function buildReviewedRecords(observations) {
     && promptId === "prompt-01"
   ));
   const claim = extractAnswerEvidence(citationObservation, EXTRACTION_CONFIG).claims[0];
+  const rationaleClaim = extractAnswerEvidence(rationaleObservation, EXTRACTION_CONFIG).claims[0];
   const evidenceItems = [
     {
       id: "e-citation",
@@ -230,7 +231,7 @@ function buildReviewedRecords(observations) {
     },
   ];
   const evidence = {
-    claims: [claim],
+    claims: [claim, rationaleClaim],
     evidenceItems,
     relations: [
       { claimId: claim.id, evidenceItemId: "e-citation", relation: "supports" },
@@ -238,7 +239,7 @@ function buildReviewedRecords(observations) {
       { claimId: claim.id, evidenceItemId: "e-page", relation: "supports" },
       { claimId: claim.id, evidenceItemId: "e-checker", relation: "contextualizes" },
       { claimId: claim.id, evidenceItemId: "e-contradiction", relation: "contradicts" },
-      { claimId: claim.id, evidenceItemId: "e-rationale", relation: "contextualizes" },
+      { claimId: rationaleClaim.id, evidenceItemId: "e-rationale", relation: "contextualizes" },
     ],
   };
   const hypothesis = {
@@ -268,6 +269,7 @@ function closeSyntheticCase({ evidence, hypothesis, alternatives, comparison, ba
     panelVersion: V1_PROMPT_PANEL.version,
     panelFingerprint: V1_PROMPT_PANEL.fingerprint,
     cycleCount: WINDOWS[0].dates.length,
+    cadenceDays: 3,
     language: "en",
     location: "US",
     surfaces: DEMO_SURFACES.map(({ id }) => id),

@@ -1,5 +1,5 @@
 import { VisibilityError } from "../visibility/visibility-error.mjs";
-import { buildEvidenceTrace } from "./evidence-trace.mjs";
+import { validateCohortCadence } from "./cohort-cadence.mjs";
 import {
   assertStoredComparisonReceipt,
   validateFollowupComparisonReceipt,
@@ -9,8 +9,12 @@ import {
   evaluateCohortAgainstExpectation,
   validateExpectedCohortReceipt,
 } from "./expected-cohort.mjs";
+import {
+  assertStoredHypothesisReviewReceipt,
+  createHypothesisReviewReceipt,
+} from "./hypothesis-review.mjs";
 import { validatePanelFingerprint } from "./panel-identity.mjs";
-import { V1_PROMPT_PANEL } from "./v1-panel.mjs";
+import { V1_INVESTIGATION_SCOPE, V1_PROMPT_PANEL } from "./v1-scope.mjs";
 
 export const INVESTIGATION_STATES = Object.freeze([
   "draft", "baseline_collecting", "evidence_review", "unresolved", "hypothesis_ready",
@@ -65,6 +69,21 @@ const validSurfaces = (surfaces) => Array.isArray(surfaces)
 
 const historyError = (message) => new VisibilityError("INVALID_CASE_HISTORY", message);
 
+const assertV1Scope = (record, error) => {
+  if (record.panelId !== V1_PROMPT_PANEL.id) return;
+  if (
+    record.projectId !== V1_INVESTIGATION_SCOPE.projectId
+    || record.language !== V1_INVESTIGATION_SCOPE.language
+    || record.location !== V1_INVESTIGATION_SCOPE.location
+    || record.cadenceDays !== V1_INVESTIGATION_SCOPE.cadenceDays
+    || record.panelVersion !== V1_INVESTIGATION_SCOPE.panelVersion
+    || record.methodVersion !== V1_INVESTIGATION_SCOPE.methodologyVersion
+    || record.panelFingerprint !== V1_INVESTIGATION_SCOPE.panelFingerprint
+  ) {
+    throw error("The frozen v1 case requires the canonical Kamran, English, US, three-day panel identity.");
+  }
+};
+
 const normalizeIntervention = (value, eventAt, stored = false) => {
   const error = (message) => {
     if (stored) throw historyError(message);
@@ -102,6 +121,8 @@ const validateCaseScope = (record) => {
     || record.panelVersion < 1
     || !Number.isInteger(record?.cycleCount)
     || record.cycleCount < 1
+    || !Number.isInteger(record?.cadenceDays)
+    || record.cadenceDays < 1
     || !validSurfaces(record?.surfaces)
   ) {
     throw historyError("Case scope is invalid.");
@@ -112,6 +133,7 @@ const validateCaseScope = (record) => {
       panelVersion: record.panelVersion,
       methodologyVersion: record.methodVersion,
     });
+    assertV1Scope(record, historyError);
     if (record.panelId === V1_PROMPT_PANEL.id && record.cycleCount < 3) {
       throw new VisibilityError("INVALID_EXPECTED_COHORT", "The v1 case requires at least three cycles.");
     }
@@ -129,66 +151,9 @@ const validateCaseScope = (record) => {
   }
 };
 
-const validateStoredHypothesisReceipt = (receipt, error) => {
-  const evidenceIds = receipt?.reviewedEvidenceItemIds;
-  const alternativeIds = receipt?.reviewedAlternativeIds;
-  if (
-    receipt?.schemaVersion !== 1
-    || typeof receipt.hypothesisId !== "string"
-    || !receipt.hypothesisId
-    || !Array.isArray(evidenceIds)
-    || evidenceIds.length < 1
-    || evidenceIds.some((id) => typeof id !== "string" || !id)
-    || new Set(evidenceIds).size !== evidenceIds.length
-    || !Array.isArray(alternativeIds)
-    || alternativeIds.length < 1
-    || alternativeIds.some((id) => typeof id !== "string" || !id)
-    || new Set(alternativeIds).size !== alternativeIds.length
-  ) {
-    throw error("A reviewed hypothesis requires structured evidence and alternatives.");
-  }
-  return receipt;
-};
-
-const createHypothesisReviewReceipt = (review) => {
-  if (!review || typeof review !== "object") {
-    throw new VisibilityError("HYPOTHESIS_REVIEW_INCOMPLETE", "A reviewed hypothesis record is required.");
-  }
-  const hypothesisId = String(review.hypothesis?.id || "").trim();
-  if (!hypothesisId || review.hypothesis?.reviewState !== "approved") {
-    throw new VisibilityError("HYPOTHESIS_REVIEW_INCOMPLETE", "The hypothesis must be an approved structured record.");
-  }
-  const reviewedAlternatives = (review.alternatives || []).filter((alternative) => (
-    alternative?.reviewState === "reviewed"
-    && String(alternative?.id || "").trim()
-    && String(alternative?.wording || "").trim()
-    && String(alternative?.disposition || "").trim()
-  ));
-  if (reviewedAlternatives.length === 0) {
-    throw new VisibilityError("HYPOTHESIS_REVIEW_INCOMPLETE", "At least one reviewed alternative record is required.");
-  }
-  const trace = buildEvidenceTrace(review.evidence || {});
-  const reviewedEvidenceItemIds = [...new Set(trace.claims.flatMap(({ evidence }) => evidence
-    .filter(({ relation, item }) => (
-      item.reviewState === "reviewed"
-      && !["provider_rationale", "analyst_annotation"].includes(item.type)
-      && ["supports", "contextualizes"].includes(relation)
-    ))
-    .map(({ item }) => item.id)))].sort();
-  if (reviewedEvidenceItemIds.length === 0) {
-    throw new VisibilityError("HYPOTHESIS_REVIEW_INCOMPLETE", "Reviewed independent evidence must support or contextualize the hypothesis.");
-  }
-  return freeze({
-    schemaVersion: 1,
-    hypothesisId,
-    reviewedEvidenceItemIds,
-    reviewedAlternativeIds: reviewedAlternatives.map(({ id }) => String(id).trim()).sort(),
-  });
-};
-
 const validateHistoryGate = (from, event) => {
   if (event.to === "hypothesis_ready") {
-    validateStoredHypothesisReceipt(event.hypothesisReviewReceipt, historyError);
+    assertStoredHypothesisReviewReceipt(event.hypothesisReviewReceipt, historyError);
   }
   if (event.to.startsWith("closed_") && from === "followup_review") {
     try {
@@ -251,6 +216,7 @@ export function createInvestigationCase(input) {
     panelVersion: input?.panelVersion,
     panelFingerprint: String(input?.panelFingerprint || "").trim(),
     cycleCount: input?.cycleCount,
+    cadenceDays: input?.cadenceDays,
     language: String(input?.language || "").trim(),
     location: String(input?.location || "").trim(),
     surfaces: Array.isArray(suppliedSurfaces) ? [...suppliedSurfaces] : suppliedSurfaces,
@@ -272,6 +238,10 @@ export function createInvestigationCase(input) {
   if (!Number.isInteger(record.cycleCount) || record.cycleCount < 1) {
     throw new VisibilityError("INVALID_CASE_SCOPE", "Case cycle count must be a positive integer.");
   }
+  if (!Number.isInteger(record.cadenceDays) || record.cadenceDays < 1) {
+    throw new VisibilityError("INVALID_CASE_SCOPE", "Case cadence must be a positive integer number of days.");
+  }
+  assertV1Scope(record, (message) => new VisibilityError("INVALID_CASE_SCOPE", message));
   if (record.panelId === V1_PROMPT_PANEL.id && record.cycleCount < 3) {
     throw new VisibilityError("INVALID_CASE_SCOPE", "The v1 case requires at least three cycles.");
   }
@@ -326,6 +296,16 @@ export function transitionInvestigationCase(record, transition) {
       field: "followupObservations",
       requireComplete: true,
     });
+    validateCohortCadence(comparison?.baselineObservations, {
+      cadenceDays: record.cadenceDays,
+      repeatOrdinals: record.expectedCohortReceipt.repeatOrdinals,
+      field: "baselineObservations",
+    });
+    validateCohortCadence(comparison?.followupObservations, {
+      cadenceDays: record.cadenceDays,
+      repeatOrdinals: record.expectedCohortReceipt.repeatOrdinals,
+      field: "followupObservations",
+    });
     comparisonReceipt = validateFollowupComparisonReceipt(comparison?.receipt, {
       baselineObservations: comparison?.baselineObservations,
       followupObservations: comparison?.followupObservations,
@@ -346,6 +326,17 @@ export function transitionInvestigationCase(record, transition) {
     ));
     if (!baselineBefore || !followupAfter) {
       throw new VisibilityError("INVALID_INTERVENTION_TIME_BOUNDARY", "Baseline must precede and follow-up must follow the intervention.");
+    }
+    const closureMs = new Date(eventAt).getTime();
+    const observationsBeforeClosure = [
+      ...comparison.baselineObservations,
+      ...comparison.followupObservations,
+    ].every(({ observationCompletedAt }) => new Date(observationCompletedAt).getTime() <= closureMs);
+    if (!observationsBeforeClosure) {
+      throw new VisibilityError(
+        "INVALID_CLOSURE_TIME_BOUNDARY",
+        "Closure observations cannot finish after the closure event.",
+      );
     }
   }
   const reviewer = reviewName(transition?.reviewer);

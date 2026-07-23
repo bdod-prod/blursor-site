@@ -109,7 +109,16 @@ export function reviewedEvidence(overrides = {}) {
 
 export function hypothesisReview() {
   return {
-    hypothesis: { id: "hypothesis-1", reviewState: "approved" },
+    hypothesis: {
+      id: "hypothesis-1",
+      wording: "Synthetic hypothesis.",
+      confidence: "bounded",
+      basis: ["Evidence"],
+      contradictions: [],
+      inferenceSteps: ["Inference"],
+      falsifier: "A repeat disagrees.",
+      reviewState: "approved",
+    },
     alternatives: [{
       id: "alternative-1",
       wording: "Normal surface variation.",

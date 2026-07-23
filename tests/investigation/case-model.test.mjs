@@ -22,6 +22,7 @@ function caseInput(overrides = {}) {
     panelVersion: 1,
     panelFingerprint: V1_PROMPT_PANEL.fingerprint,
     cycleCount: 3,
+    cadenceDays: 3,
     language: "en",
     location: "US",
     surfaces: [
@@ -101,6 +102,7 @@ test("freezes the canonical panel fingerprint and complete expected v1 cohort on
 
   assert.equal(record.panelFingerprint, V1_PROMPT_PANEL.fingerprint);
   assert.equal(record.cycleCount, 3);
+  assert.equal(record.cadenceDays, 3);
   assert.equal(record.expectedCohortReceipt.expectedCount, 135);
   assert.deepEqual(record.expectedCohortReceipt.promptIds, V1_PROMPT_PANEL.prompts.map(({ id }) => id));
   assert.deepEqual(record.expectedCohortReceipt.surfaceIds, caseInput().surfaces);
@@ -182,6 +184,38 @@ test("rejects sparse and temporally invalid follow-up closure cohorts", () => {
       comparison: comparableFollowup({ followupDays: ["2026-07-20", "2026-07-23", "2026-07-26"] }),
     }),
     (error) => error.code === "INVALID_INTERVENTION_TIME_BOUNDARY",
+  );
+});
+
+test("rejects nominal cycles that do not preserve the frozen three-day cadence", () => {
+  const record = advanceToFollowupReview();
+  for (const windowName of ["baseline", "followup"]) {
+    const comparison = comparableFollowup();
+    comparison[`${windowName}Observations`] = comparison[`${windowName}Observations`].map((observation) => ({
+      ...observation,
+      scheduledAt: windowName === "baseline" ? "2026-07-22T09:00:00.000Z" : "2026-08-05T09:00:00.000Z",
+      observationStartedAt: windowName === "baseline" ? "2026-07-22T09:00:00.000Z" : "2026-08-05T09:00:00.000Z",
+      observationCompletedAt: windowName === "baseline" ? "2026-07-22T09:00:02.000Z" : "2026-08-05T09:00:02.000Z",
+    }));
+    comparison.receipt = createFollowupComparisonReceipt(comparison);
+
+    assert.throws(
+      () => transition(record, "closed_supported", "2026-08-12T11:00:00.000Z", { comparison }),
+      (error) => error.code === "INVALID_COHORT_CADENCE",
+      windowName,
+    );
+  }
+});
+
+test("rejects closure observations that finish after the closure event", () => {
+  const record = advanceToFollowupReview();
+  const comparison = comparableFollowup({
+    followupDays: ["2030-08-05", "2030-08-08", "2030-08-11"],
+  });
+
+  assert.throws(
+    () => transition(record, "closed_supported", "2026-08-12T11:00:00.000Z", { comparison }),
+    (error) => error.code === "INVALID_CLOSURE_TIME_BOUNDARY",
   );
 });
 
@@ -298,6 +332,16 @@ test("rejects forged case state and malformed replay receipts", () => {
     () => transition(malformed, "intervention_in_progress", "2026-07-29T10:00:00.000Z"),
     (error) => error.code === "INVALID_CASE_HISTORY",
   );
+  const forgedFingerprint = {
+    ...reviewed,
+    events: reviewed.events.map((event) => event.to === "hypothesis_ready"
+      ? { ...event, hypothesisReviewReceipt: { ...event.hypothesisReviewReceipt, reviewFingerprint: "{}" } }
+      : event),
+  };
+  assert.throws(
+    () => transition(forgedFingerprint, "intervention_in_progress", "2026-07-29T10:00:00.000Z"),
+    (error) => error.code === "INVALID_CASE_HISTORY",
+  );
 });
 
 test("requires exactly three distinct ID-like surfaces", () => {
@@ -310,6 +354,23 @@ test("requires exactly three distinct ID-like surfaces", () => {
     assert.throws(
       () => createInvestigationCase(caseInput({ surfaces })),
       (error) => error.code === "INVALID_CASE_SCOPE",
+    );
+  }
+});
+
+test("enforces the complete canonical v1 case identity", () => {
+  const scenarios = [
+    { projectId: "different-project" },
+    { language: "ru" },
+    { location: "GB" },
+    { cadenceDays: 2 },
+  ];
+
+  for (const override of scenarios) {
+    assert.throws(
+      () => createInvestigationCase(caseInput(override)),
+      (error) => error.code === "INVALID_CASE_SCOPE",
+      JSON.stringify(override),
     );
   }
 });

@@ -1,9 +1,14 @@
 import { VisibilityError } from "../visibility/visibility-error.mjs";
 import { extractAnswerEvidence } from "./answer-extractor.mjs";
 import { validateInvestigationCase } from "./case-model.mjs";
+import { validateCohortCadence } from "./cohort-cadence.mjs";
 import { EVIDENCE_TERMS, buildEvidenceTrace } from "./evidence-trace.mjs";
 import { evaluateCohortAgainstExpectation } from "./expected-cohort.mjs";
 import { validateFollowupComparisonReceipt } from "./followup-comparison.mjs";
+import {
+  assertStoredHypothesisReviewReceipt,
+  createHypothesisReviewReceipt,
+} from "./hypothesis-review.mjs";
 import { normalizeObservation } from "./observation-model.mjs";
 
 const CLOSED_FOLLOWUP_OUTCOMES = Object.freeze({
@@ -118,9 +123,6 @@ const assertCohortScope = (observations, record, extractionConfig, field) => {
     }
     surfaceLabels.set(observation.surfaceId, observation.surfaceLabel);
   }
-  if (observations.length && record.surfaces.some((surfaceId) => !surfaceLabels.has(surfaceId))) {
-    throw new VisibilityError("DOSSIER_SCOPE_MISMATCH", `${field} does not cover every case surface.`);
-  }
   return surfaceLabels;
 };
 
@@ -161,6 +163,15 @@ const assertObservationEvidenceProvenance = ({ trace, observations, extractions 
     }
 
     for (const { item } of claim.evidence) {
+      if (OBSERVATION_EVIDENCE_TYPES.has(item.type) && (
+        !claim.observationId
+        || claim.observationId !== item.observationId
+      )) {
+        throw new VisibilityError(
+          "OBSERVATION_CLAIM_LINK_MISMATCH",
+          "Observation evidence must be linked to a deterministic claim from the same observation.",
+        );
+      }
       if (!item.observationId) continue;
       const observation = observationMap.get(item.observationId);
       if (!observation) {
@@ -247,6 +258,17 @@ const hasRepeatedPattern = (baseline) => {
   ));
 };
 
+const usableCycleCount = (records, receipt) => receipt.repeatOrdinals.filter((repeatOrdinal) => {
+  const usable = new Set(records.filter(({ observation, extraction }) => (
+    observation.repeatOrdinal === repeatOrdinal
+    && isValidMentionObservation({ observation })
+    && extraction.extractionState === "complete"
+  )).map(({ observation }) => `${observation.surfaceId}|${observation.promptId}`));
+  return receipt.surfaceIds.every((surfaceId) => receipt.promptIds.every((promptId) => (
+    usable.has(`${surfaceId}|${promptId}`)
+  )));
+}).length;
+
 const projectAlternative = (value, index) => {
   const alternative = objectField(value, `alternatives[${index}]`);
   return {
@@ -287,9 +309,12 @@ const projectIntervention = (value) => {
 
 const projectReview = (value) => {
   const review = objectField(value, "review");
+  const reviewedAt = stringField(review.reviewedAt, "review.reviewedAt");
+  const parsed = new Date(reviewedAt);
+  if (Number.isNaN(parsed.getTime())) throw invalidField("review.reviewedAt", "a valid timestamp");
   return {
     analyst: stringField(review.analyst, "review.analyst"),
-    reviewedAt: stringField(review.reviewedAt, "review.reviewedAt"),
+    reviewedAt: parsed.toISOString(),
     extractorVersion: stringField(review.extractorVersion, "review.extractorVersion"),
   };
 };
@@ -372,24 +397,27 @@ const deriveCoverage = (observations, scheduled) => {
   return coverage;
 };
 
-const sameList = (left, right) => JSON.stringify(left) === JSON.stringify(right);
-
-const lifecycleHypothesisMatches = (record, hypothesis, alternatives, evidenceItems) => {
-  const receipt = record.events.find(({ to }) => to === "hypothesis_ready")?.hypothesisReviewReceipt;
-  if (!receipt || receipt.hypothesisId !== hypothesis?.id || hypothesis?.reviewState !== "approved") return false;
-  const evidenceIds = [...new Set(evidenceItems
-    .filter(({ relation, reviewState, type }) => (
-      reviewState === "reviewed"
-      && ["supports", "contextualizes"].includes(relation)
-      && !["provider_rationale", "analyst_annotation"].includes(type)
-    ))
-    .map(({ id }) => id))].sort();
-  const alternativeIds = alternatives
-    .filter(({ reviewState }) => reviewState === "reviewed")
-    .map(({ id }) => id)
-    .sort();
-  return sameList(receipt.reviewedEvidenceItemIds, evidenceIds)
-    && sameList(receipt.reviewedAlternativeIds, alternativeIds);
+const lifecycleHypothesisMatches = (record, review) => {
+  const stored = record.events.find(({ to }) => to === "hypothesis_ready")?.hypothesisReviewReceipt;
+  if (!stored) return false;
+  let supplied;
+  let derived;
+  try {
+    supplied = assertStoredHypothesisReviewReceipt(stored);
+    derived = createHypothesisReviewReceipt(review);
+  } catch {
+    throw new VisibilityError(
+      "CASE_HYPOTHESIS_REVIEW_MISMATCH",
+      "Dossier hypothesis content does not match the lifecycle review receipt.",
+    );
+  }
+  if (supplied.reviewFingerprint !== derived.reviewFingerprint) {
+    throw new VisibilityError(
+      "CASE_HYPOTHESIS_REVIEW_MISMATCH",
+      "Dossier hypothesis content does not match the lifecycle review receipt.",
+    );
+  }
+  return true;
 };
 
 const assertNoCallerDerivedFields = (input) => {
@@ -418,12 +446,30 @@ export function buildInvestigationDossier(input) {
     panelVersion: integerField(record.panelVersion, "caseRecord.panelVersion"),
     panelFingerprint: stringField(record.panelFingerprint, "caseRecord.panelFingerprint"),
     methodVersion: stringField(record.methodVersion, "caseRecord.methodVersion"),
+    cadenceDays: integerField(record.cadenceDays, "caseRecord.cadenceDays"),
     surfaces,
   };
   const extractionConfig = objectField(input?.extractionConfig, "extractionConfig");
   stringField(extractionConfig.extractorVersion, "extractionConfig.extractorVersion");
   const baselineObservations = normalizeCohort(input?.baselineObservations, "baselineObservations", true);
   const followupObservations = normalizeCohort(input?.followupObservations, "followupObservations", false);
+  const allObservationIds = [...baselineObservations, ...followupObservations].map(({ id }) => id);
+  if (new Set(allObservationIds).size !== allObservationIds.length) {
+    throw new VisibilityError(
+      "DUPLICATE_DOSSIER_OBSERVATION",
+      "Baseline and follow-up observation IDs must be unique across the complete dossier.",
+    );
+  }
+  validateCohortCadence(baselineObservations, {
+    cadenceDays: scopedRecord.cadenceDays,
+    repeatOrdinals: record.expectedCohortReceipt.repeatOrdinals,
+    field: "baselineObservations",
+  });
+  validateCohortCadence(followupObservations, {
+    cadenceDays: scopedRecord.cadenceDays,
+    repeatOrdinals: record.expectedCohortReceipt.repeatOrdinals,
+    field: "followupObservations",
+  });
   const baselineExpected = evaluateCohortAgainstExpectation(baselineObservations, record.expectedCohortReceipt, {
     field: "baselineObservations",
   });
@@ -434,7 +480,9 @@ export function buildInvestigationDossier(input) {
   const baselineLabels = assertCohortScope(baselineObservations, scopedRecord, extractionConfig, "baselineObservations");
   const followupLabels = assertCohortScope(followupObservations, scopedRecord, extractionConfig, "followupObservations");
   for (const [surfaceId, label] of followupLabels) {
-    if (baselineLabels.get(surfaceId) !== label) throw new VisibilityError("DOSSIER_SURFACE_MISMATCH", "Baseline and follow-up surface labels differ.");
+    if (baselineLabels.has(surfaceId) && baselineLabels.get(surfaceId) !== label) {
+      throw new VisibilityError("DOSSIER_SURFACE_MISMATCH", "Baseline and follow-up surface labels differ.");
+    }
   }
   const trace = buildEvidenceTrace(objectField(input?.evidence, "evidence"));
   const baselineExtractions = extractionRecords(baselineObservations, extractionConfig);
@@ -451,7 +499,11 @@ export function buildInvestigationDossier(input) {
   const evidenceItems = flattenEvidence(trace);
   const hypothesis = projectHypothesis(input?.hypothesis);
   const alternatives = arrayField(input?.alternatives, "alternatives").map(projectAlternative);
-  const lifecycleHypothesisReady = lifecycleHypothesisMatches(record, hypothesis, alternatives, evidenceItems);
+  const lifecycleHypothesisReady = lifecycleHypothesisMatches(record, {
+    hypothesis,
+    alternatives,
+    evidence: input?.evidence,
+  });
   let comparisonReceipt = null;
   if (input?.comparisonReceipt != null) {
     comparisonReceipt = validateFollowupComparisonReceipt(input.comparisonReceipt, {
@@ -497,12 +549,25 @@ export function buildInvestigationDossier(input) {
         "Baseline must precede and follow-up must follow the intervention.",
       );
     }
+    const closureMs = new Date(record.events.at(-1).at).getTime();
+    if ([...baselineObservations, ...followupObservations].some(({ observationCompletedAt }) => (
+      new Date(observationCompletedAt).getTime() > closureMs
+    ))) {
+      throw new VisibilityError(
+        "INVALID_CLOSURE_TIME_BOUNDARY",
+        "Closure observations cannot finish after the closure event.",
+      );
+    }
   }
+  const baselineUsableCycles = usableCycleCount(baselineExtractions, record.expectedCohortReceipt);
+  const followupUsableCycles = usableCycleCount(followupExtractions, record.expectedCohortReceipt);
   const levelFiveReady = Boolean(
     closedOutcome
     && comparisonReceipt?.comparable
     && baselineExpected.complete
     && followupExpected?.complete
+    && baselineUsableCycles >= 3
+    && followupUsableCycles >= 3
     && storedIntervention,
   );
   const assessment = deriveAssessment({
@@ -530,12 +595,24 @@ export function buildInvestigationDossier(input) {
   } : null;
   const projectedFollowup = input?.followup == null ? null : {
     comparable: comparisonReceipt?.comparable === true,
-    outcome: comparisonReceipt?.comparable === true ? closedOutcome : null,
+    outcome: assessment.level === 5 && comparisonReceipt?.comparable === true ? closedOutcome : null,
     summary: stringField(objectField(input.followup, "followup").summary, "followup.summary", true),
   };
   const review = projectReview(input?.review);
   if (review.extractorVersion !== extractionConfig.extractorVersion) {
     throw new VisibilityError("DOSSIER_EXTRACTOR_MISMATCH", "Dossier review and observation extractor versions must match.");
+  }
+  const reviewedMs = new Date(review.reviewedAt).getTime();
+  if (
+    [...baselineObservations, ...followupObservations].some(({ observationCompletedAt }) => (
+      new Date(observationCompletedAt).getTime() > reviewedMs
+    ))
+    || record.events.some(({ at }) => new Date(at).getTime() > reviewedMs)
+  ) {
+    throw new VisibilityError(
+      "INVALID_DOSSIER_REVIEW_TIME_BOUNDARY",
+      "Dossier observations and lifecycle events cannot occur after dossier review.",
+    );
   }
 
   return deepFreeze({
@@ -550,7 +627,9 @@ export function buildInvestigationDossier(input) {
       panelId: scopedRecord.panelId,
       panelVersion: scopedRecord.panelVersion,
       methodVersion: scopedRecord.methodVersion,
-      surfaces: scopedRecord.surfaces.map((surfaceId) => baselineLabels.get(surfaceId)),
+      surfaces: scopedRecord.surfaces.map((surfaceId) => (
+        baselineLabels.get(surfaceId) || followupLabels.get(surfaceId) || surfaceId
+      )),
       baselineWindow: windowLabel(baselineObservations),
       followupWindow: windowLabel(followupObservations),
       exampleOnly: booleanField(input?.exampleOnly, "exampleOnly"),
