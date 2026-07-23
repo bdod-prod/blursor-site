@@ -54,6 +54,8 @@ function assertCopyDiscipline(section, surface) {
     [/\bnever\b/i, 'never'],
     [/\bnot\b[^.]{0,80}\bbut\b/i, 'not X but Y'],
     [/\bless\b[^.]{0,80}\bmore\b/i, 'less X more Y'],
+    [/\brather\s+than\b/i, 'rather than'],
+    [/\binstead\s+of\b/i, 'instead of'],
   ];
   for (const [pattern, label] of forbidden) {
     assert.doesNotMatch(section, pattern, `${surface} must avoid ${label}`);
@@ -71,6 +73,9 @@ test('homepage explains the paper-to-distill method and links to Research', () =
   assert.match(section, /href="\/research"[^>]*>Browse the research/);
   assert.doesNotMatch(html, /Every number links to its paper/);
   assert.doesNotMatch(html, /Every digest links the paper it came from/);
+  assert.doesNotMatch(html, /2,800/);
+  assert.doesNotMatch(html, /70,000/);
+  assert.doesNotMatch(html, /March 2026/);
 });
 
 test('Research archive explains the same method before the article inventory', () => {
@@ -90,7 +95,13 @@ test('research compiler preserves the archive method explainer', () => {
   const html = fs.readFileSync(ARCHIVE_PATH, 'utf8');
   const articles = discoverArticles({ rootDir: ROOT_DIR });
   const rebuilt = generateArchiveHtml(html, articles);
+  const section = extractMethodSection(rebuilt, 'archive');
+  const sectionPosition = rebuilt.indexOf(section);
+  const articlesPosition = rebuilt.indexOf('<section class="articles">');
 
-  assert.match(rebuilt, /data-research-method="archive"/);
-  assert.match(rebuilt, /From paper to practical briefing/);
+  assertStepsInOrder(section, 'archive');
+  assertCopyDiscipline(section, 'archive');
+  assert.match(section, /From paper to practical briefing/);
+  assert.match(section, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
+  assert.ok(sectionPosition < articlesPosition, 'rebuilt archive method must precede the article inventory');
 });
