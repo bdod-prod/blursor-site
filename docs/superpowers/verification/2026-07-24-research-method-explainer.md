@@ -3,7 +3,7 @@
 **Date:** 2026-07-24
 **Branch:** `codex/research-method-explainer`
 **Base:** `origin/main`
-**Verified implementation HEAD:** `0fd92b50b57046bbb8daf1c78340c18df2b08aaf`
+**Verified implementation HEAD:** `ce65f16823940e7b87f1800ad69ef1155b822f1f`
 
 ## Automated checks
 
@@ -11,8 +11,8 @@
 | --- | --- |
 | `node --test tests/*.test.js` | PASS — 49 tests passed, 0 failed. |
 | `node scripts/build-research-index.js` | PASS — `Compiled and verified 30 research article(s)`. |
-| `node --test tests/research-method-explainer.test.js` | PASS — 4 tests passed, 0 failed. |
-| `git diff --exit-code` after compiler | PASS — exit 0; no generated diff. |
+| `node --test tests/research-method-explainer.test.js` after compiler | PASS — 4 tests passed, 0 failed. |
+| `git diff --exit-code` after compiler | PASS — exit 0; no generated diff (compiler idempotence). |
 | `curl -fsS http://127.0.0.1:4173/ >/dev/null` | PASS — exit 0. |
 | `curl -fsS http://127.0.0.1:4173/research/ >/dev/null` | PASS — exit 0. |
 | `curl -fsS http://127.0.0.1:4173/assets/research-method.css >/dev/null` | PASS — exit 0. |
@@ -31,6 +31,14 @@
   original paper remains one click away.
 - Contrast: PASS — focused test passed; fallback runtime measured muted
   explainer text at `5.5963:1` against the method surface (minimum `4.5:1`).
+
+## Accessibility check
+
+- Process-list semantics: PASS — both `.research-method__steps` ordered lists
+  explicitly declare `role="list"`. This preserves list semantics for Safari and
+  VoiceOver when the shared CSS removes native list styling; visible ordinals
+  remain `aria-hidden`, so the accessibility tree provides the sequence rather
+  than duplicating it.
 
 ## Visual checks
 
