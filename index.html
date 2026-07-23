@@ -746,6 +746,7 @@
       .finding-card.is-duplicate { display: none; }
     }
   </style>
+  <link rel="stylesheet" href="/assets/research-method.css">
 </head>
 <body>
 
@@ -808,7 +809,7 @@
           <div class="section-kicker">From the papers we've distilled</div>
           <h2 class="findings-band__title" id="findings-title">What the research actually says</h2>
         </div>
-        <span class="findings-band__note">Every number links to its paper · updated as we publish</span>
+        <span class="findings-band__note">Numbers link to their papers · updated as we publish</span>
       </div>
 
       <!-- Future sessions: add one finding-card per new article only when the number and arXiv id appear in the published digest metadata or body. Keep duplicate cards aria-hidden. -->
@@ -909,6 +910,39 @@
       </div>
     </section>
 
+    <section class="research-method" data-research-method="homepage" aria-labelledby="home-research-method-title">
+      <div class="research-method__inner">
+        <div class="research-method__intro">
+          <div>
+            <div class="research-method__kicker">How the research gets useful</div>
+            <h2 class="research-method__title" id="home-research-method-title">Catch up with the papers shaping AI visibility</h2>
+          </div>
+          <p class="research-method__lead">AI research moves faster than most practitioners can follow. BLURSOR follows the work on retrieval, citations, recommendations and generative search, then turns the useful papers into briefings people can act on.</p>
+        </div>
+        <ol class="research-method__steps">
+          <li class="research-method__step">
+            <span class="research-method__ordinal" aria-hidden="true">01</span>
+            <h3 class="research-method__step-title">Follow the field</h3>
+            <p class="research-method__step-copy">A research pipeline watches arXiv for new work on how AI systems find, trust and surface information.</p>
+          </li>
+          <li class="research-method__step">
+            <span class="research-method__ordinal" aria-hidden="true">02</span>
+            <h3 class="research-method__step-title">Interrogate the paper</h3>
+            <p class="research-method__step-copy">Promising studies are checked for their method, evidence, useful findings and limits. The headline opens the investigation.</p>
+          </li>
+          <li class="research-method__step">
+            <span class="research-method__ordinal" aria-hidden="true">03</span>
+            <h3 class="research-method__step-title">Make it usable</h3>
+            <p class="research-method__step-copy">We publish a plain-English distill: what the study found, where the finding applies and what it could change in your work.</p>
+          </li>
+        </ol>
+        <div class="research-method__trust">
+          <p>The pipeline helps with discovery and drafting. Publication requires editorial review. The original paper stays one click away.</p>
+          <a class="research-method__link" href="/research">Browse the research →</a>
+        </div>
+      </div>
+    </section>
+
     <section class="digests" id="latest-digests" aria-labelledby="digests-title">
       <div class="digests__head">
         <div>
@@ -953,7 +987,7 @@
         <div class="stance__grid">
           <div class="tenet">
             <span class="tenet__label">SHOW THE WORK</span>
-            <p>Every digest links the paper it came from. Every checker result cites its source. If we cannot source a claim, we do not say it.</p>
+            <p>Digests link the papers they came from, and checker results cite their sources. If we cannot source a claim, we leave it out.</p>
           </div>
           <div class="tenet">
             <span class="tenet__label">SAY WHAT DOESN'T WORK</span>
