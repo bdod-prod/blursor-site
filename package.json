@@ -1,0 +1,14 @@
+{
+  "name": "blursor-site",
+  "private": true,
+  "scripts": {
+    "build:pages": "node scripts/build-pages-public.mjs",
+    "check:pages-bundle": "node scripts/build-pages-public.mjs",
+    "test": "node --test",
+    "test:investigation": "node --test tests/investigation",
+    "test:visibility": "node --test tests/visibility"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

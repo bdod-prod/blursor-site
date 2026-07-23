@@ -1,0 +1,30 @@
+{
+  "projectId": "blursor-pilot",
+  "surfaceId": "yandex_gen_search_api_ru",
+  "purpose": "forecast",
+  "repeatCount": 2,
+  "scheduledFor": "2026-07-21T09:00:00+03:00",
+  "projectSpentMicrorub": 0,
+  "projectBudgetMicrorub": 20000000000,
+  "globalSpentMicrorub": 0,
+  "globalBudgetMicrorub": 20000000000,
+  "panel": {
+    "id": "ru-ai-visibility-pilot",
+    "version": 1,
+    "methodologyVersion": "0.1",
+    "prompts": [
+      {
+        "id": "discovery-01",
+        "text": "Какие сервисы помогают проверить видимость бренда в ответах ИИ?",
+        "language": "ru",
+        "intent": "discovery"
+      },
+      {
+        "id": "comparison-01",
+        "text": "Какие инструменты AI visibility подходят российской компании?",
+        "language": "ru",
+        "intent": "comparison"
+      }
+    ]
+  }
+}

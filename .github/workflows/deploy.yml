@@ -32,8 +32,14 @@ jobs:
             echo "branch=$BR" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Run tests
+        run: npm test
+
       - name: Regenerate research/index.html from article metadata
         run: node scripts/build-research-index.js
+
+      - name: Build validated public bundle
+        run: npm run build:pages
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
@@ -41,4 +47,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4.80.0"
-          command: pages deploy . --project-name=blursor --branch=${{ steps.branch.outputs.branch }} --commit-dirty=true
+          command: pages deploy .pages-public --project-name=blursor --branch=${{ steps.branch.outputs.branch }} --commit-dirty=true
