@@ -6,7 +6,39 @@
     <atom:link href="https://blursor.ai/research/feed.xml" rel="self" type="application/rss+xml"/>
     <description>Research on why AI says what it says, distilled for practitioners.</description>
     <language>en</language>
-    <lastBuildDate>Thu, 25 Jun 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 21 Jul 2026 00:00:00 GMT</lastBuildDate>
+    <item>
+      <title>DRNoise shows how one plausible false document can knock deep research agents off course</title>
+      <link>https://blursor.ai/research/drnoise-shows-one-false-document-can-knock-agents-off-course</link>
+      <guid isPermaLink="true">https://blursor.ai/research/drnoise-shows-one-false-document-can-knock-agents-off-course</guid>
+      <pubDate>Tue, 21 Jul 2026 00:00:00 GMT</pubDate>
+      <description>One misleading “direct claim” can derail an agent that’s otherwise correct</description>
+      <category>Verification · Reliability</category>
+    </item>
+    <item>
+      <title>Chinese generative search cites only a small slice of available brand sources, and external quality scores do not predict what surfaces</title>
+      <link>https://blursor.ai/research/generative-search-citations-surface-predictors</link>
+      <guid isPermaLink="true">https://blursor.ai/research/generative-search-citations-surface-predictors</guid>
+      <pubDate>Mon, 20 Jul 2026 00:00:00 GMT</pubDate>
+      <description>Why citation coverage is sparse—and what actually predicts which sources get surfaced</description>
+      <category>Retrieval · RAG</category>
+    </item>
+    <item>
+      <title>GEO can change citations inside a fixed context, but it doesn’t show durable organic visibility</title>
+      <link>https://blursor.ai/research/generative-engine-optimization-doesnt-translate</link>
+      <guid isPermaLink="true">https://blursor.ai/research/generative-engine-optimization-doesnt-translate</guid>
+      <pubDate>Thu, 16 Jul 2026 00:00:00 GMT</pubDate>
+      <description>Why GEO gains don’t translate into durable visibility (and which levers actually hold).</description>
+      <category>Retrieval · RAG</category>
+    </item>
+    <item>
+      <title>LLM brand answers are mostly unstable because language changes the signal</title>
+      <link>https://blursor.ai/research/llm-brand-answer-variance-decomposition</link>
+      <guid isPermaLink="true">https://blursor.ai/research/llm-brand-answer-variance-decomposition</guid>
+      <pubDate>Thu, 16 Jul 2026 00:00:00 GMT</pubDate>
+      <description>Variance components explain why brand answers won’t stabilize—and what to sample instead</description>
+      <category>Retrieval · RAG</category>
+    </item>
     <item>
       <title>LLMs mostly source “brand reputation” from other people’s pages</title>
       <link>https://blursor.ai/research/llm-brand-reputation-citations-third-party</link>
@@ -76,7 +108,7 @@
       <link>https://blursor.ai/research/cultural-reasoning-gap-llms</link>
       <guid isPermaLink="true">https://blursor.ai/research/cultural-reasoning-gap-llms</guid>
       <pubDate>Tue, 02 Jun 2026 00:00:00 GMT</pubDate>
-      <description>When Cultural Knowledge Doesn't Transfer to Cultural Reasoning</description>
+      <description>When Cultural Knowledge Doesn&#39;t Transfer to Cultural Reasoning</description>
       <category>Evaluation · Culture</category>
     </item>
     <item>
@@ -144,15 +176,15 @@
       <category>AI Visibility</category>
     </item>
     <item>
-      <title>Query-Specific Expiry: Why 'Recent' Isn't the Same as 'Fresh'</title>
+      <title>Query-Specific Expiry: Why &#39;Recent&#39; Isn&#39;t the Same as &#39;Fresh&#39;</title>
       <link>https://blursor.ai/research/query-specific-expiry-search-freshness</link>
       <guid isPermaLink="true">https://blursor.ai/research/query-specific-expiry-search-freshness</guid>
       <pubDate>Mon, 01 Jun 2026 00:00:00 GMT</pubDate>
-      <description>Baidu's Aurora-Expiry uses RAG-augmented LLMs to infer query-specific expiration thresholds, cutting median document age 12.81% for time-sensitive queries in a 14-day live A/B test.</description>
+      <description>Baidu&#39;s Aurora-Expiry uses RAG-augmented LLMs to infer query-specific expiration thresholds, cutting median document age 12.81% for time-sensitive queries in a 14-day live A/B test.</description>
       <category>AI Visibility</category>
     </item>
     <item>
-      <title>RAG Doesn't Flatten the Brand Hierarchy — It Just Moves Where You Lose</title>
+      <title>RAG Doesn&#39;t Flatten the Brand Hierarchy — It Just Moves Where You Lose</title>
       <link>https://blursor.ai/research/rag-brand-visibility-tier-failures</link>
       <guid isPermaLink="true">https://blursor.ai/research/rag-brand-visibility-tier-failures</guid>
       <pubDate>Mon, 01 Jun 2026 00:00:00 GMT</pubDate>
@@ -164,7 +196,7 @@
       <link>https://blursor.ai/research/semantic-metadata-agent-retrieval-tradeoff</link>
       <guid isPermaLink="true">https://blursor.ai/research/semantic-metadata-agent-retrieval-tradeoff</guid>
       <pubDate>Sun, 31 May 2026 00:00:00 GMT</pubDate>
-      <description>Schema.org markup gives retrieval agents 65.7% higher FAIR-compliant precision — but cuts query coverage by 29% where publishers haven't adopted it.</description>
+      <description>Schema.org markup gives retrieval agents 65.7% higher FAIR-compliant precision — but cuts query coverage by 29% where publishers haven&#39;t adopted it.</description>
       <category>AI Visibility</category>
     </item>
     <item>
@@ -176,6 +208,14 @@
       <category>AI Visibility</category>
     </item>
     <item>
+      <title>AI Research Agents Fail in Ways Their Own Tests Can&#39;t See</title>
+      <link>https://blursor.ai/research/agentic-rag-failure-modes-evaluation</link>
+      <guid isPermaLink="true">https://blursor.ai/research/agentic-rag-failure-modes-evaluation</guid>
+      <pubDate>Fri, 22 May 2026 00:00:00 GMT</pubDate>
+      <description>A new SoK survey of 118 works shows that agentic RAG&#39;s iterative retrieval and memory systems introduce failure modes that static metrics and current benchmarks cannot detect.</description>
+      <category>RETRIEVAL · AGENTIC RAG</category>
+    </item>
+    <item>
       <title>Most Pages Get Zero AI Citations. Editing 5% Won 40% More.</title>
       <link>https://blursor.ai/research/citation-failures-generative-engine-agentgeo</link>
       <guid isPermaLink="true">https://blursor.ai/research/citation-failures-generative-engine-agentgeo</guid>
@@ -184,7 +224,7 @@
       <category>Citation · GEO</category>
     </item>
     <item>
-      <title>AI Cites Sources It Never Checked — and Half Don't Hold Up</title>
+      <title>AI Cites Sources It Never Checked — and Half Don&#39;t Hold Up</title>
       <link>https://blursor.ai/research/deployment-constraints-llm-citation-collapse</link>
       <guid isPermaLink="true">https://blursor.ai/research/deployment-constraints-llm-citation-collapse</guid>
       <pubDate>Fri, 22 May 2026 00:00:00 GMT</pubDate>

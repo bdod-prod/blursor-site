@@ -35,6 +35,9 @@ jobs:
       - name: Regenerate research/index.html from article metadata
         run: node scripts/build-research-index.js
 
+      - name: Verify research publication integrity
+        run: node --test tests/research-publication.test.js tests/research-repository.test.js
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
