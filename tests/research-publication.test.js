@@ -11,6 +11,7 @@ const {
   discoverArticles,
   normalizeArticleHtml,
   selectRelatedArticles,
+  verifyPublishedState,
 } = require('../scripts/lib/research-publication');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
@@ -233,6 +234,7 @@ test('compileResearch writes normalized articles and reports the validated count
     articleCount: 3,
     writtenArticleCount: 3,
     articleSlugs: ['new-a', 'new-b', 'old'],
+    verification: { articleCount: 3, relatedLinkCount: 6 },
   });
   const normalized = fs.readFileSync(path.join(rootDir, 'research/new-a.html'), 'utf8');
   assert.equal((normalized.match(/class="article-byline"/g) || []).length, 1);
@@ -241,6 +243,158 @@ test('compileResearch writes normalized articles and reports the validated count
       .map(match => match[1]),
     ['new-b', 'old'],
   );
+});
+
+function compileThreeArticleFixture(t) {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-22' });
+  compileResearch({ rootDir });
+  return { rootDir, expectedArticles: discoverArticles({ rootDir }) };
+}
+
+test('verification reports a missing RSS item URL after the feed is tampered', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const feedPath = path.join(rootDir, 'research/feed.xml');
+  fs.writeFileSync(feedPath, fs.readFileSync(feedPath, 'utf8').replace(
+    '<link>https://blursor.ai/research/old</link>',
+    '<link>https://blursor.ai/research/removed</link>',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /research\/feed\.xml: missing https:\/\/blursor\.ai\/research\/old/,
+  );
+});
+
+test('verification reports a duplicate archive target', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const archivePath = path.join(rootDir, 'research/index.html');
+  fs.writeFileSync(archivePath, fs.readFileSync(archivePath, 'utf8').replace(
+    'href="/research/new-b" class="article-card"',
+    'href="/research/new-a" class="article-card"',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /research\/index\.html: duplicate entries/,
+  );
+});
+
+test('verification reports a self-related target', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const articlePath = path.join(rootDir, 'research/new-a.html');
+  fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
+    'href="/research/new-b" class="more-card"',
+    'href="/research/new-a" class="more-card"',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /research\/new-a\.html: self-related target \/research\/new-a/,
+  );
+});
+
+test('verification reports a noncanonical related target', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const articlePath = path.join(rootDir, 'research/new-a.html');
+  fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
+    'href="/research/new-b" class="more-card"',
+    'href="https://blursor.ai/research/new-b" class="more-card"',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /research\/new-a\.html: noncanonical related target https:\/\/blursor\.ai\/research\/new-b/,
+  );
+});
+
+test('verification reports a missing linked byline', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const articlePath = path.join(rootDir, 'research/new-a.html');
+  fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
+    /<span class="article-byline">[\s\S]*?<\/span>\n\s*/,
+    '',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /research\/new-a\.html: expected one exact linked byline/,
+  );
+});
+
+test('verification reports missing RSS discovery', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const homePath = path.join(rootDir, 'index.html');
+  fs.writeFileSync(homePath, fs.readFileSync(homePath, 'utf8').replace(
+    '<link rel="alternate" type="application/rss+xml" title="BLURSOR Research RSS" href="https://blursor.ai/research/feed.xml">',
+    '',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /index\.html: missing RSS discovery/,
+  );
+});
+
+test('verification reports an altered JSON-LD author URL', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const articlePath = path.join(rootDir, 'research/new-a.html');
+  fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
+    '"url":"https://blursor.ai/author/alex-rostovtsev"',
+    '"url":"https://example.com/author"',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /new-a\.html: JSON-LD Article must name Alex Rostovtsev/,
+  );
+});
+
+function snapshotGeneratedTree(rootDir) {
+  const files = [
+    ...fs.readdirSync(path.join(rootDir, 'research'))
+      .filter(file => file.endsWith('.html') && file !== 'index.html')
+      .sort()
+      .map(file => path.join('research', file)),
+    'research/index.html',
+    'research/feed.xml',
+    'sitemap.xml',
+  ];
+  return Object.fromEntries(files.map(file => [file, fs.readFileSync(path.join(rootDir, file), 'utf8')]));
+}
+
+test('a second compiler run produces byte-identical output', t => {
+  const { rootDir } = compileThreeArticleFixture(t);
+  const before = snapshotGeneratedTree(rootDir);
+  compileResearch({ rootDir });
+  assert.deepEqual(snapshotGeneratedTree(rootDir), before);
+});
+
+test('compiler makes article, archive, feed, and sitemap inventories agree', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-22' });
+
+  const result = compileResearch({ rootDir });
+  const expectedSlugs = ['new-a', 'new-b', 'old'];
+  assert.equal(result.articleCount, 3);
+  assert.deepEqual(result.articleSlugs, expectedSlugs);
+  assert.equal(result.verification.articleCount, 3);
+  assert.equal(result.verification.relatedLinkCount, 6);
+
+  const archive = fs.readFileSync(path.join(rootDir, 'research/index.html'), 'utf8');
+  const feed = fs.readFileSync(path.join(rootDir, 'research/feed.xml'), 'utf8');
+  const sitemap = fs.readFileSync(path.join(rootDir, 'sitemap.xml'), 'utf8');
+  for (const slug of expectedSlugs) {
+    assert.match(archive, new RegExp(`href="/research/${slug}" class="article-card"`));
+    assert.match(feed, new RegExp(`<link>https://blursor.ai/research/${slug}</link>`));
+    assert.match(sitemap, new RegExp(`<loc>https://blursor.ai/research/${slug}</loc>`));
+  }
 });
 
 test('compileResearch does not write any article until all normalizations succeed', t => {

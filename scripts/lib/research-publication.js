@@ -8,6 +8,17 @@ const AUTHOR_NAME = 'Alex Rostovtsev';
 const AUTHOR_PATH = '/author/alex-rostovtsev';
 const AUTHOR_URL = `${BASE_URL}${AUTHOR_PATH}`;
 const RSS_FEED_URL = `${BASE_URL}/research/feed.xml`;
+const RSS_FEED_LINK_TAG = `<link rel="alternate" type="application/rss+xml" title="BLURSOR Research RSS" href="${RSS_FEED_URL}">`;
+const STATIC_ROUTES = [
+  { url: `${BASE_URL}/`, file: 'index.html' },
+  { url: `${BASE_URL}/ai-crawler-checker`, file: 'ai-crawler-checker.html' },
+  { url: `${BASE_URL}/research`, file: 'research/index.html' },
+  { url: AUTHOR_URL, file: 'author/alex-rostovtsev.html' },
+];
+const LEGACY_SOFT_404_PATHS = [
+  '/research/rag-ranking-signal-amplification',
+  '/research/brand-mention-llm-recommendation',
+];
 const META_RE = /<!--\s*BLURSOR-META:\s*({[\s\S]*?})\s*-->/g;
 const REQUIRED_META_FIELDS = [
   'slug', 'title', 'published_date', 'reading_time_min',
@@ -80,6 +91,10 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+function escapeXml(value) {
+  return escapeHtml(value);
+}
+
 function fmtDate(value) {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
@@ -108,6 +123,98 @@ function renderRelatedCard(article) {
           <h3 class="more-card__title">${escapeHtml(meta.title)}</h3>
           <div class="more-card__source">arXiv:${escapeHtml(meta.arxiv_id)}</div>
         </a>`;
+}
+
+function renderArchiveCard(article, ordinal) {
+  const meta = article.meta;
+  return `        <a href="/research/${escapeHtml(meta.slug)}" class="article-card">
+          <div class="article-card__ordinal">
+            ${String(ordinal).padStart(2, '0')}
+            <span class="article-card__rule"></span>
+          </div>
+          <div class="article-card__body">
+            <div class="article-card__meta">
+              <span class="article-card__date">${escapeHtml(fmtDate(meta.published_date))}</span>
+              <span class="article-card__dot"></span>
+              <span class="article-card__reading-time">${escapeHtml(meta.reading_time_min)} min read</span>
+            </div>
+            <h2 class="article-card__title">${escapeHtml(meta.title)}</h2>
+            <p class="article-card__summary">${escapeHtml(meta.summary_for_card)}</p>
+            <span class="article-card__source">arXiv:${escapeHtml(meta.arxiv_id)}</span>
+          </div>
+        </a>`;
+}
+
+function ensureRssDiscoveryHtml(html) {
+  const hasDiscovery = findTags(html, 'link').some(tag => {
+    const rel = (getAttribute(tag, 'rel') || '').split(/\s+/);
+    return rel.includes('alternate')
+      && (getAttribute(tag, 'type') || '').toLowerCase() === 'application/rss+xml'
+      && getAttribute(tag, 'href') === RSS_FEED_URL;
+  });
+  if (hasDiscovery) return html;
+  if (html.includes('\n  <!-- Fonts -->')) {
+    return html.replace('\n  <!-- Fonts -->', `\n  ${RSS_FEED_LINK_TAG}\n  <!-- Fonts -->`);
+  }
+  return html.replace(/<\/head>/i, `  ${RSS_FEED_LINK_TAG}\n</head>`);
+}
+
+function removeBlockedDigestLinks(html) {
+  return html
+    .replace(/<li><a href="\/digest">Weekly Digest<\/a><\/li>/g, '<li><a href="/research/feed.xml">RSS Feed</a></li>')
+    .replace(/\n\s*<li><a href="\/digest">Newsletter<\/a><\/li>/g, '');
+}
+
+function generateArchiveHtml(indexHtml, articles) {
+  const indexWithDiscovery = removeBlockedDigestLinks(ensureRssDiscoveryHtml(indexHtml));
+  const gridTag = findSingleClassTag(indexWithDiscovery, 'articles__grid', 'research/index.html');
+  const cards = articles.map((article, index) => renderArchiveCard(article, index + 1)).join('\n\n');
+  const archiveWithCards = replaceBalancedDivContents(
+    indexWithDiscovery,
+    gridTag,
+    `\n\n${cards}\n\n      `,
+    'research/index.html',
+  );
+  const count = articles.length;
+  return archiveWithCards.replace(
+    /<span class="articles__count">\d+ articles?<\/span>/,
+    `<span class="articles__count">${count} article${count === 1 ? '' : 's'}</span>`,
+  );
+}
+
+function rssDate(value) {
+  return new Date(`${value}T00:00:00Z`).toUTCString();
+}
+
+function generateFeedXml(articles) {
+  const items = articles.map(article => {
+    const meta = article.meta;
+    const url = `${BASE_URL}/research/${meta.slug}`;
+    const category = meta.category_label ? `\n      <category>${escapeXml(meta.category_label)}</category>` : '';
+    return `    <item>\n      <title>${escapeXml(meta.title)}</title>\n      <link>${escapeXml(url)}</link>\n      <guid isPermaLink="true">${escapeXml(url)}</guid>\n      <pubDate>${rssDate(meta.published_date)}</pubDate>\n      <description>${escapeXml(meta.summary_for_card)}</description>${category}\n    </item>`;
+  }).join('\n');
+  const latestDate = articles[0] ? articles[0].meta.published_date : new Date().toISOString().slice(0, 10);
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n  <channel>\n    <title>BLURSOR Research</title>\n    <link>${BASE_URL}/research</link>\n    <atom:link href="${RSS_FEED_URL}" rel="self" type="application/rss+xml"/>\n    <description>Research on why AI says what it says, distilled for practitioners.</description>\n    <language>en</language>\n    <lastBuildDate>${rssDate(latestDate)}</lastBuildDate>\n${items}\n  </channel>\n</rss>\n`;
+}
+
+function isoDate(value) {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
+}
+
+function generateSitemapXml({ rootDir, articles }) {
+  const entries = [
+    ...STATIC_ROUTES.map(route => ({
+      loc: route.url,
+      lastmod: isoDate(fs.statSync(path.join(rootDir, route.file)).mtime),
+    })),
+    ...articles.map(article => ({
+      loc: `${BASE_URL}/research/${article.meta.slug}`,
+      lastmod: article.meta.published_date,
+    })),
+  ];
+  const body = entries.map(entry => `  <url>\n    <loc>${escapeXml(entry.loc)}</loc>${entry.lastmod ? `\n    <lastmod>${entry.lastmod}</lastmod>` : ''}\n  </url>`).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
 
 function replaceBalancedDivContents(html, openTag, replacement, fileName) {
@@ -341,24 +448,139 @@ function discoverArticles({ rootDir }) {
   return articles;
 }
 
+function assertSameSet(label, actual, expected, issues) {
+  const actualSet = new Set(actual);
+  const expectedSet = new Set(expected);
+  const missing = [...expectedSet].filter(value => !actualSet.has(value));
+  const extra = [...actualSet].filter(value => !expectedSet.has(value));
+  if (actual.length !== actualSet.size) issues.push(`${label}: duplicate entries`);
+  if (missing.length) issues.push(`${label}: missing ${missing.join(', ')}`);
+  if (extra.length) issues.push(`${label}: unexpected ${extra.join(', ')}`);
+}
+
+function readPublishedFile(rootDir, file, issues) {
+  const filePath = path.join(rootDir, file);
+  if (!fs.existsSync(filePath)) {
+    issues.push(`${file}: missing file`);
+    return null;
+  }
+  return fs.readFileSync(filePath, 'utf8');
+}
+
+function hasRssDiscovery(html) {
+  return findTags(html, 'link').some(tag => {
+    const rel = (getAttribute(tag, 'rel') || '').split(/\s+/);
+    return rel.includes('alternate')
+      && (getAttribute(tag, 'type') || '').toLowerCase() === 'application/rss+xml'
+      && getAttribute(tag, 'href') === RSS_FEED_URL;
+  });
+}
+
+function extractClassLinkTargets(html, className) {
+  const classPattern = `\\bclass\\s*=\\s*(["'])[^"']*\\b${className}\\b[^"']*\\1`;
+  return [...html.matchAll(new RegExp(`<a\\b(?=[^>]*${classPattern})[^>]*>`, 'gi'))]
+    .map(match => getAttribute(match[0], 'href'));
+}
+
+function verifyPublishedState({ rootDir, expectedArticles }) {
+  const issues = [];
+  const expectedSlugs = expectedArticles.map(article => article.meta.slug);
+  const expectedUrls = expectedSlugs.map(slug => `${BASE_URL}/research/${slug}`);
+  const archive = readPublishedFile(rootDir, 'research/index.html', issues);
+  const feed = readPublishedFile(rootDir, 'research/feed.xml', issues);
+  const sitemap = readPublishedFile(rootDir, 'sitemap.xml', issues);
+  const home = readPublishedFile(rootDir, 'index.html', issues);
+  let relatedLinkCount = 0;
+
+  for (const route of STATIC_ROUTES) readPublishedFile(rootDir, route.file, issues);
+
+  if (archive) {
+    assertSameSet(
+      'research/index.html',
+      extractClassLinkTargets(archive, 'article-card').map(target => target && target.replace(/^\/research\//, '')),
+      expectedSlugs,
+      issues,
+    );
+    if (!hasRssDiscovery(archive)) issues.push('research/index.html: missing RSS discovery');
+  }
+  if (feed) {
+    const itemUrls = [...feed.matchAll(/<item\b[\s\S]*?<link>([\s\S]*?)<\/link>[\s\S]*?<\/item>/gi)]
+      .map(match => match[1].trim());
+    assertSameSet('research/feed.xml', itemUrls, expectedUrls, issues);
+  }
+  if (sitemap) {
+    const sitemapUrls = [...sitemap.matchAll(/<loc>([\s\S]*?)<\/loc>/gi)].map(match => match[1].trim());
+    assertSameSet('sitemap.xml', sitemapUrls, [...STATIC_ROUTES.map(route => route.url), ...expectedUrls], issues);
+  }
+  if (home && !hasRssDiscovery(home)) issues.push('index.html: missing RSS discovery');
+
+  for (const article of expectedArticles) {
+    const file = `research/${article.meta.slug}.html`;
+    const html = readPublishedFile(rootDir, file, issues);
+    if (!html) continue;
+    const candidate = validateCandidate(path.join(rootDir, file));
+    issues.push(...candidate.issues);
+    if (!hasRssDiscovery(html)) issues.push(`${file}: missing RSS discovery`);
+    const bylines = [...html.matchAll(/<span\b(?=[^>]*\bclass\s*=\s*(["'])[^"']*\barticle-byline\b[^"']*\1)[^>]*>[\s\S]*?<\/span>/gi)];
+    const exactByline = `By <a href="${AUTHOR_PATH}" rel="author" class="article-byline__link">${AUTHOR_NAME}</a>`;
+    if (bylines.length !== 1 || !bylines[0][0].includes(exactByline)) {
+      issues.push(`${file}: expected one exact linked byline`);
+    }
+    const relatedTargets = extractClassLinkTargets(html, 'more-card');
+    relatedLinkCount += relatedTargets.length;
+    if (relatedTargets.length !== 2) issues.push(`${file}: expected two related targets`);
+    if (new Set(relatedTargets).size !== relatedTargets.length) issues.push(`${file}: duplicate related targets`);
+    for (const target of relatedTargets) {
+      const targetSlug = target && /^\/research\/([^/?#]+)$/.exec(target);
+      if (!targetSlug || !expectedSlugs.includes(targetSlug[1])) {
+        issues.push(`${file}: noncanonical related target ${target}`);
+      } else if (targetSlug[1] === article.meta.slug) {
+        issues.push(`${file}: self-related target ${target}`);
+      }
+    }
+    for (const legacyPath of LEGACY_SOFT_404_PATHS) {
+      if (html.includes(legacyPath)) issues.push(`${file}: contains legacy soft-404 route ${legacyPath}`);
+    }
+  }
+
+  if (issues.length) throw new PublicationValidationError(issues);
+  return { articleCount: expectedArticles.length, relatedLinkCount };
+}
+
 function compileResearch({ rootDir }) {
   const articles = discoverArticles({ rootDir });
   const renderedArticles = articles.map(article => ({
     filePath: article.filePath,
-    html: normalizeArticleHtml(article, articles),
+    html: removeBlockedDigestLinks(ensureRssDiscoveryHtml(normalizeArticleHtml(article, articles))),
   }));
-  const changedArticles = renderedArticles.filter(({ filePath, html }) =>
-    fs.readFileSync(filePath, 'utf8') !== html,
+  const archivePath = path.join(rootDir, 'research/index.html');
+  const generatedOutputs = [
+    ...renderedArticles,
+    { filePath: archivePath, html: generateArchiveHtml(fs.readFileSync(archivePath, 'utf8'), articles) },
+    { filePath: path.join(rootDir, 'research/feed.xml'), html: generateFeedXml(articles) },
+    { filePath: path.join(rootDir, 'index.html'), html: ensureRssDiscoveryHtml(fs.readFileSync(path.join(rootDir, 'index.html'), 'utf8')) },
+    { filePath: path.join(rootDir, 'sitemap.xml'), html: generateSitemapXml({ rootDir, articles }) },
+  ];
+  const changedOutputs = generatedOutputs.filter(({ filePath, html }) =>
+    !fs.existsSync(filePath) || fs.readFileSync(filePath, 'utf8') !== html,
   );
+  const writtenArticleCount = changedOutputs.filter(output =>
+    output.filePath.startsWith(`${path.join(rootDir, 'research')}${path.sep}`)
+      && output.filePath.endsWith('.html')
+      && path.basename(output.filePath) !== 'index.html',
+  ).length;
 
-  for (const article of changedArticles) {
-    fs.writeFileSync(article.filePath, article.html);
+  for (const output of changedOutputs) {
+    fs.writeFileSync(output.filePath, output.html);
   }
+
+  const verification = verifyPublishedState({ rootDir, expectedArticles: articles });
 
   return {
     articleCount: articles.length,
-    writtenArticleCount: changedArticles.length,
+    writtenArticleCount,
     articleSlugs: articles.map(article => article.meta.slug),
+    verification,
   };
 }
 
@@ -369,7 +591,11 @@ module.exports = {
   PublicationValidationError,
   discoverArticles,
   compileResearch,
+  generateArchiveHtml,
+  generateFeedXml,
+  generateSitemapXml,
   normalizeArticleHtml,
   renderByline,
   selectRelatedArticles,
+  verifyPublishedState,
 };
