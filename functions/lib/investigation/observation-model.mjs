@@ -6,6 +6,10 @@ export const OBSERVATION_STATES = Object.freeze(["success", "refused", "missing_
 export const COLLECTION_CLASSES = Object.freeze(["official_api", "supplier", "consumer_interface", "native_dashboard", "synthetic_fixture"]);
 export const OBSERVATION_REVIEW_STATUSES = Object.freeze(["unreviewed", "reviewed", "excluded"]);
 
+const VISIBLE_ANSWER_CONTENT = /[\p{L}\p{N}\p{P}\p{S}]/u;
+
+const hasVisibleAnswerContent = (value) => VISIBLE_ANSWER_CONTENT.test(String(value ?? ""));
+
 const required = (value, code, message) => {
   const text = String(value ?? "").trim();
   if (!text) throw new VisibilityError(code, message);
@@ -86,8 +90,8 @@ export function normalizeObservation(input) {
     }
   }
   const rawAnswer = input?.rawAnswer == null ? null : String(input.rawAnswer);
-  if ((state === "success" || state === "refused") && !rawAnswer?.trim()) {
-    throw new VisibilityError("ANSWER_REQUIRED", "Successful and refused observations require non-whitespace answer text.");
+  if ((state === "success" || state === "refused") && !hasVisibleAnswerContent(rawAnswer)) {
+    throw new VisibilityError("ANSWER_REQUIRED", "Successful and refused observations require visible answer content.");
   }
   if (state === "failed" && rawAnswer) throw new VisibilityError("FAILED_OBSERVATION_HAS_ANSWER", "A failed observation cannot contain answer text.");
   if (state === "missing_answer" && rawAnswer) throw new VisibilityError("MISSING_ANSWER_HAS_ANSWER", "A missing-answer observation cannot contain answer text.");

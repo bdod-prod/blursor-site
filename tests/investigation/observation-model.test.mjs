@@ -162,6 +162,31 @@ test("rejects whitespace-only success and refusal answers", () => {
   }
 });
 
+for (const [label, rawAnswer] of [
+  ["U+200B ZERO WIDTH SPACE", "\u200B"],
+  ["U+2060 WORD JOINER", "\u2060"],
+  ["NUL", "\u0000"],
+  ["mixed whitespace, control, and format characters", " \t\u0000\u200B\u200C\u200D\u2060\n"],
+]) {
+  test(`rejects ${label}-only success and refusal answers`, () => {
+    for (const state of ["success", "refused"]) {
+      assert.throws(
+        () => normalizeObservation(validObservation({ state, rawAnswer })),
+        (error) => error.code === "ANSWER_REQUIRED",
+        state,
+      );
+    }
+  });
+}
+
+test("accepts answers containing a visible letter, number, punctuation mark, or symbol", () => {
+  for (const rawAnswer of ["Normal English answer.", "2026", "...", "🤖✨"]) {
+    for (const state of ["success", "refused"]) {
+      assert.equal(normalizeObservation(validObservation({ state, rawAnswer })).rawAnswer, rawAnswer);
+    }
+  }
+});
+
 test("enforces immutable identity, version, review, and timestamp invariants", () => {
   for (const [field, value, code] of [
     ["projectId", "", "INVALID_PROJECT_ID"],
