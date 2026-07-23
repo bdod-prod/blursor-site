@@ -311,12 +311,43 @@ test('verification reports a noncanonical related target', t => {
   );
 });
 
+test('verification requires the deterministic related-card targets', t => {
+  const { rootDir } = compileThreeArticleFixture(t);
+  writeArticle(rootDir, 'older.html', { published_date: '2026-07-21' });
+  compileResearch({ rootDir });
+  const fourArticleSet = discoverArticles({ rootDir });
+  const articlePath = path.join(rootDir, 'research/new-a.html');
+  fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
+    'href="/research/old" class="more-card"',
+    'href="/research/older" class="more-card"',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles: fourArticleSet }),
+    /research\/new-a\.html: related targets: missing old/,
+  );
+});
+
 test('verification reports a missing linked byline', t => {
   const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
   const articlePath = path.join(rootDir, 'research/new-a.html');
   fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
     /<span class="article-byline">[\s\S]*?<\/span>\n\s*/,
     '',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /research\/new-a\.html: expected one exact linked byline/,
+  );
+});
+
+test('verification reports appended visible text in a linked byline', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const articlePath = path.join(rootDir, 'research/new-a.html');
+  fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
+    '</a></span>',
+    '</a> with Example Sponsor</span>',
   ));
 
   assert.throws(
@@ -368,6 +399,20 @@ function snapshotGeneratedTree(rootDir) {
 
 test('a second compiler run produces byte-identical output', t => {
   const { rootDir } = compileThreeArticleFixture(t);
+  const before = snapshotGeneratedTree(rootDir);
+  compileResearch({ rootDir });
+  assert.deepEqual(snapshotGeneratedTree(rootDir), before);
+});
+
+test('a backdated archive mtime does not change second-run output', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-22' });
+  fs.utimesSync(path.join(rootDir, 'research/index.html'), new Date('2001-01-01T00:00:00Z'), new Date('2001-01-01T00:00:00Z'));
+
+  compileResearch({ rootDir });
   const before = snapshotGeneratedTree(rootDir);
   compileResearch({ rootDir });
   assert.deepEqual(snapshotGeneratedTree(rootDir), before);

@@ -206,7 +206,9 @@ function generateSitemapXml({ rootDir, articles }) {
   const entries = [
     ...STATIC_ROUTES.map(route => ({
       loc: route.url,
-      lastmod: isoDate(fs.statSync(path.join(rootDir, route.file)).mtime),
+      lastmod: route.file === 'research/index.html' && articles[0]
+        ? articles[0].meta.published_date
+        : isoDate(fs.statSync(path.join(rootDir, route.file)).mtime),
     })),
     ...articles.map(article => ({
       loc: `${BASE_URL}/research/${article.meta.slug}`,
@@ -522,14 +524,21 @@ function verifyPublishedState({ rootDir, expectedArticles }) {
     issues.push(...candidate.issues);
     if (!hasRssDiscovery(html)) issues.push(`${file}: missing RSS discovery`);
     const bylines = [...html.matchAll(/<span\b(?=[^>]*\bclass\s*=\s*(["'])[^"']*\barticle-byline\b[^"']*\1)[^>]*>[\s\S]*?<\/span>/gi)];
-    const exactByline = `By <a href="${AUTHOR_PATH}" rel="author" class="article-byline__link">${AUTHOR_NAME}</a>`;
-    if (bylines.length !== 1 || !bylines[0][0].includes(exactByline)) {
+    const exactByline = `<span class="article-byline">By <a href="${AUTHOR_PATH}" rel="author" class="article-byline__link">${AUTHOR_NAME}</a></span>`;
+    if (bylines.length !== 1 || bylines[0][0] !== exactByline) {
       issues.push(`${file}: expected one exact linked byline`);
     }
     const relatedTargets = extractClassLinkTargets(html, 'more-card');
     relatedLinkCount += relatedTargets.length;
     if (relatedTargets.length !== 2) issues.push(`${file}: expected two related targets`);
     if (new Set(relatedTargets).size !== relatedTargets.length) issues.push(`${file}: duplicate related targets`);
+    const expectedRelatedSlugs = selectRelatedArticles(expectedArticles, article.meta.slug, 2)
+      .map(related => related.meta.slug);
+    const actualRelatedSlugs = relatedTargets.map(target => {
+      const match = target && /^\/research\/([^/?#]+)$/.exec(target);
+      return match ? match[1] : target;
+    });
+    assertSameSet(`${file}: related targets`, actualRelatedSlugs, expectedRelatedSlugs, issues);
     for (const target of relatedTargets) {
       const targetSlug = target && /^\/research\/([^/?#]+)$/.exec(target);
       if (!targetSlug || !expectedSlugs.includes(targetSlug[1])) {
