@@ -48,6 +48,14 @@ function assertStepsInOrder(section, surface) {
   );
 }
 
+function assertProcessListSemantics(section, surface) {
+  assert.match(
+    section,
+    /<ol\b(?=[^>]*class="research-method__steps")(?=[^>]*role="list")[^>]*>/,
+    `${surface} process list must explicitly retain list semantics when CSS removes list styling`,
+  );
+}
+
 function assertCopyDiscipline(section, surface) {
   const forbidden = [
     [/\bevery\b/i, 'every'],
@@ -71,6 +79,7 @@ test('homepage explains the paper-to-distill method and links to Research', () =
   const section = extractMethodSection(html, 'homepage');
 
   assertStepsInOrder(section, 'homepage');
+  assertProcessListSemantics(section, 'homepage');
   assertCopyDiscipline(section, 'homepage');
   assert.match(section, /Catch up with the papers shaping AI visibility/);
   assert.match(section, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
@@ -89,6 +98,7 @@ test('Research archive explains the same method before the article inventory', (
   const articlesPosition = html.indexOf('<section class="articles">');
 
   assertStepsInOrder(section, 'archive');
+  assertProcessListSemantics(section, 'archive');
   assertCopyDiscipline(section, 'archive');
   assert.match(section, /From paper to practical briefing/);
   assert.match(section, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
@@ -104,6 +114,7 @@ test('research compiler preserves the archive method explainer', () => {
   const articlesPosition = rebuilt.indexOf('<section class="articles">');
 
   assertStepsInOrder(section, 'archive');
+  assertProcessListSemantics(section, 'archive');
   assertCopyDiscipline(section, 'archive');
   assert.match(section, /From paper to practical briefing/);
   assert.match(section, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
