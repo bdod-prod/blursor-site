@@ -61,6 +61,37 @@ Observed: destination `http://127.0.0.1:4173/research/`; title
 no console warnings/errors; focused link had a solid red `2px` outline with a
 `4px` offset.
 
+At 1440 × 1100, the targeted bundled-Playwright hover check observed
+`textDecorationLine: none` before hover and `underline` after hover, with
+`textDecorationThickness: 1px` and `textUnderlineOffset: 3px`; the red text
+color was unchanged, `hoverVisible: true`, and console/page errors were zero.
+
+Direct screenshot inspection found the component consistent with each page's
+paper palette, serif/mono hierarchy, spacing, and red accents rather than
+appearing pasted in.
+
+## Branch evidence
+
+Before this evidence follow-up commit, `git status --short --branch` returned
+only:
+
+```text
+## codex/research-method-explainer...origin/main [ahead 8]
+```
+
+At the same time, `git log --oneline origin/main..HEAD` returned:
+
+```text
+9eeb82e docs: verify research method explainer
+0fd92b5 fix: improve research method text contrast
+dd1574f feat: explain the BLURSOR research method
+17410da test: guard retired research volume claims
+a75f18c test: strengthen research method contract
+ef71233 test: define research method explainer contract
+a2a25ed docs: plan research method explainer
+8894fd9 docs: design research method explainer
+```
+
 ## Boundaries
 
 No article content, n8n, remote branches, merge state, or production state
