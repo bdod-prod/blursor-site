@@ -56,6 +56,9 @@ function assertCopyDiscipline(section, surface) {
     [/\bless\b[^.]{0,80}\bmore\b/i, 'less X more Y'],
     [/\brather\s+than\b/i, 'rather than'],
     [/\binstead\s+of\b/i, 'instead of'],
+    [/2,800/, 'retired 2,800 volume claim'],
+    [/70,000/, 'retired 70,000 volume claim'],
+    [/March 2026/, 'retired March 2026 volume claim'],
   ];
   for (const [pattern, label] of forbidden) {
     assert.doesNotMatch(section, pattern, `${surface} must avoid ${label}`);
