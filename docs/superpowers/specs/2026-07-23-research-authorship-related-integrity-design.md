@@ -1,9 +1,9 @@
 # BLURSOR Research Authorship and Related-Article Integrity Design
 
-**Date:** 2026-07-23  
-**Status:** Approved design, awaiting written-spec review  
-**Repository:** `blursor/blursor-site`  
-**Branch:** `codex/research-authorship-integrity`  
+**Date:** 2026-07-23
+**Status:** Approved design, awaiting written-spec review
+**Repository:** `blursor/blursor-site`
+**Branch:** `codex/research-authorship-integrity`
 **Base:** `origin/main` at `2bf6fa70a5b1f52deb01684337693645e0ef041a`
 
 ## Goal

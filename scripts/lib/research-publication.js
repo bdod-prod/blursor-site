@@ -184,6 +184,13 @@ function removeBlockedDigestLinks(html) {
 
 function generateArchiveHtml(indexHtml, articles) {
   const indexWithDiscovery = removeBlockedDigestLinks(ensureRssDiscoveryHtml(indexHtml));
+  const countMarkerRe = /<span class="articles__count">[\s\S]*?<\/span>/g;
+  const countMarkers = [...indexWithDiscovery.matchAll(countMarkerRe)];
+  if (countMarkers.length !== 1) {
+    throw new PublicationValidationError([
+      `research/index.html: expected exactly one articles__count marker, found ${countMarkers.length}`,
+    ]);
+  }
   const gridTag = findSingleClassTag(indexWithDiscovery, 'articles__grid', 'research/index.html');
   const cards = articles.map((article, index) => renderArchiveCard(article, index + 1)).join('\n\n');
   const archiveWithCards = replaceBalancedDivContents(
@@ -194,7 +201,7 @@ function generateArchiveHtml(indexHtml, articles) {
   );
   const count = articles.length;
   return archiveWithCards.replace(
-    /<span class="articles__count">\d+ articles?<\/span>/,
+    countMarkerRe,
     `<span class="articles__count">${count} article${count === 1 ? '' : 's'}</span>`,
   );
 }
@@ -219,7 +226,12 @@ function isoDate(value) {
   return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 }
 
-function buildSitemapEntries({ rootDir, articles, allowMissingFiles = false }) {
+function buildSitemapEntries({
+  rootDir,
+  articles,
+  allowMissingFiles = false,
+  fileMtimes = {},
+}) {
   return [
     ...STATIC_ROUTES.map(route => ({
       loc: route.url,
@@ -227,7 +239,9 @@ function buildSitemapEntries({ rootDir, articles, allowMissingFiles = false }) {
         ? articles[0].meta.published_date
         : allowMissingFiles && !fs.existsSync(path.join(rootDir, route.file))
           ? null
-          : isoDate(fs.statSync(path.join(rootDir, route.file)).mtime),
+          : isoDate(Object.hasOwn(fileMtimes, route.file)
+            ? fileMtimes[route.file]
+            : fs.statSync(path.join(rootDir, route.file)).mtime),
     })),
     ...articles.map(article => ({
       loc: `${BASE_URL}/research/${article.meta.slug}`,
@@ -236,8 +250,8 @@ function buildSitemapEntries({ rootDir, articles, allowMissingFiles = false }) {
   ];
 }
 
-function generateSitemapXml({ rootDir, articles }) {
-  const entries = buildSitemapEntries({ rootDir, articles });
+function generateSitemapXml({ rootDir, articles, fileMtimes = {} }) {
+  const entries = buildSitemapEntries({ rootDir, articles, fileMtimes });
   const body = entries.map(entry => `  <url>\n    <loc>${escapeXml(entry.loc)}</loc>${entry.lastmod ? `\n    <lastmod>${entry.lastmod}</lastmod>` : ''}\n  </url>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
@@ -384,32 +398,53 @@ function validateCandidate(filePath) {
   });
   if (hasNoindex) issues.push(`${fileName}: noindex is not allowed`);
 
-  const hasExactArticleAuthor = findTags(html, 'meta').some(tag =>
-    (getAttribute(tag, 'property') || '') === 'article:author'
-      && getAttribute(tag, 'content') === AUTHOR_URL,
+  const articleAuthorTags = findTags(html, 'meta').filter(tag =>
+    (getAttribute(tag, 'property') || '') === 'article:author',
   );
-  if (!hasExactArticleAuthor) {
+  if (articleAuthorTags.length !== 1) {
+    issues.push(`${fileName}: expected exactly one article:author declaration, found ${articleAuthorTags.length}`);
+  } else if (getAttribute(articleAuthorTags[0], 'content') !== AUTHOR_URL) {
     issues.push(`${fileName}: article:author must equal ${AUTHOR_URL}`);
   }
 
   const jsonLdArticles = parseJsonLdArticles(html, fileName, issues);
-  const hasExactJsonLdAuthor = jsonLdArticles.some(article => {
+  const hasOnlyExactJsonLdAuthors = jsonLdArticles.length > 0 && jsonLdArticles.every(article => {
     const author = article.author;
     return author
       && author['@type'] === 'Person'
       && author.name === AUTHOR_NAME
       && author.url === AUTHOR_URL;
   });
-  if (!hasExactJsonLdAuthor) {
-    issues.push(`${fileName}: JSON-LD Article must name ${AUTHOR_NAME} at ${AUTHOR_URL}`);
+  if (!hasOnlyExactJsonLdAuthors) {
+    issues.push(`${fileName}: JSON-LD Article must name ${AUTHOR_NAME} at ${AUTHOR_URL} in every Article object`);
   }
 
-  if (!meta || typeof meta.arxiv_id !== 'string'
-    || !html.includes(`https://arxiv.org/abs/${meta.arxiv_id}`)) {
+  const expectedArxivUrl = meta && typeof meta.arxiv_id === 'string'
+    ? `https://arxiv.org/abs/${meta.arxiv_id}`
+    : null;
+  const exactArxivAnchors = findTags(html, 'a').filter(tag =>
+    getAttribute(tag, 'href') === expectedArxivUrl,
+  );
+  if (!expectedArxivUrl || exactArxivAnchors.length === 0) {
     issues.push(`${fileName}: arXiv link must match metadata arxiv_id`);
   }
-  if (!/class\s*=\s*(["'])[^"']*\barticle-header__meta\b[^"']*\1/i.test(html)) {
+
+  let headerContents = null;
+  try {
+    const headerTag = findSingleClassTag(html, 'article-header__meta', fileName);
+    const bounds = findBalancedDivBlock(html, headerTag, fileName);
+    headerContents = html.slice(bounds.contentStart, bounds.contentEnd);
+  } catch {
     issues.push(`${fileName}: expected article-header metadata marker`);
+  }
+  if (expectedArxivUrl && headerContents != null) {
+    const headerArxivLinks = findTags(headerContents, 'a').filter(tag =>
+      (getAttribute(tag, 'class') || '').split(/\s+/).includes('arxiv-link'),
+    );
+    if (headerArxivLinks.length !== 1
+      || getAttribute(headerArxivLinks[0], 'href') !== expectedArxivUrl) {
+      issues.push(`${fileName}: header .arxiv-link href must equal ${expectedArxivUrl}`);
+    }
   }
   if (!/class\s*=\s*(["'])[^"']*\bmore-articles__grid\b[^"']*\1/i.test(html)) {
     issues.push(`${fileName}: expected related-grid marker`);
@@ -578,6 +613,20 @@ function verifyPublishedState({ rootDir, expectedArticles }) {
       expectedSlugs,
       issues,
     );
+    const countMarkers = [...archive.matchAll(/<span class="articles__count">([\s\S]*?)<\/span>/g)];
+    if (countMarkers.length !== 1) {
+      issues.push(`research/index.html: expected exactly one articles__count marker, found ${countMarkers.length}`);
+    } else {
+      const actualCount = countMarkers[0][1]
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const expectedCount = `${expectedArticles.length} article${expectedArticles.length === 1 ? '' : 's'}`;
+      if (actualCount !== expectedCount) {
+        issues.push(`research/index.html: articles__count must equal "${expectedCount}", found "${actualCount}"`);
+      }
+    }
     if (!hasRssDiscovery(archive)) issues.push('research/index.html: missing RSS discovery');
   }
   if (feed) {
@@ -634,6 +683,7 @@ function verifyPublishedState({ rootDir, expectedArticles }) {
 }
 
 function compileResearch({ rootDir }) {
+  const buildTimestamp = new Date();
   const articles = discoverArticles({ rootDir });
   const renderedArticles = articles.map(article => ({
     filePath: article.filePath,
@@ -643,12 +693,22 @@ function compileResearch({ rootDir }) {
     ),
   }));
   const archivePath = path.join(rootDir, 'research/index.html');
+  const homePath = path.join(rootDir, 'index.html');
+  const homeHtml = ensureRssDiscoveryHtml(fs.readFileSync(homePath, 'utf8'));
+  const homeChanged = fs.readFileSync(homePath, 'utf8') !== homeHtml;
   const generatedOutputs = [
     ...renderedArticles,
     { filePath: archivePath, html: generateArchiveHtml(fs.readFileSync(archivePath, 'utf8'), articles) },
     { filePath: path.join(rootDir, 'research/feed.xml'), html: generateFeedXml(articles) },
-    { filePath: path.join(rootDir, 'index.html'), html: ensureRssDiscoveryHtml(fs.readFileSync(path.join(rootDir, 'index.html'), 'utf8')) },
-    { filePath: path.join(rootDir, 'sitemap.xml'), html: generateSitemapXml({ rootDir, articles }) },
+    { filePath: homePath, html: homeHtml },
+    {
+      filePath: path.join(rootDir, 'sitemap.xml'),
+      html: generateSitemapXml({
+        rootDir,
+        articles,
+        fileMtimes: homeChanged ? { 'index.html': buildTimestamp } : {},
+      }),
+    },
   ];
   const changedOutputs = generatedOutputs.filter(({ filePath, html }) =>
     !fs.existsSync(filePath) || fs.readFileSync(filePath, 'utf8') !== html,
@@ -661,6 +721,9 @@ function compileResearch({ rootDir }) {
 
   for (const output of changedOutputs) {
     fs.writeFileSync(output.filePath, output.html);
+    if (output.filePath === homePath) {
+      fs.utimesSync(homePath, buildTimestamp, buildTimestamp);
+    }
   }
 
   const verification = verifyPublishedState({ rootDir, expectedArticles: articles });

@@ -9,6 +9,7 @@ const { spawnSync } = require('node:child_process');
 const {
   compileResearch,
   discoverArticles,
+  generateArchiveHtml,
   normalizeArticleHtml,
   selectRelatedArticles,
   verifyPublishedState,
@@ -210,6 +211,76 @@ test('discovery reports all invalid candidates before writing', t => {
   );
 });
 
+test('discovery rejects a conflicting second article:author declaration', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'conflicting-meta-author.html');
+  const articlePath = path.join(rootDir, 'research/conflicting-meta-author.html');
+  fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
+    '</head>',
+    '  <meta property="article:author" content="https://example.com/author">\n</head>',
+  ));
+
+  assert.throws(
+    () => discoverArticles({ rootDir }),
+    /conflicting-meta-author\.html: expected exactly one article:author declaration/,
+  );
+});
+
+test('discovery rejects a conflicting second JSON-LD Article author', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'conflicting-jsonld-author.html');
+  const articlePath = path.join(rootDir, 'research/conflicting-jsonld-author.html');
+  const conflictingArticle = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    author: {
+      '@type': 'Person',
+      name: 'Someone Else',
+      url: 'https://example.com/author',
+    },
+  });
+  fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
+    '</head>',
+    `  <script type="application/ld+json">${conflictingArticle}</script>\n</head>`,
+  ));
+
+  assert.throws(
+    () => discoverArticles({ rootDir }),
+    /conflicting-jsonld-author\.html: JSON-LD Article must name Alex Rostovtsev.*in every Article object/,
+  );
+});
+
+test('discovery rejects a wrong header arXiv href when the exact URL exists only in JSON-LD', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'jsonld-only-arxiv.html');
+  const articlePath = path.join(rootDir, 'research/jsonld-only-arxiv.html');
+  let html = fs.readFileSync(articlePath, 'utf8').replace(
+    'href="https://arxiv.org/abs/2607.12345" class="arxiv-link"',
+    'href="https://example.com/abs/2607.12345" class="arxiv-link"',
+  );
+  html = html.replace(
+    '"@type":"Article"',
+    '"@type":"Article","sameAs":"https://arxiv.org/abs/2607.12345"',
+  );
+  fs.writeFileSync(articlePath, html);
+
+  assert.throws(
+    () => discoverArticles({ rootDir }),
+    /jsonld-only-arxiv\.html: header \.arxiv-link href must equal https:\/\/arxiv\.org\/abs\/2607\.12345/,
+  );
+});
+
+test('discovery accepts an exact arXiv anchor matching metadata', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'exact-arxiv.html');
+
+  assert.equal(discoverArticles({ rootDir })[0].meta.slug, 'exact-arxiv');
+});
+
 test('discovery orders equal dates by slug and otherwise newest first', t => {
   const rootDir = makeFixture();
   t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
@@ -369,6 +440,87 @@ test('verification reports a duplicate archive target', t => {
   );
 });
 
+test('archive generation rejects a missing visible article count marker', () => {
+  assert.throws(
+    () => generateArchiveHtml(
+      '<html><body><div class="articles__grid"></div></body></html>',
+      [articleRecord('only')],
+    ),
+    /research\/index\.html: expected exactly one articles__count marker, found 0/,
+  );
+});
+
+test('archive generation rejects duplicate visible article count markers', () => {
+  assert.throws(
+    () => generateArchiveHtml(
+      '<html><body><span class="articles__count">0 articles</span><span class="articles__count">stale</span><div class="articles__grid"></div></body></html>',
+      [articleRecord('only')],
+    ),
+    /research\/index\.html: expected exactly one articles__count marker, found 2/,
+  );
+});
+
+test('archive generation replaces the complete visible count contents', () => {
+  const generated = generateArchiveHtml(
+    '<html><body><span class="articles__count"><strong>stale</strong> count</span><div class="articles__grid"></div></body></html>',
+    [articleRecord('only')],
+  );
+
+  assert.match(generated, /<span class="articles__count">1 article<\/span>/);
+  assert.doesNotMatch(generated, /stale/);
+});
+
+test('verification rejects a missing visible article count marker', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const archivePath = path.join(rootDir, 'research/index.html');
+  fs.writeFileSync(archivePath, fs.readFileSync(archivePath, 'utf8').replace(
+    '<span class="articles__count">3 articles</span>',
+    '',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /research\/index\.html: expected exactly one articles__count marker, found 0/,
+  );
+});
+
+test('verification rejects duplicate visible article count markers', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const archivePath = path.join(rootDir, 'research/index.html');
+  fs.writeFileSync(archivePath, fs.readFileSync(archivePath, 'utf8').replace(
+    '<span class="articles__count">3 articles</span>',
+    '<span class="articles__count">3 articles</span><span class="articles__count">3 articles</span>',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /research\/index\.html: expected exactly one articles__count marker, found 2/,
+  );
+});
+
+test('verification rejects a stale visible article count', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const archivePath = path.join(rootDir, 'research/index.html');
+  fs.writeFileSync(archivePath, fs.readFileSync(archivePath, 'utf8').replace(
+    '<span class="articles__count">3 articles</span>',
+    '<span class="articles__count">2 articles</span>',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /research\/index\.html: articles__count must equal "3 articles", found "2 articles"/,
+  );
+});
+
+test('verification accepts the valid generated visible article count', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+
+  assert.equal(
+    verifyPublishedState({ rootDir, expectedArticles }).articleCount,
+    3,
+  );
+});
+
 test('verification reports a self-related target', t => {
   const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
   const articlePath = path.join(rootDir, 'research/new-a.html');
@@ -486,6 +638,7 @@ test('verification reports an altered JSON-LD author URL', t => {
 
 function snapshotGeneratedTree(rootDir) {
   const files = [
+    'index.html',
     ...fs.readdirSync(path.join(rootDir, 'research'))
       .filter(file => file.endsWith('.html') && file !== 'index.html')
       .sort()
@@ -513,6 +666,29 @@ test('a backdated archive mtime does not change second-run output', t => {
   fs.utimesSync(path.join(rootDir, 'research/index.html'), new Date('2001-01-01T00:00:00Z'), new Date('2001-01-01T00:00:00Z'));
 
   compileResearch({ rootDir });
+  const before = snapshotGeneratedTree(rootDir);
+  compileResearch({ rootDir });
+  assert.deepEqual(snapshotGeneratedTree(rootDir), before);
+});
+
+test('compiler repairs a backdated homepage RSS omission in one idempotent run', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-22' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-21' });
+  const homePath = path.join(rootDir, 'index.html');
+  const backdated = new Date('2001-01-01T00:00:00Z');
+  fs.utimesSync(homePath, backdated, backdated);
+
+  compileResearch({ rootDir });
+
+  const homepageDate = fs.statSync(homePath).mtime.toISOString().slice(0, 10);
+  const sitemap = fs.readFileSync(path.join(rootDir, 'sitemap.xml'), 'utf8');
+  assert.match(
+    sitemap,
+    new RegExp(`<loc>https://blursor\\.ai/</loc>\\s*<lastmod>${homepageDate}</lastmod>`),
+  );
   const before = snapshotGeneratedTree(rootDir);
   compileResearch({ rootDir });
   assert.deepEqual(snapshotGeneratedTree(rootDir), before);
@@ -558,7 +734,7 @@ test('compileResearch does not write any article until all normalizations succee
 
   assert.throws(
     () => compileResearch({ rootDir }),
-    /old\.html: ambiguous byline insertion point/,
+    /old\.html: header \.arxiv-link href must equal https:\/\/arxiv\.org\/abs\/2607\.12345/,
   );
   assert.equal(fs.readFileSync(newAPath, 'utf8'), before);
 });
