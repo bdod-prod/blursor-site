@@ -7,6 +7,7 @@ const BASE_URL = 'https://blursor.ai';
 const AUTHOR_NAME = 'Alex Rostovtsev';
 const AUTHOR_PATH = '/author/alex-rostovtsev';
 const AUTHOR_URL = `${BASE_URL}${AUTHOR_PATH}`;
+const RSS_FEED_URL = `${BASE_URL}/research/feed.xml`;
 const META_RE = /<!--\s*BLURSOR-META:\s*({[\s\S]*?})\s*-->/g;
 const REQUIRED_META_FIELDS = [
   'slug', 'title', 'published_date', 'reading_time_min',
@@ -100,20 +101,22 @@ function validateCandidate(filePath) {
     }
   }
 
-  const canonicalUrl = meta && typeof meta.slug === 'string'
+  const expectedCanonicalUrl = meta && typeof meta.slug === 'string'
     ? `${BASE_URL}/research/${meta.slug}`
     : null;
   const canonicalUrls = findTags(html, 'link')
     .filter(tag => (getAttribute(tag, 'rel') || '').split(/\s+/).includes('canonical'))
     .map(tag => getAttribute(tag, 'href'));
-  if (!canonicalUrl || canonicalUrls.length !== 1 || canonicalUrls[0] !== canonicalUrl) {
+  const canonicalUrl = canonicalUrls.length === 1 ? canonicalUrls[0] : null;
+  if (!expectedCanonicalUrl || canonicalUrls.length !== 1 || canonicalUrl !== expectedCanonicalUrl) {
     issues.push(`${fileName}: canonical must match its self URL`);
   }
 
   const hasNoindex = findTags(html, 'meta').some(tag => {
     const name = (getAttribute(tag, 'name') || '').toLowerCase();
     const content = (getAttribute(tag, 'content') || '').toLowerCase();
-    return name === 'robots' && /(^|\s|,)noindex($|\s|,)/.test(content);
+    return (name === 'robots' || /bot(?:-|$)/.test(name))
+      && /(^|\s|,)noindex($|\s|,)/.test(content);
   });
   if (hasNoindex) issues.push(`${fileName}: noindex is not allowed`);
 
@@ -150,11 +153,12 @@ function validateCandidate(filePath) {
   const hasRssDiscovery = findTags(html, 'link').some(tag => {
     const rel = (getAttribute(tag, 'rel') || '').split(/\s+/);
     return rel.includes('alternate')
-      && (getAttribute(tag, 'type') || '').toLowerCase() === 'application/rss+xml';
+      && (getAttribute(tag, 'type') || '').toLowerCase() === 'application/rss+xml'
+      && getAttribute(tag, 'href') === RSS_FEED_URL;
   });
   if (!hasRssDiscovery) issues.push(`${fileName}: expected RSS discovery link`);
 
-  return { fileName, filePath, html, meta, canonicalUrl, issues };
+  return { fileName, filePath, html, meta, canonicalUrl, canonicalUrls, issues };
 }
 
 function discoverArticles({ rootDir }) {
@@ -166,22 +170,24 @@ function discoverArticles({ rootDir }) {
   const issues = candidates.flatMap(candidate => candidate.issues);
 
   const duplicateFields = [
-    { label: 'slug', getValue: candidate => candidate.meta && candidate.meta.slug },
-    { label: 'canonical', getValue: candidate => candidate.canonicalUrl },
+    { label: 'slug', getValues: candidate => [candidate.meta && candidate.meta.slug] },
+    { label: 'canonical', getValues: candidate => candidate.canonicalUrls },
   ];
-  for (const { label, getValue } of duplicateFields) {
+  for (const { label, getValues } of duplicateFields) {
     const groups = new Map();
     for (const candidate of candidates) {
-      const value = getValue(candidate);
-      if (!value) continue;
-      const group = groups.get(value) || [];
-      group.push(candidate);
-      groups.set(value, group);
+      const values = new Set(getValues(candidate));
+      for (const value of values) {
+        if (!value) continue;
+        const group = groups.get(value) || [];
+        group.push(candidate);
+        groups.set(value, group);
+      }
     }
-    for (const group of groups.values()) {
+    for (const [value, group] of groups) {
       if (group.length > 1) {
         for (const candidate of group) {
-          issues.push(`${candidate.fileName}: duplicate ${label} ${getValue(candidate)}`);
+          issues.push(`${candidate.fileName}: duplicate ${label} ${value}`);
         }
       }
     }

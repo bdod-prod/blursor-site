@@ -148,3 +148,56 @@ test('compileResearch reports the validated article count and slugs', t => {
     articleSlugs: ['article'],
   });
 });
+
+test('discovery requires the canonical RSS feed URL', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'wrong-feed.html');
+  const articlePath = path.join(rootDir, 'research/wrong-feed.html');
+  fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
+    'https://blursor.ai/research/feed.xml',
+    'https://example.com/research/feed.xml',
+  ));
+
+  assert.throws(
+    () => discoverArticles({ rootDir }),
+    /wrong-feed\.html: expected RSS discovery link/,
+  );
+});
+
+test('discovery aggregates duplicate declared canonical URLs', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'alpha.html');
+  writeArticle(rootDir, 'beta.html');
+  const betaPath = path.join(rootDir, 'research/beta.html');
+  fs.writeFileSync(betaPath, fs.readFileSync(betaPath, 'utf8').replace(
+    'https://blursor.ai/research/beta',
+    'https://blursor.ai/research/alpha',
+  ));
+
+  assert.throws(
+    () => discoverArticles({ rootDir }),
+    error => {
+      assert.match(error.message, /beta\.html: canonical must match its self URL/);
+      assert.match(error.message, /alpha\.html: duplicate canonical https:\/\/blursor\.ai\/research\/alpha/);
+      assert.match(error.message, /beta\.html: duplicate canonical https:\/\/blursor\.ai\/research\/alpha/);
+      return true;
+    },
+  );
+});
+
+test('discovery rejects noindex directives for named crawler meta tags', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'googlebot-noindex.html');
+  fs.appendFileSync(
+    path.join(rootDir, 'research/googlebot-noindex.html'),
+    '<meta name="googlebot" content="noindex">',
+  );
+
+  assert.throws(
+    () => discoverArticles({ rootDir }),
+    /googlebot-noindex\.html: noindex is not allowed/,
+  );
+});
