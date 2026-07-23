@@ -179,6 +179,24 @@ for (const [label, rawAnswer] of [
   });
 }
 
+for (const [label, rawAnswer] of [
+  ["U+115F HANGUL CHOSEONG FILLER", "\u115F"],
+  ["U+1160 HANGUL JUNGSEONG FILLER", "\u1160"],
+  ["U+3164 HANGUL FILLER", "\u3164"],
+  ["U+FFA0 HALFWIDTH HANGUL FILLER", "\uFFA0"],
+  ["U+2800 BRAILLE PATTERN BLANK", "\u2800"],
+  ["mixed Hangul fillers and BRAILLE PATTERN BLANK", "\u115F\u1160\u3164\uFFA0\u2800"],
+]) {
+  for (const state of ["success", "refused"]) {
+    test(`rejects ${label}-only ${state} answers`, () => {
+      assert.throws(
+        () => normalizeObservation(validObservation({ state, rawAnswer })),
+        (error) => error.code === "ANSWER_REQUIRED",
+      );
+    });
+  }
+}
+
 test("accepts answers containing a visible letter, number, punctuation mark, or symbol", () => {
   for (const rawAnswer of ["Normal English answer.", "2026", "...", "🤖✨"]) {
     for (const state of ["success", "refused"]) {

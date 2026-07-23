@@ -7,8 +7,14 @@ export const COLLECTION_CLASSES = Object.freeze(["official_api", "supplier", "co
 export const OBSERVATION_REVIEW_STATUSES = Object.freeze(["unreviewed", "reviewed", "excluded"]);
 
 const VISIBLE_ANSWER_CONTENT = /[\p{L}\p{N}\p{P}\p{S}]/u;
+const DEFAULT_IGNORABLE_CODE_POINT = /\p{Default_Ignorable_Code_Point}/u;
+const BRAILLE_PATTERN_BLANK = "\u2800";
 
-const hasVisibleAnswerContent = (value) => VISIBLE_ANSWER_CONTENT.test(String(value ?? ""));
+const hasVisibleAnswerContent = (value) => [...String(value ?? "")].some((codePoint) => (
+  VISIBLE_ANSWER_CONTENT.test(codePoint)
+  && !DEFAULT_IGNORABLE_CODE_POINT.test(codePoint)
+  && codePoint !== BRAILLE_PATTERN_BLANK
+));
 
 const required = (value, code, message) => {
   const text = String(value ?? "").trim();
