@@ -6,7 +6,7 @@ const { compileResearch } = require('./lib/research-publication');
 
 try {
   const result = compileResearch({ rootDir: path.resolve(__dirname, '..') });
-  console.log(`Validated ${result.articleCount} research article(s)`);
+  console.log(`Compiled and verified ${result.articleCount} research article(s)`);
 } catch (error) {
   console.error(error && error.message ? error.message : error);
   process.exitCode = 1;

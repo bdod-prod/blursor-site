@@ -245,6 +245,42 @@ test('compileResearch writes normalized articles and reports the validated count
   );
 });
 
+test('compileResearch restores missing RSS discovery before post-write verification', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-22' });
+  const articlePath = path.join(rootDir, 'research/new-a.html');
+  fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
+    '  <link rel="alternate" type="application/rss+xml" href="https://blursor.ai/research/feed.xml">\n',
+    '',
+  ));
+
+  compileResearch({ rootDir });
+
+  assert.match(
+    fs.readFileSync(articlePath, 'utf8'),
+    /<link rel="alternate" type="application\/rss\+xml" title="BLURSOR Research RSS" href="https:\/\/blursor\.ai\/research\/feed\.xml">/,
+  );
+});
+
+test('compileResearch adds a managed mobile metadata-wrap rule', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-22' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-21' });
+
+  compileResearch({ rootDir });
+
+  const normalized = fs.readFileSync(path.join(rootDir, 'research/new-a.html'), 'utf8');
+  assert.match(
+    normalized,
+    /<style data-blursor-managed="article-meta-mobile">[\s\S]*@media \(max-width: 640px\)[\s\S]*\.article-header__meta \{ flex-wrap: wrap; \}[\s\S]*<\/style>/,
+  );
+});
+
 function compileThreeArticleFixture(t) {
   const rootDir = makeFixture();
   t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
@@ -370,6 +406,20 @@ test('verification reports missing RSS discovery', t => {
   );
 });
 
+test('verification reports missing managed mobile metadata wrapping', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const articlePath = path.join(rootDir, 'research/new-a.html');
+  fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
+    /\n  <style data-blursor-managed="article-meta-mobile">[\s\S]*?<\/style>/,
+    '',
+  ));
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /research\/new-a\.html: expected one managed mobile metadata-wrap style/,
+  );
+});
+
 test('verification reports an altered JSON-LD author URL', t => {
   const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
   const articlePath = path.join(rootDir, 'research/new-a.html');
@@ -463,20 +513,37 @@ test('compileResearch does not write any article until all normalizations succee
   assert.equal(fs.readFileSync(newAPath, 'utf8'), before);
 });
 
-test('discovery requires the canonical RSS feed URL', t => {
+test('compileResearch adds the canonical RSS feed URL alongside an unrelated feed', t => {
   const rootDir = makeFixture();
   t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
   writeArticle(rootDir, 'wrong-feed.html');
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-22' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-21' });
   const articlePath = path.join(rootDir, 'research/wrong-feed.html');
   fs.writeFileSync(articlePath, fs.readFileSync(articlePath, 'utf8').replace(
     'https://blursor.ai/research/feed.xml',
     'https://example.com/research/feed.xml',
   ));
 
-  assert.throws(
-    () => discoverArticles({ rootDir }),
-    /wrong-feed\.html: expected RSS discovery link/,
+  compileResearch({ rootDir });
+
+  assert.match(
+    fs.readFileSync(articlePath, 'utf8'),
+    /<link rel="alternate" type="application\/rss\+xml" title="BLURSOR Research RSS" href="https:\/\/blursor\.ai\/research\/feed\.xml">/,
   );
+});
+
+test('CLI reports that compilation and verification both completed', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-22' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-21' });
+
+  const result = runFixture(rootDir);
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, 'Compiled and verified 3 research article(s)\n');
 });
 
 test('discovery aggregates duplicate declared canonical URLs', t => {

@@ -2,19 +2,35 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://blursor.ai/</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-23</lastmod>
   </url>
   <url>
     <loc>https://blursor.ai/ai-crawler-checker</loc>
-    <lastmod>2026-07-05</lastmod>
+    <lastmod>2026-07-23</lastmod>
   </url>
   <url>
     <loc>https://blursor.ai/research</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-21</lastmod>
   </url>
   <url>
     <loc>https://blursor.ai/author/alex-rostovtsev</loc>
-    <lastmod>2026-06-05</lastmod>
+    <lastmod>2026-07-23</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/drnoise-shows-one-false-document-can-knock-agents-off-course</loc>
+    <lastmod>2026-07-21</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/generative-search-citations-surface-predictors</loc>
+    <lastmod>2026-07-20</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/generative-engine-optimization-doesnt-translate</loc>
+    <lastmod>2026-07-16</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/llm-brand-answer-variance-decomposition</loc>
+    <lastmod>2026-07-16</lastmod>
   </url>
   <url>
     <loc>https://blursor.ai/research/llm-brand-reputation-citations-third-party</loc>
@@ -99,6 +115,10 @@
   <url>
     <loc>https://blursor.ai/research/rank-zero-honeypot-agent-collapse</loc>
     <lastmod>2026-05-26</lastmod>
+  </url>
+  <url>
+    <loc>https://blursor.ai/research/agentic-rag-failure-modes-evaluation</loc>
+    <lastmod>2026-05-22</lastmod>
   </url>
   <url>
     <loc>https://blursor.ai/research/citation-failures-generative-engine-agentgeo</loc>

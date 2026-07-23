@@ -9,6 +9,11 @@ const AUTHOR_PATH = '/author/alex-rostovtsev';
 const AUTHOR_URL = `${BASE_URL}${AUTHOR_PATH}`;
 const RSS_FEED_URL = `${BASE_URL}/research/feed.xml`;
 const RSS_FEED_LINK_TAG = `<link rel="alternate" type="application/rss+xml" title="BLURSOR Research RSS" href="${RSS_FEED_URL}">`;
+const MOBILE_META_WRAP_STYLE = `  <style data-blursor-managed="article-meta-mobile">
+    @media (max-width: 640px) {
+      .article-header__meta { flex-wrap: wrap; }
+    }
+  </style>`;
 const STATIC_ROUTES = [
   { url: `${BASE_URL}/`, file: 'index.html' },
   { url: `${BASE_URL}/ai-crawler-checker`, file: 'ai-crawler-checker.html' },
@@ -157,6 +162,18 @@ function ensureRssDiscoveryHtml(html) {
     return html.replace('\n  <!-- Fonts -->', `\n  ${RSS_FEED_LINK_TAG}\n  <!-- Fonts -->`);
   }
   return html.replace(/<\/head>/i, `  ${RSS_FEED_LINK_TAG}\n</head>`);
+}
+
+function ensureMobileMetaWrapHtml(html, fileName) {
+  const managedStyleRe = /\n\s*<style\b(?=[^>]*\bdata-blursor-managed\s*=\s*(["'])article-meta-mobile\1)[^>]*>[\s\S]*?<\/style>/gi;
+  const withoutManagedStyle = html.replace(managedStyleRe, '');
+  const headClosings = [...withoutManagedStyle.matchAll(/<\/head>/gi)];
+  if (headClosings.length !== 1) {
+    throw new PublicationValidationError([
+      `${fileName}: expected one head closing tag for mobile metadata style`,
+    ]);
+  }
+  return withoutManagedStyle.replace(/<\/head>/i, `${MOBILE_META_WRAP_STYLE}\n</head>`);
 }
 
 function removeBlockedDigestLinks(html) {
@@ -391,13 +408,6 @@ function validateCandidate(filePath) {
   if (!/class\s*=\s*(["'])[^"']*\bmore-articles__grid\b[^"']*\1/i.test(html)) {
     issues.push(`${fileName}: expected related-grid marker`);
   }
-  const hasRssDiscovery = findTags(html, 'link').some(tag => {
-    const rel = (getAttribute(tag, 'rel') || '').split(/\s+/);
-    return rel.includes('alternate')
-      && (getAttribute(tag, 'type') || '').toLowerCase() === 'application/rss+xml'
-      && getAttribute(tag, 'href') === RSS_FEED_URL;
-  });
-  if (!hasRssDiscovery) issues.push(`${fileName}: expected RSS discovery link`);
 
   return { fileName, filePath, html, meta, canonicalUrl, canonicalUrls, issues };
 }
@@ -523,6 +533,9 @@ function verifyPublishedState({ rootDir, expectedArticles }) {
     const candidate = validateCandidate(path.join(rootDir, file));
     issues.push(...candidate.issues);
     if (!hasRssDiscovery(html)) issues.push(`${file}: missing RSS discovery`);
+    if (html.split(MOBILE_META_WRAP_STYLE).length !== 2) {
+      issues.push(`${file}: expected one managed mobile metadata-wrap style`);
+    }
     const bylines = [...html.matchAll(/<span\b(?=[^>]*\bclass\s*=\s*(["'])[^"']*\barticle-byline\b[^"']*\1)[^>]*>[\s\S]*?<\/span>/gi)];
     const exactByline = `<span class="article-byline">By <a href="${AUTHOR_PATH}" rel="author" class="article-byline__link">${AUTHOR_NAME}</a></span>`;
     if (bylines.length !== 1 || bylines[0][0] !== exactByline) {
@@ -560,7 +573,10 @@ function compileResearch({ rootDir }) {
   const articles = discoverArticles({ rootDir });
   const renderedArticles = articles.map(article => ({
     filePath: article.filePath,
-    html: removeBlockedDigestLinks(ensureRssDiscoveryHtml(normalizeArticleHtml(article, articles))),
+    html: ensureMobileMetaWrapHtml(
+      removeBlockedDigestLinks(ensureRssDiscoveryHtml(normalizeArticleHtml(article, articles))),
+      article.fileName,
+    ),
   }));
   const archivePath = path.join(rootDir, 'research/index.html');
   const generatedOutputs = [
