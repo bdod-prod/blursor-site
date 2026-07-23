@@ -291,6 +291,56 @@ function compileThreeArticleFixture(t) {
   return { rootDir, expectedArticles: discoverArticles({ rootDir }) };
 }
 
+function tamperSitemapLastmod(rootDir, loc, replacement = '2000-01-01') {
+  const sitemapPath = path.join(rootDir, 'sitemap.xml');
+  const sitemap = fs.readFileSync(sitemapPath, 'utf8');
+  const escapedLoc = loc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const entryRe = new RegExp(`(<loc>${escapedLoc}</loc>\\s*<lastmod>)[^<]+(</lastmod>)`);
+  assert.match(sitemap, entryRe);
+  fs.writeFileSync(sitemapPath, sitemap.replace(entryRe, `$1${replacement}$2`));
+}
+
+test('verification rejects the wrong generated research lastmod', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  tamperSitemapLastmod(rootDir, 'https://blursor.ai/research');
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /sitemap\.xml: https:\/\/blursor\.ai\/research lastmod must equal 2026-07-23, found 2000-01-01/,
+  );
+});
+
+test('verification rejects the wrong article lastmod', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  tamperSitemapLastmod(rootDir, 'https://blursor.ai/research/old');
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /sitemap\.xml: https:\/\/blursor\.ai\/research\/old lastmod must equal 2026-07-22, found 2000-01-01/,
+  );
+});
+
+test('verification rejects the wrong mtime-based route lastmod', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const expectedDate = fs.statSync(path.join(rootDir, 'index.html')).mtime.toISOString().slice(0, 10);
+  tamperSitemapLastmod(rootDir, 'https://blursor.ai/');
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    new RegExp(`sitemap\\.xml: https://blursor\\.ai/ lastmod must equal ${expectedDate}, found 2000-01-01`),
+  );
+});
+
+test('verification rejects an empty sitemap lastmod', t => {
+  const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  tamperSitemapLastmod(rootDir, 'https://blursor.ai/research/old', '');
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles }),
+    /sitemap\.xml: https:\/\/blursor\.ai\/research\/old lastmod must not be empty/,
+  );
+});
+
 test('verification reports a missing RSS item URL after the feed is tampered', t => {
   const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
   const feedPath = path.join(rootDir, 'research/feed.xml');

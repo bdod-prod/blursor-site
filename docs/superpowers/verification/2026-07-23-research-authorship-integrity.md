@@ -6,6 +6,10 @@ Merge base: `2bf6fa70a5b1f52deb01684337693645e0ef041a`
 
 Task 4 branch input: `4bbe4dd3a0a3a7633169c9d68688970700989120`
 
+Pinned generated after-state: `77964ce46fc2547bfd1c22dcc25ba6ae4605264b`
+
+That original Task 4 implementation commit contains the regenerated 30-article corpus and its archive, feed, and sitemap collection surfaces. Later verifier, test, and receipt follow-up commits do not alter those regenerated corpus files. The follow-up commit SHA is intentionally not embedded here because a commit cannot truthfully contain its own final SHA.
+
 ## Inventory Receipt
 
 - Before: 30 article HTML files / 29 metadata-bearing articles / 29 legacy-builder inventory members / 0 visible bylines / 60 legacy related links.
@@ -22,7 +26,7 @@ Command:
 node --test tests/research-publication.test.js tests/research-repository.test.js
 ```
 
-Result: 29 tests passed, 0 failed, 0 skipped.
+Result after review follow-up: 33 tests passed, 0 failed, 0 skipped.
 
 Compiler command:
 
@@ -68,6 +72,7 @@ Result: `cmp` exited `0`. Both patch files have SHA-256 `57ddd06e86a21a9f7e4f8ee
 - Archive: 30 unique article-card slugs, exactly equal to the article inventory.
 - Feed: 30 unique item URLs, exactly equal to the article canonical URL set.
 - Sitemap: 30 unique article URLs, exactly equal to the article canonical URL set, plus the four required non-article routes.
+- Sitemap route/date pairs are verified fail-closed: `/research` equals the newest publication date; every article equals its own publication date; and `/`, `/ai-crawler-checker`, and `/author/alex-rostovtsev` equal their current file-mtime dates.
 - Every article has one exact linked byline and two deterministic, unique, non-self related targets.
 - The two legacy soft-404 related targets occur in no related grid.
 

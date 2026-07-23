@@ -219,19 +219,25 @@ function isoDate(value) {
   return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 }
 
-function generateSitemapXml({ rootDir, articles }) {
-  const entries = [
+function buildSitemapEntries({ rootDir, articles, allowMissingFiles = false }) {
+  return [
     ...STATIC_ROUTES.map(route => ({
       loc: route.url,
       lastmod: route.file === 'research/index.html' && articles[0]
         ? articles[0].meta.published_date
-        : isoDate(fs.statSync(path.join(rootDir, route.file)).mtime),
+        : allowMissingFiles && !fs.existsSync(path.join(rootDir, route.file))
+          ? null
+          : isoDate(fs.statSync(path.join(rootDir, route.file)).mtime),
     })),
     ...articles.map(article => ({
       loc: `${BASE_URL}/research/${article.meta.slug}`,
       lastmod: article.meta.published_date,
     })),
   ];
+}
+
+function generateSitemapXml({ rootDir, articles }) {
+  const entries = buildSitemapEntries({ rootDir, articles });
   const body = entries.map(entry => `  <url>\n    <loc>${escapeXml(entry.loc)}</loc>${entry.lastmod ? `\n    <lastmod>${entry.lastmod}</lastmod>` : ''}\n  </url>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
@@ -470,6 +476,65 @@ function assertSameSet(label, actual, expected, issues) {
   if (extra.length) issues.push(`${label}: unexpected ${extra.join(', ')}`);
 }
 
+function parseSitemapUrlEntries(sitemap, issues) {
+  return [...sitemap.matchAll(/<url\b[^>]*>([\s\S]*?)<\/url>/gi)].map((match, index) => {
+    const contents = match[1];
+    const locs = [...contents.matchAll(/<loc>([\s\S]*?)<\/loc>/gi)]
+      .map(locMatch => locMatch[1].trim());
+    const lastmods = [...contents.matchAll(/<lastmod>([\s\S]*?)<\/lastmod>/gi)]
+      .map(lastmodMatch => lastmodMatch[1].trim());
+    const label = locs.length === 1 ? locs[0] : `url entry ${index + 1}`;
+    if (locs.length !== 1) {
+      issues.push(`sitemap.xml: ${label} must contain exactly one loc, found ${locs.length}`);
+    }
+    if (lastmods.length !== 1) {
+      issues.push(`sitemap.xml: ${label} must contain exactly one lastmod, found ${lastmods.length}`);
+    } else if (!lastmods[0]) {
+      issues.push(`sitemap.xml: ${label} lastmod must not be empty`);
+    }
+    return {
+      loc: locs.length === 1 ? locs[0] : null,
+      lastmod: lastmods.length === 1 && lastmods[0] ? lastmods[0] : null,
+    };
+  });
+}
+
+function verifySitemapEntries({ rootDir, sitemap, expectedArticles, issues }) {
+  const expectedEntries = buildSitemapEntries({
+    rootDir,
+    articles: expectedArticles,
+    allowMissingFiles: true,
+  });
+  const expectedLocs = new Set(expectedEntries.map(entry => entry.loc));
+  const actualGroups = new Map();
+
+  for (const entry of parseSitemapUrlEntries(sitemap, issues)) {
+    if (!entry.loc) continue;
+    const group = actualGroups.get(entry.loc) || [];
+    group.push(entry);
+    actualGroups.set(entry.loc, group);
+  }
+
+  for (const expected of expectedEntries) {
+    const group = actualGroups.get(expected.loc) || [];
+    if (group.length === 0) {
+      issues.push(`sitemap.xml: missing entry ${expected.loc}`);
+      continue;
+    }
+    if (group.length > 1) {
+      issues.push(`sitemap.xml: duplicate entry ${expected.loc}`);
+      continue;
+    }
+    if (expected.lastmod && group[0].lastmod && group[0].lastmod !== expected.lastmod) {
+      issues.push(`sitemap.xml: ${expected.loc} lastmod must equal ${expected.lastmod}, found ${group[0].lastmod}`);
+    }
+  }
+
+  for (const loc of actualGroups.keys()) {
+    if (!expectedLocs.has(loc)) issues.push(`sitemap.xml: unexpected entry ${loc}`);
+  }
+}
+
 function readPublishedFile(rootDir, file, issues) {
   const filePath = path.join(rootDir, file);
   if (!fs.existsSync(filePath)) {
@@ -521,8 +586,7 @@ function verifyPublishedState({ rootDir, expectedArticles }) {
     assertSameSet('research/feed.xml', itemUrls, expectedUrls, issues);
   }
   if (sitemap) {
-    const sitemapUrls = [...sitemap.matchAll(/<loc>([\s\S]*?)<\/loc>/gi)].map(match => match[1].trim());
-    assertSameSet('sitemap.xml', sitemapUrls, [...STATIC_ROUTES.map(route => route.url), ...expectedUrls], issues);
+    verifySitemapEntries({ rootDir, sitemap, expectedArticles, issues });
   }
   if (home && !hasRssDiscovery(home)) issues.push('index.html: missing RSS discovery');
 
