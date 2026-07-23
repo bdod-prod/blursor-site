@@ -19,6 +19,7 @@
 - Related selection is published date descending, current slug excluded, and slug ascending as the date tie-breaker.
 - Restore `agentic-rag-failure-modes-evaluation` from evidence already present in its HTML and Markdown; do not rewrite article prose.
 - Preserve self-canonicals, indexability, Article JSON-LD, RSS discovery, arXiv evidence, static sitemap routes, and the existing `/digest` cleanup.
+- In the sitemap, `/research` is a generated collection route whose `lastmod` is the newest validated article publication date; `/`, `/ai-crawler-checker`, and `/author/alex-rostovtsev` retain file-mtime `lastmod`, while article routes use their own publication dates.
 - Discovery and validation must finish before any write; compiler output must be idempotent.
 - Do not delete or restore the legacy soft-404 concepts, mutate n8n, merge, push, or deploy.
 
@@ -479,8 +480,8 @@ Port existing output behavior from the old CLI without weakening it:
 
 - preserve archive card structure and article count;
 - preserve RSS channel metadata and chronological items;
-- preserve the four static sitemap routes;
-- preserve file-mtime lastmod for static routes and publication date for articles;
+- preserve the four established non-article sitemap routes;
+- use the newest validated article publication date for generated `/research`, file-mtime `lastmod` for `/`, `/ai-crawler-checker`, and `/author/alex-rostovtsev`, and each article’s publication date for its article route;
 - preserve RSS discovery insertion on home/archive/articles; and
 - preserve removal of blocked `/digest` footer links.
 
