@@ -12,6 +12,7 @@ const {
 const ROOT_DIR = path.resolve(__dirname, '..');
 const HOME_PATH = path.join(ROOT_DIR, 'index.html');
 const ARCHIVE_PATH = path.join(ROOT_DIR, 'research/index.html');
+const RESEARCH_METHOD_CSS_PATH = path.join(ROOT_DIR, 'assets/research-method.css');
 const STEP_LABELS = [
   'Follow the field',
   'Interrogate the paper',
@@ -107,4 +108,38 @@ test('research compiler preserves the archive method explainer', () => {
   assert.match(section, /From paper to practical briefing/);
   assert.match(section, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
   assert.ok(sectionPosition < articlesPosition, 'rebuilt archive method must precede the article inventory');
+});
+
+test('research method muted text meets contrast requirements on the archive surface', () => {
+  const css = fs.readFileSync(RESEARCH_METHOD_CSS_PATH, 'utf8');
+  const color = css.match(/--research-method-muted:\s*(#[0-9a-f]{6})/i)?.[1];
+
+  assert.ok(color, 'research method must define a shared muted color');
+  for (const selector of [
+    '.research-method__lead',
+    '.research-method__step-copy',
+    '.research-method__trust p',
+  ]) {
+    assert.match(
+      css,
+      new RegExp(`${selector.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\s*\\{[^}]*color:\\s*var\\(--research-method-muted\\)`, 's'),
+      `${selector} must use the shared muted color`,
+    );
+  }
+
+  const relativeLuminance = (hex) => {
+    const channels = hex.slice(1).match(/../g).map((channel) => parseInt(channel, 16) / 255);
+    const linear = channels.map((channel) => (
+      channel <= 0.04045
+        ? channel / 12.92
+        : ((channel + 0.055) / 1.055) ** 2.4
+    ));
+    return (0.2126 * linear[0]) + (0.7152 * linear[1]) + (0.0722 * linear[2]);
+  };
+  const contrast = (lighter, darker) => (lighter + 0.05) / (darker + 0.05);
+  const foreground = relativeLuminance(color);
+  const background = relativeLuminance('#f5f1ea');
+  const ratio = contrast(Math.max(foreground, background), Math.min(foreground, background));
+
+  assert.ok(ratio >= 4.5, `muted text contrast must be at least 4.5:1; received ${ratio.toFixed(2)}:1`);
 });

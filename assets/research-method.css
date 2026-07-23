@@ -1,4 +1,5 @@
 .research-method {
+  --research-method-muted: #665f55;
   padding: 4.6rem 0;
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
@@ -39,7 +40,7 @@
 
 .research-method__lead {
   max-width: 620px;
-  color: var(--color-text-secondary);
+  color: var(--research-method-muted);
   font-size: 1.02rem;
   line-height: 1.72;
 }
@@ -84,7 +85,7 @@
 
 .research-method__step-copy {
   margin-top: .65rem;
-  color: var(--color-text-secondary);
+  color: var(--research-method-muted);
   font-size: .94rem;
   line-height: 1.68;
 }
@@ -99,7 +100,7 @@
 
 .research-method__trust p {
   max-width: 760px;
-  color: var(--color-text-secondary);
+  color: var(--research-method-muted);
   font-family: var(--font-mono);
   font-size: .67rem;
   line-height: 1.75;
