@@ -249,6 +249,27 @@ test("readReport rejects malformed or inconsistent persisted snapshots", async (
   }
 });
 
+test("readReport fails closed on a persisted javascript finding source URL", async () => {
+  const stored = result();
+  stored.findings = [{
+    id: "unsafe-source",
+    label: "Unsafe source",
+    status: "warn",
+    source: { label: "Forged source", url: "javascript:alert(1)" },
+  }];
+
+  const outcome = await readReport(REPORT_ID, ENV, {
+    fetch: async () => new Response(JSON.stringify([{
+      id: REPORT_ID,
+      result: stored,
+      checked_at: stored.checkedAt,
+    }]), { status: 200 }),
+    logger: { error: () => {} },
+  });
+
+  assert.deepEqual(outcome, { status: "failed" });
+});
+
 test("readReport accepts uppercase UUID paths returned in canonical lowercase", async () => {
   const stored = {
     ok: true,

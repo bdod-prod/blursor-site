@@ -141,7 +141,7 @@ function pickBot(bot) {
     robots: nullableString(bot && bot.robots),
     server: nullableString(bot && bot.server),
     status: finiteNumber(bot && bot.status, null),
-    source: nullableString(bot && bot.source),
+    source: strictOptionalSanitizedUrl(bot && bot.source),
   };
 }
 
@@ -152,7 +152,7 @@ function pickContent(content, baseUrl) {
     titleLength: finiteNumber(value.titleLength, 0),
     metaDescription: nullableString(value.metaDescription),
     metaDescriptionLength: finiteNumber(value.metaDescriptionLength, 0),
-    canonical: optionalSanitizedUrl(value.canonical, baseUrl),
+    canonical: strictOptionalSanitizedUrl(value.canonical, baseUrl),
     headings: pickHeadings(value.headings),
     headingOrderOk: Boolean(value.headingOrderOk),
     hasJsonLd: Boolean(value.hasJsonLd),
@@ -261,7 +261,7 @@ function pickFinding(finding) {
     why: nullableString(value.why),
     source: value.source ? {
       label: nullableString(value.source.label),
-      url: nullableString(value.source.url),
+      url: strictOptionalSanitizedUrl(value.source.url),
     } : null,
     copyLabel: nullableString(value.copyLabel),
     copyText: nullableString(value.copyText),
@@ -314,13 +314,9 @@ function findingStatuses(findings) {
   );
 }
 
-function optionalSanitizedUrl(input, base) {
-  if (!input) return null;
-  try {
-    return sanitizeStoredUrl(input, base);
-  } catch {
-    return null;
-  }
+function strictOptionalSanitizedUrl(input, base) {
+  if (input === null || input === undefined) return null;
+  return sanitizeStoredUrl(input, base);
 }
 
 function validTimestamp(input) {

@@ -101,9 +101,15 @@ test("renderer covers the complete client-safe dossier without raw observations"
     "dossier.header.question",
     "dossier.header.project",
     "dossier.header.surfaces",
+    "observed.coverage.observed",
     "observed.coverage.valid",
     "observed.coverage.scheduled",
+    "observed.coverage.refused",
+    "observed.coverage.missing",
     "observed.coverage.failed",
+    "observed.coverage.unreviewed",
+    "observed.coverage.excluded",
+    "observed.coverage.omitted",
     "observed.metrics",
     "evidenceSection.items",
     "evidenceSection.hypothesis",
@@ -131,4 +137,22 @@ test("renderer exposes item-level surface, collection, and review provenance", (
   ]) {
     assert.ok(html.includes(field), field);
   }
+});
+
+test("renderer distinguishes every coverage state from valid answer analysis", () => {
+  const html = DOSSIER_PAGE_HTML;
+  for (const label of ["scheduled", "observed", "valid", "refused", "missing", "failed", "unreviewed", "excluded", "omitted"]) {
+    assert.ok(html.includes(`' ${label}'`), label);
+  }
+  assert.doesNotMatch(html, /coverage\.valid\s*\+\s*' valid of '/);
+});
+
+test("renderer builds safe labelled evidence links only for validated non-null URLs", () => {
+  const html = DOSSIER_PAGE_HTML;
+  assert.match(html, /if \(item\.url\) \{/);
+  assert.match(html, /element\('a', 'evidence-link', 'Open evidence source'\)/);
+  assert.match(html, /link\.href = item\.url/);
+  assert.match(html, /link\.target = '_blank'/);
+  assert.match(html, /link\.rel = 'noopener noreferrer'/);
+  assert.doesNotMatch(html, /innerHTML\s*=/);
 });

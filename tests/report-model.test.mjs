@@ -35,7 +35,7 @@ function sampleResult() {
       robots: "allowed",
       server: "ok",
       status: 200,
-      source: "https://example.org/bot-docs",
+      source: "https://reader:secret@example.org/bot-docs?private=drop#fragment",
       secret: "drop-me",
     }],
     content: {
@@ -91,7 +91,7 @@ function sampleResult() {
       status: "pass",
       detail: "No blocks found.",
       why: "Bots need access.",
-      source: { label: "Research", url: "https://example.org/research", secret: "drop-me" },
+      source: { label: "Research", url: "https://reader:secret@blursor.ai/research/source?private=drop#fragment", secret: "drop-me" },
       copyLabel: "Suggested text",
       copyText: "User-agent: GPTBot",
       secret: "drop-me",
@@ -160,6 +160,8 @@ test("buildStoredResult allowlists the public snapshot and strips sensitive fiel
   assert.equal(stored.url, "https://example.com/article");
   assert.equal(stored.finalUrl, "https://example.com/article");
   assert.equal(stored.content.canonical, "https://example.com/article");
+  assert.equal(stored.botAccess[0].source, "https://example.org/bot-docs");
+  assert.equal(stored.findings[0].source.url, "https://blursor.ai/research/source");
   assert.equal(stored.screenshot, undefined);
   assert.equal(stored.internalDebug, undefined);
   assert.equal(stored.content.secret, undefined);
@@ -168,6 +170,26 @@ test("buildStoredResult allowlists the public snapshot and strips sensitive fiel
   assert.equal(stored.findings[0].source.secret, undefined);
   assert.equal(stored.findings[0].copyText, "User-agent: GPTBot");
   assert.notStrictEqual(stored.content, sampleResult().content);
+});
+
+test("buildStoredResult rejects unsafe non-null URLs throughout the public projection", () => {
+  const scenarios = [
+    (result) => { result.botAccess[0].source = "javascript:alert(1)"; },
+    (result) => { result.content.canonical = "javascript:alert(1)"; },
+    (result) => { result.findings[0].source.url = "javascript:alert(1)"; },
+    (result) => {
+      result.citeability.findings[0].source = { label: "Forged", url: "data:text/html,unsafe" };
+    },
+    (result) => {
+      result.agentic.findings[0].source = { label: "Forged", url: "file:///tmp/unsafe" };
+    },
+  ];
+
+  for (const mutate of scenarios) {
+    const result = structuredClone(sampleResult());
+    mutate(result);
+    assert.throws(() => buildStoredResult(result), /valid http or https URL/i);
+  }
 });
 
 test("buildSignalSnapshot keeps deterministic change signals rather than report prose", () => {

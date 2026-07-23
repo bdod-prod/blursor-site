@@ -35,6 +35,7 @@ export const DOSSIER_PAGE_HTML = String.raw`<!doctype html>
     .evidence[data-type="provider_rationale"] { border-left-color:var(--accent); }
     .evidence-top { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
     .relation { color:var(--muted); font-size:.78rem; }
+    .evidence-link { display:inline-block; margin-top:2px; color:var(--accent); font-size:.86rem; }
     .rationale { padding:16px; background:var(--soft); }
     .pill,.metric,.evidence,.rationale,.plain-list li { overflow-wrap:anywhere; }
     .status { min-height:28px; margin-top:20px; color:var(--muted); }
@@ -149,7 +150,17 @@ export const DOSSIER_PAGE_HTML = String.raw`<!doctype html>
       for (const value of [dossier.header.language.toUpperCase(), dossier.header.location, 'Panel ' + dossier.header.panelId + ' v' + dossier.header.panelVersion, dossier.header.baselineWindow, dossier.header.followupWindow]) meta.append(element('span', 'pill', value));
       const observed = dossier.sections.find((section) => section.id === 'finding');
       byId('observed-summary').textContent = observed.summary;
-      byId('coverage').textContent = observed.coverage.valid + ' valid of ' + observed.coverage.scheduled + ' scheduled samples · ' + observed.coverage.failed + ' failed';
+      byId('coverage').textContent = [
+        observed.coverage.scheduled + ' scheduled',
+        observed.coverage.observed + ' observed',
+        observed.coverage.valid + ' valid',
+        observed.coverage.refused + ' refused',
+        observed.coverage.missing + ' missing',
+        observed.coverage.failed + ' failed',
+        observed.coverage.unreviewed + ' unreviewed',
+        observed.coverage.excluded + ' excluded',
+        observed.coverage.omitted + ' omitted',
+      ].join(' · ');
       const metrics = byId('metrics');
       clear(metrics);
       for (const metric of observed.metrics) {
@@ -175,6 +186,13 @@ export const DOSSIER_PAGE_HTML = String.raw`<!doctype html>
           element('p', 'muted', item.surfaceLabel + ' (' + item.surfaceId + ') · ' + item.collectedAt + ' · ' + item.reviewState),
           element('p', 'muted', item.provenance + (item.optional ? ' · optional' : '')),
         );
+        if (item.url) {
+          const link = element('a', 'evidence-link', 'Open evidence source');
+          link.href = item.url;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          row.append(link);
+        }
         evidence.append(row);
       }
       const rationale = byId('rationale');
