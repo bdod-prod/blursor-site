@@ -47,6 +47,8 @@
   font-weight: 500;
   line-height: 24px;
   letter-spacing: .08em;
+  margin: 0;
+  padding: 0;
   text-decoration: none;
 }
 

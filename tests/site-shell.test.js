@@ -111,6 +111,8 @@ test('canonical shell owns geometry independently of page root styles', () => {
       gap: '12px',
     },
     '.site-header .site-header__logo': {
+      margin: '0',
+      padding: '0',
       gap: '8px',
       'font-size': '14px',
       'line-height': '24px',
@@ -154,6 +156,8 @@ test('canonical shell owns geometry independently of page root styles', () => {
       gap: '16px',
     },
     '.site-footer .site-footer__logo': {
+      margin: '0',
+      padding: '0',
       gap: '8px',
       'font-size': '14px',
       'line-height': '24px',
