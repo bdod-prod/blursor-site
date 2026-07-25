@@ -39,13 +39,16 @@ Use an integrated two-column hero on both pages.
 The desktop hero contains:
 
 - a left column with the existing editorial headline, the approved positioning sentence, and two links;
-- a right column with the three-step paper-to-distill process and the editorial trust line.
+- a right column with the four-step BLURSOR process, connecting research
+  discovery to publication and tools.
 
 The primary link is `Browse the research` and points to `/research`. The secondary link is `Try the crawler checker` and points to `/ai-crawler-checker`.
 
 Remove the homepage URL form, `Develop` button, crawler list, and supporting form copy. The crawler checker remains available through the secondary hero link and primary navigation.
 
-Remove the crawler-checker call-to-action card from the paper-backed findings ticker, including its duplicate used by the animation. That band should contain research findings only.
+The homepage findings carousel is governed by
+`2026-07-25-homepage-findings-carousel-design.md`, including its centred
+crawler-checker card.
 
 Remove the standalone homepage research-method section because its content moves into the hero.
 
@@ -54,7 +57,7 @@ Remove the standalone homepage research-method section because its content moves
 The desktop hero contains:
 
 - a left column with the current Research headline and a concise catch-up explanation;
-- a right column with the same three-step process and trust line.
+- a right column with the same four-step BLURSOR process.
 
 The article count and inventory follow the hero directly. Remove the standalone archive research-method section.
 
@@ -66,8 +69,7 @@ At tablet and mobile widths, the columns stack in document order:
 
 1. headline and supporting copy;
 2. homepage actions, when present;
-3. process steps; and
-4. trust line.
+3. process steps.
 
 The ordered list remains intact so the reading sequence does not depend on the visual grid.
 
@@ -129,21 +131,39 @@ Keep the existing headline:
 
 Do not use short step headings. Each two-digit ordinal introduces one first-person paragraph.
 
+**Heading**
+
+> How BLURSOR works
+
 **01**
 
-> We monitor new research papers on AI visibility, LLM ranking factors, and how generative engines find and cite sources.
+> We monitor new research papers on AI visibility, LLM ranking factors, and how AI finds and cites sources.
 
 **02**
 
-> We filter for findings with practical implications, examine the evidence and limitations, and distill the useful parts into readable articles.
+> We filter for findings with practical implications and distill the useful parts into readable articles.
 
 **03**
 
-> We publish the findings, the evidence behind them, and what they could mean for your work.
+> We publish the findings, supporting evidence, and what they could mean for your work.
 
-**Trust line**
+On the homepage, `publish the findings` is a red underlined link to
+`/research`. On the Research archive, the same phrase uses the red emphasis
+treatment without a link so the current page does not link to itself.
+
+**04**
+
+> We turn useful findings into tools that help you investigate problems and improve AI visibility.
+
+On both surfaces, `tools` is a red underlined link to
+`/ai-crawler-checker`. That route can later be replaced by the planned Tools
+page without changing the process copy.
+
+Remove the former trust line:
 
 > The pipeline helps with discovery and drafting. Publication requires editorial review. The original paper stays one click away.
+
+The disclosure no longer appears beneath either hero process.
 
 ## Visual Design
 
@@ -153,8 +173,9 @@ The change should feel native to BLURSOR's existing editorial system:
 - retain Source Serif for editorial copy and IBM Plex Mono for kickers, ordinals, and actions;
 - use red as an accent rather than a large surface;
 - use a roughly 58/42 desktop split with enough gap to keep the headline and steps distinct;
-- render the process as three compact rows with thin rules;
+- render the process as four compact rows with thin rules;
 - place each ordinal beside its paragraph, rather than above a separate heading;
+- underline process links so their meaning does not depend on red alone;
 - keep the primary Research link visually stronger than the checker link; and
 - avoid a new card, illustration, or decorative pipeline diagram.
 
@@ -171,7 +192,10 @@ wrapping sentence and its three red italic phrases while giving 13-inch laptop
 screens more breathing room. It does not change the headline wording, column
 split, line height, or Research archive typography.
 
-At 1440 × 900 and 1280 × 800, a desktop visitor should see the complete three-step process without scrolling. This above-the-fold requirement applies to the process, not to the following findings or article inventory.
+At 1440 × 900 and 1280 × 800, a desktop visitor should see the complete
+four-step process without scrolling. Removing the trust line offsets some of
+the height added by the fourth row. This above-the-fold requirement applies to
+the process, not to the following findings or article inventory.
 
 ## Information Hierarchy
 
@@ -196,7 +220,11 @@ Research findings and tool promotion should remain visibly separate even though 
 
 Each hero is labelled by its existing `h1`.
 
-The process is an ordered list containing three list items. CSS may remove visible list markers, so the list must retain explicit list semantics for Safari and VoiceOver. The two-digit ordinals remain decorative to assistive technology.
+The process is an ordered list containing four list items. CSS may remove visible list markers, so the list must retain explicit list semantics for Safari and VoiceOver. The two-digit ordinals remain decorative to assistive technology.
+
+Process links must have visible hover and keyboard-focus states. The
+non-linked Research-page emphasis for `publish the findings` must use the same
+red text treatment without presenting itself as interactive.
 
 The homepage actions are ordinary links. Both need visible hover and keyboard-focus states. The primary and secondary treatments must remain distinguishable without relying on color alone.
 
@@ -212,15 +240,18 @@ The shared process copy appears in both published HTML surfaces. Tests are the c
 
 Update the focused tests to prove that:
 
-- the homepage hero contains one ordered three-step process;
+- the homepage hero contains one ordered four-step process;
 - the Research hero contains the same ordered process;
+- both process headings read `How BLURSOR works`;
 - the retired step headings do not appear;
 - the approved positioning sentence appears on the homepage;
 - the homepage contains links to `/research` and `/ai-crawler-checker`;
+- `publish the findings` links to `/research` only on the homepage;
+- `publish the findings` is emphasized without a self-link on the Research archive;
+- `tools` links to `/ai-crawler-checker` on both surfaces;
 - the homepage no longer contains the URL form, `Develop` button, crawler-list copy, or standalone research-method section;
-- the paper-backed findings band contains no crawler-checker call-to-action card;
 - the Research archive no longer contains a standalone research-method section;
-- the trust line appears on both surfaces;
+- the retired trust line appears on neither surface;
 - the Research compiler preserves the integrated archive hero;
 - repeated compiler runs remain idempotent;
 - copy-discipline guards still reject `every`, `always`, `never`, contrast formulas, and retired volume claims inside the new process; and
@@ -253,7 +284,6 @@ This change does not:
 - change the external n8n workflow;
 - add another public tool;
 - add analytics or subscription behavior;
-- push the branch;
 - merge to `main`; or
 - deploy the site.
 
@@ -265,9 +295,9 @@ The branch is review-ready when:
 - the homepage uses the approved research-and-tools positioning;
 - Research is the primary homepage action and the checker is secondary;
 - the homepage crawler form and crawler list are gone;
-- the findings ticker contains research findings only;
 - both pages use the approved first-person process copy without mini-headings;
-- the source-paper and editorial-review disclosure remains visible;
+- the homepage and Research process links follow the approved page-aware behavior;
+- the retired trust line is absent from both surfaces;
 - desktop and mobile layouts pass visual inspection;
 - automated, compiler, accessibility, and copy-discipline checks pass; and
 - the branch remains unmerged and undeployed.
