@@ -14,11 +14,16 @@ const HOME_PATH = path.join(ROOT_DIR, 'index.html');
 const ARCHIVE_PATH = path.join(ROOT_DIR, 'research/index.html');
 const RESEARCH_METHOD_CSS_PATH = path.join(ROOT_DIR, 'assets/research-method.css');
 const POSITIONING_LINE = 'Research-based insights into how AI systems retrieve, cite, and recommend information.';
-const PROCESS_COPY = [
+const HOME_PROCESS_COPY = [
   'We monitor new research papers on AI visibility, LLM ranking factors, and how AI finds and cites sources.',
   'We filter for findings with practical implications and distill the useful parts into readable articles.',
   'We publish the findings, supporting evidence, and what they could mean for your work.',
   'We turn useful findings into tools that help you investigate problems and improve AI visibility.',
+];
+const ARCHIVE_PROCESS_COPY = [
+  'We find papers that address AI visibility, ranking, retrieval, and citation behavior.',
+  'We examine the methods, results, and limitations, then isolate findings with practical implications.',
+  'We publish the distill in plain English, with the supporting evidence and a direct link to the paper.',
 ];
 const EXPECTED_FINDING_CARDS = [
   {
@@ -136,16 +141,17 @@ function extractProcess(hero, surface) {
 
 function assertProcessCopyInOrder(process, surface) {
   const visibleProcess = normalizeVisibleText(process);
+  const expectedCopy = surface === 'homepage' ? HOME_PROCESS_COPY : ARCHIVE_PROCESS_COPY;
   let cursor = -1;
-  for (const paragraph of PROCESS_COPY) {
+  for (const paragraph of expectedCopy) {
     const next = visibleProcess.indexOf(paragraph);
     assert.ok(next > cursor, `${surface} must place the approved process copy in order`);
     cursor = next;
   }
   assert.equal(
     (process.match(/class="research-process__step"/g) || []).length,
-    4,
-    `${surface} must contain four process steps`,
+    expectedCopy.length,
+    `${surface} must contain ${expectedCopy.length} process steps`,
   );
 }
 
@@ -163,33 +169,37 @@ function assertResearchProcessListSemantics(process, surface) {
 }
 
 function assertProcessLinks(process, surface) {
-  assert.match(
-    process,
-    /<h2\b[^>]*>\s*How BLURSOR works\s*<\/h2>/,
-    `${surface} must use the approved process heading`,
-  );
-  assert.match(
-    process,
-    /<a\b(?=[^>]*class="research-process__link")(?=[^>]*href="\/ai-crawler-checker")[^>]*>\s*tools\s*<\/a>/,
-    `${surface} must link tools to the crawler checker`,
-  );
-
   if (surface === 'homepage') {
+    assert.match(
+      process,
+      /<h2\b[^>]*>\s*How BLURSOR works\s*<\/h2>/,
+      'homepage must use the approved process heading',
+    );
     assert.match(
       process,
       /<a\b(?=[^>]*class="research-process__link")(?=[^>]*href="\/research")[^>]*>\s*publish the findings\s*<\/a>/,
       'homepage must link published findings to Research',
     );
+    assert.match(
+      process,
+      /<a\b(?=[^>]*class="research-process__link")(?=[^>]*href="\/ai-crawler-checker")[^>]*>\s*tools\s*<\/a>/,
+      'homepage must link tools to the crawler checker',
+    );
   } else {
     assert.doesNotMatch(
       process,
-      /<a\b[^>]*href="\/research"[^>]*>/,
-      'Research process must not link to its current page',
+      /<a\b/,
+      'Research process must not contain process links',
     );
     assert.match(
       process,
-      /<span\b[^>]*class="research-process__emphasis"[^>]*>\s*publish the findings\s*<\/span>/,
-      'Research process must retain non-interactive red emphasis',
+      /<h2\b[^>]*>\s*How a distill is made\s*<\/h2>/,
+      'Research must use the approved distillation-method heading',
+    );
+    assert.doesNotMatch(
+      process,
+      /<span\b[^>]*class="research-process__ordinal"[^>]*>\s*04\s*<\/span>/,
+      'Research process must not contain a fourth step',
     );
   }
 
