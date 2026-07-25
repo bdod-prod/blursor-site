@@ -38,6 +38,122 @@ class PublicationValidationError extends Error {
   }
 }
 
+const CANONICAL_SITE_SHELL_STYLESHEET = '<link rel="stylesheet" href="/assets/site-shell.css?v=20260725-canonical-shell">';
+
+function renderCanonicalHeader(currentPath) {
+  const toolsCurrent = currentPath === '/ai-crawler-checker' ? ' aria-current="page"' : '';
+  const researchCurrent = currentPath === '/research' || currentPath.startsWith('/research/')
+    ? ' aria-current="page"'
+    : '';
+  return `  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="site-header__left">
+        <a href="/" class="site-header__logo" aria-label="BLURSOR home">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="#b73524" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <span class="site-header__tagline">Science-backed data on why AI says what it says</span>
+      </div>
+      <nav class="site-header__nav" aria-label="Primary navigation">
+        <a href="/ai-crawler-checker"${toolsCurrent}>Tools</a>
+        <a href="/research"${researchCurrent}>Research</a>
+      </nav>
+    </div>
+  </header>`;
+}
+
+function renderCanonicalFooter() {
+  return `  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <a href="/" class="site-footer__logo" aria-label="BLURSOR home">
+          <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <p class="site-footer__desc">Research on why AI says what it says, distilled for people who act on it.</p>
+        <span class="site-footer__tagline">Now you have no excuses not to act on it.</span>
+      </div>
+
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Instruments</div>
+        <ul>
+          <li><a href="/ai-crawler-checker">What AI Sees</a></li>
+        </ul>
+      </div>
+
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Research</div>
+        <ul>
+          <li><a href="/research">All articles</a></li>
+          <li><a href="/author/alex-rostovtsev">Author</a></li>
+        </ul>
+      </div>
+
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Connect</div>
+        <ul>
+          <li><a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener">@blursor_ai</a></li>
+          <li><a href="mailto:contact@blursor.ai">contact@blursor.ai</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="site-footer__bottom">
+      <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
+      <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>
+    </div>
+  </footer>`;
+}
+
+function replaceSingleShellElement(html, { className, replacement, fileName }) {
+  const pattern = new RegExp(
+    `^[\\t ]*<(?:header|footer)\\b[^>]*class=(["'])[^"']*\\b${className}\\b[^"']*\\1[^>]*>[\\s\\S]*?<\\/(?:header|footer)>`,
+    'gm',
+  );
+  const matches = html.match(pattern) || [];
+  if (matches.length !== 1) {
+    throw new PublicationValidationError([
+      `${fileName}: expected exactly one ${className}, found ${matches.length}`,
+    ]);
+  }
+  return html.replace(pattern, replacement);
+}
+
+function normalizeSiteShellHtml(html, { fileName, currentPath }) {
+  const withoutStylesheet = html.replace(
+    /<link\b(?=[^>]*\bhref\s*=\s*(["'])\/assets\/site-shell\.css(?:[?#][^"']*)?\1)[^>]*>/gi,
+    '',
+  );
+  const headClosings = [...withoutStylesheet.matchAll(/<\/head>/gi)];
+  if (headClosings.length !== 1) {
+    throw new PublicationValidationError([
+      `${fileName}: expected exactly one head closing tag, found ${headClosings.length}`,
+    ]);
+  }
+  const withStylesheet = withoutStylesheet.replace(
+    /<\/head>/i,
+    `${CANONICAL_SITE_SHELL_STYLESHEET}</head>`,
+  );
+  const withHeader = replaceSingleShellElement(withStylesheet, {
+    className: 'site-header',
+    replacement: renderCanonicalHeader(currentPath),
+    fileName,
+  });
+  return replaceSingleShellElement(withHeader, {
+    className: 'site-footer',
+    replacement: renderCanonicalFooter(),
+    fileName,
+  });
+}
+
 function getAttribute(tag, name) {
   const match = new RegExp(`\\b${name}\\s*=\\s*(["'])([\\s\\S]*?)\\1`, 'i').exec(tag);
   return match ? match[2] : null;
@@ -796,6 +912,7 @@ module.exports = {
   AUTHOR_NAME,
   AUTHOR_PATH,
   AUTHOR_URL,
+  CANONICAL_SITE_SHELL_STYLESHEET,
   PublicationValidationError,
   discoverArticles,
   compileResearch,
@@ -803,6 +920,7 @@ module.exports = {
   generateFeedXml,
   generateSitemapXml,
   normalizeArticleHtml,
+  normalizeSiteShellHtml,
   renderByline,
   selectRelatedArticles,
   verifyPublishedState,
