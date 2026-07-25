@@ -35,6 +35,26 @@ function extractHero(html, headingId, surface) {
   return matches[0][0];
 }
 
+function extractElement(html, tagName, selector, surface) {
+  const selectorRequirement = selector.startsWith('#')
+    ? `(?=[^>]*id="${selector.slice(1)}")`
+    : `(?=[^>]*class="[^"]*\\b${selector.slice(1)}\\b[^"]*")`;
+  const pattern = new RegExp(
+    `<${tagName}\\b${selectorRequirement}[^>]*>[\\s\\S]*?<\\/${tagName}>`,
+    'g',
+  );
+  const matches = [...html.matchAll(pattern)];
+  assert.equal(matches.length, 1, `${surface} must contain one ${selector} element`);
+  return matches[0][0];
+}
+
+function normalizeVisibleText(html) {
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function extractProcess(hero, surface) {
   const pattern = new RegExp(
     `<div\\b[^>]*data-research-process="${surface}"[^>]*>[\\s\\S]*?<\\/div>`,
@@ -60,6 +80,11 @@ function assertProcessCopyInOrder(process, surface) {
 }
 
 function assertResearchProcessListSemantics(process, surface) {
+  assert.match(
+    process,
+    /<div\b(?=[^>]*class="[^"]*\bresearch-process\b[^"]*")(?=[^>]*role="region")(?=[^>]*aria-labelledby="[^"]+")[^>]*>/,
+    `${surface} research process must expose its label through region semantics`,
+  );
   assert.match(
     process,
     /<ol\b(?=[^>]*class="research-process__steps")(?=[^>]*role="list")[^>]*>/,
@@ -89,28 +114,51 @@ test('homepage hero leads with Research and explains the paper-to-distill proces
   const html = fs.readFileSync(HOME_PATH, 'utf8');
   const hero = extractHero(html, 'home-title', 'homepage');
   const process = extractProcess(hero, 'homepage');
-  const visibleHeroText = hero
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const heading = extractElement(hero, 'h1', '#home-title', 'homepage');
+  const subheading = extractElement(hero, 'p', '.hero__sub', 'homepage');
+  const actions = extractElement(hero, 'div', '.research-hero__actions', 'homepage');
+  const focusIndices = [...heading.matchAll(/class="focus-word" style="--i:(\d+)"/g)]
+    .map((match) => Number(match[1]));
 
   assertProcessCopyInOrder(process, 'homepage');
   assertResearchProcessListSemantics(process, 'homepage');
   assertCopyDiscipline(process, 'homepage');
   assert.match(hero, new RegExp(POSITIONING_LINE.replace(/[.]/g, '\\.')));
-  assert.match(
-    visibleHeroText,
-    /AI decides who gets recommended\. We study why and build tools to help you improve your AI visibility\./,
+  assert.equal(
+    normalizeVisibleText(heading),
+    'AI decides who gets recommended. We study why and build tools to help you improve your AI visibility.',
+    'homepage heading must retain the approved focus message',
+  );
+  assert.equal(
+    normalizeVisibleText(subheading),
+    POSITIONING_LINE,
+    'homepage subheading must retain the approved positioning line',
+  );
+  for (const [phrase, index] of [
+    ['recommended.', 4],
+    ['why', 7],
+    ['tools', 10],
+    ['AI visibility.', 16],
+  ]) {
+    assert.match(
+      heading,
+      new RegExp(`<em class="focus-word" style="--i:${index}">${phrase.replace(/[.]/g, '\\.')}<\\/em>`),
+      `homepage heading must emphasize ${phrase} at focus index ${index}`,
+    );
+  }
+  assert.deepEqual(
+    focusIndices,
+    Array.from({ length: 17 }, (_, index) => index),
+    'homepage focus indices must run sequentially from 0 through 16',
   );
   assert.match(
-    visibleHeroText,
-    /Research-based insights into how AI systems retrieve, cite, and recommend information\./,
+    actions,
+    /<div\b(?=[^>]*role="group")(?=[^>]*aria-label="Explore BLURSOR")[^>]*>/,
+    'homepage actions must expose their existing label through group semantics',
   );
-  assert.match(hero, /<em class="focus-word" style="--i:10">tools<\/em>/);
-  assert.match(hero, /<em class="focus-word" style="--i:16">AI visibility\.<\/em>/);
-  assert.doesNotMatch(visibleHeroText, /show you what it sees on your site/);
+  assert.doesNotMatch(normalizeVisibleText(hero), /show you what it sees on your site/);
   assert.doesNotMatch(
-    visibleHeroText,
+    normalizeVisibleText(subheading),
     /Research-based insights and practical tools to improve your AI visibility\./,
   );
   assert.match(
