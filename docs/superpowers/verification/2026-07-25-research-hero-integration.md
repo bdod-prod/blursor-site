@@ -1,7 +1,7 @@
 # BLURSOR Research Hero Integration Verification
 
-**Date:** 2026-07-25  
-**Branch:** `codex/research-method-explainer`  
+**Date:** 2026-07-25
+**Branch:** `codex/research-method-explainer`
 **Verified implementation HEAD:** `b4f05002092a4edcf36eb3b1658356b83e3202b1`
 
 ## Automated checks
@@ -13,7 +13,7 @@
 | `node --test tests/research-method-explainer.test.js` | 4 tests passed; 0 failed, cancelled, or skipped | 0 |
 | Compiler idempotence in the complete suite | `a second compiler run produces byte-identical output` passed | 0 (within the 49-test suite) |
 | Post-compiler working-tree idempotence | `git diff --exit-code` produced no output after the compiler ran | 0 |
-| `git diff --check` | Produced no whitespace errors | 0 |
+| `git diff --check ed4a2becf6e772e8ee2b0d865e0a2a64221e8549..HEAD` | Final branch-range check produced no whitespace errors | 0 |
 
 The focused contrast test passed with the shared muted colour `#665f55`; its measured contrast against `#f5f1ea` is 5.5963:1.
 
@@ -42,7 +42,7 @@ Browser method: the in-app Browser could not acquire `http://127.0.0.1:4173/` (`
 Keyboard interaction on the 1440x900 homepage reached both actions by Tab. Each focused control had `outline: solid 2px rgb(183, 53, 36)` with `outline-offset: 4px`.
 
 - Activating `Browse the research` set the local pathname to `/research/` and returned the Research page (HTTP 200).
-- Activating `Try the crawler checker` set the local pathname to `/ai-crawler-checker`, exactly matching its href. The source page `http://127.0.0.1:4173/ai-crawler-checker.html` returned HTTP 200. Python's static server does not emulate the deployment's extensionless-route rewriting, so its direct `/ai-crawler-checker` request returned a local 404 and added one post-navigation console resource error. This was not present on either page before navigation.
+- Activating `Try the crawler checker` verified the `href` and requested pathname as `/ai-crawler-checker`. The source page `http://127.0.0.1:4173/ai-crawler-checker.html` returned HTTP 200. Python's static server does not emulate clean URLs, so its direct `/ai-crawler-checker` request returned a local 404 and added one post-navigation console resource error. Production clean-URL behavior remains unverified pending integration QA.
 
 ## Screenshot evidence
 
@@ -81,4 +81,4 @@ No push, merge, deployment, or n8n change was performed during verification.
 
 ## Verdict
 
-**READY FOR REVIEW.** The implementation criteria were proven by fresh automated, compiler, responsive, accessibility, interaction, and visual evidence. The sole 404/error observation is limited to Python's non-rewriting local server after following the extensionless checker link; the href and requested pathname are correct, and the corresponding `.html` source returns HTTP 200 locally.
+**READY FOR REVIEW.** The implementation criteria were proven by fresh automated, compiler, responsive, accessibility, interaction, and visual evidence. The sole 404/error observation is limited to Python's non-rewriting local server after following the checker link; the href/path were verified and the corresponding `.html` source returned HTTP 200 locally. Production clean-URL behavior remains unverified pending integration QA.

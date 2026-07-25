@@ -508,13 +508,13 @@ If the 1280 × 800 verification in Task 3 places the bottom of `.research-proces
 
 Delete all `.research-method`, `.research-method__inner`, `.research-method__intro`, `.research-method__kicker`, `.research-method__title`, `.research-method__lead`, `.research-method__steps`, `.research-method__step`, `.research-method__ordinal`, `.research-method__step-title`, `.research-method__step-copy`, `.research-method__trust`, and `.research-method__link` rules from `assets/research-method.css`.
 
-Confirm the repository has no retired markup or class references:
+Confirm the implementation source files have no retired markup or class references:
 
 ```bash
-rg -n "data-research-method|research-method__|Follow the field|Interrogate the paper|Make it usable" index.html research/index.html assets/research-method.css tests/research-method-explainer.test.js
+rg -n "data-research-method|research-method__|Follow the field|Interrogate the paper|Make it usable" index.html research/index.html assets/research-method.css
 ```
 
-Expected: no output.
+Expected: no output from these implementation source files. The regression test intentionally retains the retired literals as assertions.
 
 - [ ] **Step 6: Run focused and complete tests**
 

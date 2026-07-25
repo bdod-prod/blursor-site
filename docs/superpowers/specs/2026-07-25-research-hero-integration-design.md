@@ -1,7 +1,7 @@
 # BLURSOR Research Hero Integration Design
 
 **Date:** 2026-07-25
-**Status:** Approved direction; written specification pending user review
+**Status:** Approved
 **Repository:** `blursor/blursor-site`
 **Branch:** `codex/research-method-explainer`
 **Supersedes:** `2026-07-24-research-method-explainer-design.md`
