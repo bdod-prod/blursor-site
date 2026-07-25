@@ -190,8 +190,6 @@ test('homepage hero leads with Research and explains the paper-to-distill proces
   const heading = extractElement(hero, 'h1', '#home-title', 'homepage');
   const subheading = extractElement(hero, 'p', '.hero__sub', 'homepage');
   const actions = extractElement(hero, 'div', '.research-hero__actions', 'homepage');
-  const focusIndices = [...heading.matchAll(/class="focus-word" style="--i:(\d+)"/g)]
-    .map((match) => Number(match[1]));
 
   assertProcessCopyInOrder(process, 'homepage');
   assertResearchProcessListSemantics(process, 'homepage');
@@ -207,26 +205,20 @@ test('homepage hero leads with Research and explains the paper-to-distill proces
     POSITIONING_LINE,
     'homepage subheading must retain the approved positioning line',
   );
-  for (const [phrase, index] of [
-    ['recommended.', 4],
-    ['why', 7],
-    ['tools', 11],
-  ]) {
-    assert.match(
-      heading,
-      new RegExp(`<em class="focus-word" style="--i:${index}">${phrase.replace(/[.]/g, '\\.')}<\\/em>`),
-      `homepage heading must emphasize ${phrase} at focus index ${index}`,
-    );
-  }
-  assert.deepEqual(
-    focusIndices,
-    Array.from({ length: 15 }, (_, index) => index),
-    'homepage focus indices must run sequentially from 0 through 14',
-  );
   assert.match(
     heading,
-    /<span class="focus-word" style="--i:14">AI visibility\.<\/span>/,
-    'homepage heading must render AI visibility without the italic emphasis treatment',
+    /<h1\b[^>]*>\s*AI decides who gets <em>recommended\.<\/em> We study <em>why<\/em> and give you <em>tools<\/em> to improve AI visibility\.\s*<\/h1>/,
+    'homepage heading must flow as one sentence with only the approved phrases emphasized',
+  );
+  assert.equal(
+    [...heading.matchAll(/<em\b/g)].length,
+    3,
+    'homepage heading must contain exactly three emphasis elements',
+  );
+  assert.doesNotMatch(
+    heading,
+    /<span\b|class="focus-word"|style="--i:/,
+    'homepage heading must not split ordinary words into styled layout boxes',
   );
   assert.match(
     actions,

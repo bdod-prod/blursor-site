@@ -214,18 +214,6 @@
       font-weight: 600;
     }
 
-    .focus-word {
-      display: inline-block;
-      animation: focusWord .7s cubic-bezier(.3, .7, .3, 1) forwards;
-      animation-delay: calc(var(--i) * 70ms);
-      filter: blur(10px);
-      opacity: .15;
-    }
-
-    @keyframes focusWord {
-      to { filter: blur(0); opacity: 1; }
-    }
-
     .hero__sub {
       max-width: 560px;
       margin-top: 1.3rem;
@@ -649,11 +637,6 @@
         scroll-behavior: auto !important;
       }
 
-      .focus-word {
-        filter: none;
-        opacity: 1;
-      }
-
       .findings-track {
         width: auto;
         max-width: var(--max-width);
@@ -693,23 +676,7 @@
       <div class="research-hero__inner">
         <div class="research-hero__editorial">
           <div class="hero__kicker">AI-visibility research · Practical tools</div>
-          <h1 class="hero__title" id="home-title">
-            <span class="focus-word" style="--i:0">AI</span>
-            <span class="focus-word" style="--i:1">decides</span>
-            <span class="focus-word" style="--i:2">who</span>
-            <span class="focus-word" style="--i:3">gets</span>
-            <em class="focus-word" style="--i:4">recommended.</em>
-            <span class="focus-word" style="--i:5">We</span>
-            <span class="focus-word" style="--i:6">study</span>
-            <em class="focus-word" style="--i:7">why</em>
-            <span class="focus-word" style="--i:8">and</span>
-            <span class="focus-word" style="--i:9">give</span>
-            <span class="focus-word" style="--i:10">you</span>
-            <em class="focus-word" style="--i:11">tools</em>
-            <span class="focus-word" style="--i:12">to</span>
-            <span class="focus-word" style="--i:13">improve</span>
-            <span class="focus-word" style="--i:14">AI visibility.</span>
-          </h1>
+          <h1 class="hero__title" id="home-title">AI decides who gets <em>recommended.</em> We study <em>why</em> and give you <em>tools</em> to improve AI visibility.</h1>
           <p class="hero__sub">Research-based insights into how AI systems retrieve, cite, and recommend information.</p>
           <div class="research-hero__actions" role="group" aria-label="Explore BLURSOR">
             <a class="research-hero__action research-hero__action--primary" href="/research">Browse the research</a>
