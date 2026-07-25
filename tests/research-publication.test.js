@@ -11,11 +11,24 @@ const {
   discoverArticles,
   generateArchiveHtml,
   normalizeArticleHtml,
+  normalizeSiteShellHtml,
   selectRelatedArticles,
   verifyPublishedState,
 } = require('../scripts/lib/research-publication');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
+
+function withFixtureShell(contents = '') {
+  return `<!doctype html>
+<html>
+<head></head>
+<body>
+  <header class="site-header"><span>Fixture header</span></header>
+  ${contents}
+  <footer class="site-footer"><span>Fixture footer</span></footer>
+</body>
+</html>`;
+}
 
 function makeFixture() {
   const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blursor-research-'));
@@ -23,11 +36,11 @@ function makeFixture() {
   fs.mkdirSync(path.join(rootDir, 'author'), { recursive: true });
   fs.mkdirSync(path.join(rootDir, 'scripts'), { recursive: true });
   fs.mkdirSync(path.join(rootDir, 'scripts/lib'), { recursive: true });
-  fs.writeFileSync(path.join(rootDir, 'index.html'), '<html><head></head><body></body></html>');
-  fs.writeFileSync(path.join(rootDir, 'ai-crawler-checker.html'), '<html></html>');
-  fs.writeFileSync(path.join(rootDir, 'author/alex-rostovtsev.html'), '<html></html>');
+  fs.writeFileSync(path.join(rootDir, 'index.html'), withFixtureShell());
+  fs.writeFileSync(path.join(rootDir, 'ai-crawler-checker.html'), withFixtureShell());
+  fs.writeFileSync(path.join(rootDir, 'author/alex-rostovtsev.html'), withFixtureShell());
   fs.writeFileSync(path.join(rootDir, 'research/index.html'),
-    '<html><head></head><body><span class="articles__count">0 articles</span><div class="articles__grid"></div></body></html>');
+    withFixtureShell('<span class="articles__count">0 articles</span><div class="articles__grid"></div>'));
   fs.copyFileSync(
     path.join(REPO_ROOT, 'scripts/build-research-index.js'),
     path.join(rootDir, 'scripts/build-research-index.js'),
@@ -88,11 +101,13 @@ function validArticleHtml(metaOverrides = {}) {
   })}</script>
 </head>
 <body>
+  <header class="site-header"><span>Fixture header</span></header>
   <div class="article-header__meta">
     <span class="sep">·</span>
     <a href="https://arxiv.org/abs/${meta.arxiv_id}" class="arxiv-link">arXiv</a>
   </div>
   <div class="more-articles__grid"></div>
+  <footer class="site-footer"><span>Fixture footer</span></footer>
 </body>
 </html>`;
 }
@@ -316,6 +331,98 @@ test('compileResearch writes normalized articles and reports the validated count
   );
 });
 
+test('compiler normalizes the site shell on every public output', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-22' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-21' });
+
+  compileResearch({ rootDir });
+
+  const pages = [
+    ['index.html', '/'],
+    ['ai-crawler-checker.html', '/ai-crawler-checker'],
+    ['author/alex-rostovtsev.html', '/author/alex-rostovtsev'],
+    ['research/index.html', '/research'],
+    ['research/new-a.html', '/research/new-a'],
+    ['research/new-b.html', '/research/new-b'],
+    ['research/old.html', '/research/old'],
+  ];
+  for (const [file, currentPath] of pages) {
+    const html = fs.readFileSync(path.join(rootDir, file), 'utf8');
+    assert.equal(
+      normalizeSiteShellHtml(html, { fileName: file, currentPath }),
+      html,
+      `${file} must already contain the canonical shell`,
+    );
+  }
+});
+
+test('compiler refreshes homepage latest digests from the newest canonical articles', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  fs.writeFileSync(
+    path.join(rootDir, 'index.html'),
+    withFixtureShell('<section id="latest-digests"><div class="digests__list"><a class="digest-row" href="/research/stale">Stale</a></div></section>'),
+  );
+  writeArticle(rootDir, 'newest.html', {
+    title: 'Newest & proven',
+    published_date: '2026-07-24',
+    reading_time_min: 7,
+    summary_for_card: 'Newest <evidence> summary.',
+    arxiv_id: '2607.24001',
+  });
+  writeArticle(rootDir, 'second.html', {
+    published_date: '2026-07-23',
+    arxiv_id: '2607.23001',
+  });
+  writeArticle(rootDir, 'third.html', {
+    published_date: '2026-07-22',
+    arxiv_id: '2607.22001',
+  });
+  writeArticle(rootDir, 'fourth.html', {
+    published_date: '2026-07-21',
+    arxiv_id: '2607.21001',
+  });
+
+  compileResearch({ rootDir });
+
+  const home = fs.readFileSync(path.join(rootDir, 'index.html'), 'utf8');
+  assert.deepEqual(
+    [...home.matchAll(/<a class="digest-row" href="\/research\/([^"]+)">/g)]
+      .map(match => match[1]),
+    ['newest', 'second', 'third'],
+  );
+  assert.match(home, /<span>Jul 24, 2026<\/span><span>7 min<\/span><span class="src">arXiv:2607\.24001<\/span>/);
+  assert.match(home, /Newest &amp; proven/);
+  assert.match(home, /Newest &lt;evidence&gt; summary\./);
+  assert.doesNotMatch(home, /\/research\/fourth|\/research\/stale/);
+});
+
+test('verification rejects homepage latest digests that drift from the newest articles', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  fs.writeFileSync(
+    path.join(rootDir, 'index.html'),
+    withFixtureShell('<section id="latest-digests"><div class="digests__list"></div></section>'),
+  );
+  writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-22' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-21' });
+  compileResearch({ rootDir });
+  const homePath = path.join(rootDir, 'index.html');
+  fs.writeFileSync(
+    homePath,
+    fs.readFileSync(homePath, 'utf8').replace('/research/new-a', '/research/stale'),
+  );
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles: discoverArticles({ rootDir }) }),
+    /index\.html: latest digest targets must equal new-a, new-b, old; found stale, new-b, old/,
+  );
+});
+
 test('compileResearch restores missing RSS discovery before post-write verification', t => {
   const rootDir = makeFixture();
   t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
@@ -373,11 +480,14 @@ function tamperSitemapLastmod(rootDir, loc, replacement = '2000-01-01') {
 
 test('verification rejects the wrong generated research lastmod', t => {
   const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const expectedDate = fs.statSync(path.join(rootDir, 'research/index.html')).mtime
+    .toISOString()
+    .slice(0, 10);
   tamperSitemapLastmod(rootDir, 'https://blursor.ai/research');
 
   assert.throws(
     () => verifyPublishedState({ rootDir, expectedArticles }),
-    /sitemap\.xml: https:\/\/blursor\.ai\/research lastmod must equal 2026-07-23, found 2000-01-01/,
+    new RegExp(`sitemap\\.xml: https://blursor\\.ai/research lastmod must equal ${expectedDate}, found 2000-01-01`),
   );
 });
 
@@ -671,6 +781,31 @@ test('a backdated archive mtime does not change second-run output', t => {
   assert.deepEqual(snapshotGeneratedTree(rootDir), before);
 });
 
+test('compiler gives a shell-only archive change a truthful sitemap lastmod', t => {
+  const { rootDir } = compileThreeArticleFixture(t);
+  const archivePath = path.join(rootDir, 'research/index.html');
+  const archiveBefore = fs.readFileSync(archivePath, 'utf8');
+  const staleArchive = archiveBefore.replace(
+    /  <header class="site-header">[\s\S]*?<\/header>/,
+    '  <header class="site-header"><span>Stale archive header</span></header>',
+  );
+  assert.notEqual(staleArchive, archiveBefore);
+  fs.writeFileSync(archivePath, staleArchive);
+  fs.utimesSync(
+    archivePath,
+    new Date('2001-01-01T00:00:00Z'),
+    new Date('2001-01-01T00:00:00Z'),
+  );
+
+  compileResearch({ rootDir });
+
+  const archiveDate = fs.statSync(archivePath).mtime.toISOString().slice(0, 10);
+  const sitemap = fs.readFileSync(path.join(rootDir, 'sitemap.xml'), 'utf8');
+  const archiveEntry = /<loc>https:\/\/blursor\.ai\/research<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/.exec(sitemap);
+  assert.ok(archiveEntry);
+  assert.equal(archiveEntry[1], archiveDate);
+});
+
 test('compiler repairs a backdated homepage RSS omission in one idempotent run', t => {
   const rootDir = makeFixture();
   t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
@@ -718,25 +853,42 @@ test('compiler makes article, archive, feed, and sitemap inventories agree', t =
   }
 });
 
-test('compileResearch does not write any article until all normalizations succeed', t => {
+test('compileResearch does not write any public page until all normalizations succeed', t => {
   const rootDir = makeFixture();
   t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
   writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
   writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-23' });
   writeArticle(rootDir, 'old.html', { published_date: '2026-07-22' });
-  const newAPath = path.join(rootDir, 'research/new-a.html');
-  const before = fs.readFileSync(newAPath, 'utf8');
-  const oldPath = path.join(rootDir, 'research/old.html');
-  fs.writeFileSync(oldPath, fs.readFileSync(oldPath, 'utf8').replace(
-    'class="arxiv-link"',
-    'class="broken-link"',
+  const publicPages = [
+    'index.html',
+    'ai-crawler-checker.html',
+    'author/alex-rostovtsev.html',
+    'research/index.html',
+    'research/new-a.html',
+    'research/new-b.html',
+    'research/old.html',
+  ];
+  const checkerPath = path.join(rootDir, 'ai-crawler-checker.html');
+  fs.writeFileSync(checkerPath, fs.readFileSync(checkerPath, 'utf8').replace(
+    /  <footer class="site-footer">[\s\S]*?<\/footer>\n/,
+    '',
   ));
+  const before = Object.fromEntries(publicPages.map(file => [
+    file,
+    fs.readFileSync(path.join(rootDir, file), 'utf8'),
+  ]));
 
   assert.throws(
     () => compileResearch({ rootDir }),
-    /old\.html: header \.arxiv-link href must equal https:\/\/arxiv\.org\/abs\/2607\.12345/,
+    /ai-crawler-checker\.html: expected exactly one site-footer, found 0/,
   );
-  assert.equal(fs.readFileSync(newAPath, 'utf8'), before);
+  assert.deepEqual(
+    Object.fromEntries(publicPages.map(file => [
+      file,
+      fs.readFileSync(path.join(rootDir, file), 'utf8'),
+    ])),
+    before,
+  );
 });
 
 test('compileResearch adds the canonical RSS feed URL alongside an unrelated feed', t => {

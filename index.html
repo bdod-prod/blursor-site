@@ -187,9 +187,7 @@
     .site-header__nav a:hover { color: var(--color-text); }
 
     .hero {
-      max-width: var(--text-width);
-      margin: 0 auto;
-      padding: 4.8rem var(--space-md) 0;
+      padding: 4.6rem 0 4rem;
     }
 
     .hero__kicker {
@@ -203,8 +201,8 @@
     }
 
     .hero__title {
-      max-width: 720px;
-      font-size: 3.35rem;
+      max-width: 680px;
+      font-size: clamp(2.65rem, 4.6vw, 3.05rem);
       font-weight: 700;
       line-height: 1.08;
       letter-spacing: 0;
@@ -216,107 +214,12 @@
       font-weight: 600;
     }
 
-    .focus-word {
-      display: inline-block;
-      animation: focusWord .7s cubic-bezier(.3, .7, .3, 1) forwards;
-      animation-delay: calc(var(--i) * 70ms);
-      filter: blur(10px);
-      opacity: .15;
-    }
-
-    @keyframes focusWord {
-      to { filter: blur(0); opacity: 1; }
-    }
-
     .hero__sub {
-      max-width: 590px;
+      max-width: 560px;
       margin-top: 1.3rem;
       color: var(--color-text-secondary);
       font-size: 1.06rem;
       line-height: 1.7;
-    }
-
-    .slot {
-      max-width: var(--text-width);
-      margin: 2.4rem auto 0;
-      padding: 0 var(--space-md);
-    }
-
-    .slot__row {
-      display: flex;
-      background: var(--dk);
-      border: 1px solid var(--dk);
-      box-shadow: 0 18px 40px -18px rgba(26, 20, 12, .45);
-    }
-
-    .slot__prompt {
-      padding: 1.05rem 0 1.05rem 1.1rem;
-      color: var(--dk-red);
-      font-family: var(--font-mono);
-      font-size: .95rem;
-      user-select: none;
-    }
-
-    .slot__input {
-      flex: 1;
-      min-width: 0;
-      padding: 1.05rem .9rem;
-      background: transparent;
-      border: 0;
-      outline: none;
-      color: var(--dk-text);
-      caret-color: var(--dk-red);
-      font-family: var(--font-mono);
-      font-size: .95rem;
-    }
-
-    .slot__input::placeholder { color: var(--dk-faint); }
-
-    .slot__btn {
-      padding: 0 1.7rem;
-      background: var(--color-accent);
-      border: 0;
-      color: #fff;
-      cursor: pointer;
-      font-family: var(--font-mono);
-      font-size: .78rem;
-      font-weight: 600;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .slot__btn:hover { background: #b23425; }
-
-    .slot__hint {
-      margin-top: .65rem;
-      color: var(--color-text-secondary);
-      font-family: var(--font-mono);
-      font-size: .68rem;
-    }
-
-    .slot__hint a {
-      color: var(--color-accent);
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-      text-underline-offset: 2px;
-    }
-
-    .slot__hint a:hover { text-decoration-color: rgba(183, 53, 36, .65); }
-
-    .slot__bots {
-      margin-top: 1.4rem;
-      color: var(--color-text-secondary);
-      font-family: var(--font-mono);
-      font-size: .62rem;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      word-spacing: .2em;
-    }
-
-    .slot__bots i {
-      color: var(--color-border);
-      font-style: normal;
     }
 
     .findings-band {
@@ -386,7 +289,7 @@
       gap: 1rem;
       width: max-content;
       padding: 0 var(--space-md);
-      animation: slideFindings 70s linear infinite;
+      animation: slideFindings 42s linear infinite;
     }
 
     .findings-ticker:hover .findings-track,
@@ -463,15 +366,24 @@
       letter-spacing: 0;
     }
 
-    .finding-card--cta .finding-card__line { color: rgba(255, 255, 255, .86); }
-    .finding-card--cta .finding-card__src { color: #fff; font-weight: 600; }
+    .finding-card--cta .finding-card__line {
+      color: rgba(255, 255, 255, .86);
+    }
+
+    .finding-card--cta .finding-card__src {
+      color: #fff;
+      font-weight: 600;
+    }
+
     .finding-card--cta:hover,
-    .finding-card--cta:focus-visible { border-color: #fff; }
+    .finding-card--cta:focus-visible {
+      border-color: #fff;
+    }
 
     .digests {
       max-width: var(--max-width);
       margin: 0 auto;
-      padding: 4.2rem var(--space-md) 0;
+      padding: 4.2rem var(--space-md);
     }
 
     .digests__head {
@@ -553,63 +465,6 @@
       color: var(--color-text-secondary);
       font-size: .95rem;
       line-height: 1.65;
-    }
-
-    .stance {
-      margin-top: 4.2rem;
-      padding: 4rem 0;
-      background: var(--color-bg-warm);
-      border-top: 1px solid var(--color-border);
-    }
-
-    .stance__inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 0 var(--space-md);
-    }
-
-    .stance__grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 2.4rem;
-      margin-top: 1.6rem;
-    }
-
-    .tenet__label {
-      display: inline-block;
-      margin-bottom: .8rem;
-      padding-bottom: .35rem;
-      border-bottom: 2px solid var(--color-accent);
-      color: var(--color-text);
-      font-family: var(--font-mono);
-      font-size: .66rem;
-      font-weight: 600;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-    }
-
-    .tenet p {
-      color: var(--color-text-secondary);
-      font-size: .95rem;
-      line-height: 1.7;
-    }
-
-    .tenet a {
-      color: var(--color-accent);
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-      text-underline-offset: 2px;
-    }
-
-    .tenet a:hover { text-decoration-color: rgba(183, 53, 36, .65); }
-
-    .stance__close {
-      margin-top: 2.6rem;
-      padding-top: 1.6rem;
-      border-top: 1px solid var(--color-border);
-      color: var(--color-text);
-      font-size: 1.15rem;
-      font-style: italic;
     }
 
     .site-footer {
@@ -697,8 +552,7 @@
     @media (max-width: 820px) {
       .site-header__tagline { display: none; }
       .hero { padding-top: 3.6rem; }
-      .hero__title { font-size: 2.55rem; }
-      .stance__grid { grid-template-columns: 1fr; }
+      .hero__title { font-size: 2.35rem; }
       .site-footer__inner { grid-template-columns: 1fr; }
     }
 
@@ -713,12 +567,6 @@
       }
 
       .hero__title { font-size: 2.15rem; }
-      .slot__row { flex-wrap: wrap; }
-      .slot__input { width: calc(100% - 2rem); }
-      .slot__btn {
-        width: 100%;
-        padding: .9rem;
-      }
 
       .finding-card { width: 285px; }
       .digest-row { grid-template-columns: 2.5rem 1fr; gap: .9rem; }
@@ -731,11 +579,6 @@
         scroll-behavior: auto !important;
       }
 
-      .focus-word {
-        filter: none;
-        opacity: 1;
-      }
-
       .findings-track {
         width: auto;
         max-width: var(--max-width);
@@ -746,14 +589,15 @@
       .finding-card.is-duplicate { display: none; }
     }
   </style>
-</head>
+  <link rel="stylesheet" href="/assets/research-method.css?v=20260725-four-step">
+<link rel="stylesheet" href="/assets/site-shell.css?v=20260725-canonical-shell"></head>
 <body>
 
   <header class="site-header">
     <div class="site-header__inner">
       <div class="site-header__left">
         <a href="/" class="site-header__logo" aria-label="BLURSOR home">
-          <svg width="15" height="20" viewBox="0 0 15 18" fill="#c43b2a" aria-hidden="true" focusable="false">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="#b73524" aria-hidden="true" focusable="false">
             <rect x="0" y="0" width="7" height="18" rx="1"/>
             <circle cx="12" cy="5" r="2"/>
             <circle cx="12" cy="13" r="2"/>
@@ -763,44 +607,47 @@
         <span class="site-header__tagline">Science-backed data on why AI says what it says</span>
       </div>
       <nav class="site-header__nav" aria-label="Primary navigation">
-        <a href="/ai-crawler-checker">What AI Sees</a>
+        <a href="/ai-crawler-checker">Tools</a>
         <a href="/research">Research</a>
       </nav>
     </div>
   </header>
 
   <main>
-    <section class="hero" aria-labelledby="home-title">
-      <div class="hero__kicker">AI-visibility research · Free instruments · No signup</div>
-      <h1 class="hero__title" id="home-title">
-        <span class="focus-word" style="--i:0">AI</span>
-        <span class="focus-word" style="--i:1">decides</span>
-        <span class="focus-word" style="--i:2">who</span>
-        <span class="focus-word" style="--i:3">gets</span>
-        <em class="focus-word" style="--i:4">recommended.</em>
-        <span class="focus-word" style="--i:5">We</span>
-        <span class="focus-word" style="--i:6">study</span>
-        <em class="focus-word" style="--i:7">why</em>
-        <span class="focus-word" style="--i:8">and</span>
-        <span class="focus-word" style="--i:9">show</span>
-        <span class="focus-word" style="--i:10">you</span>
-        <em class="focus-word" style="--i:11">what it sees</em>
-        <span class="focus-word" style="--i:12">on</span>
-        <span class="focus-word" style="--i:13">your</span>
-        <span class="focus-word" style="--i:14">site.</span>
-      </h1>
-      <p class="hero__sub">We distill the research on why AI says what it says, how generative engines choose their sources, and where brands disappear. Then we built the instrument that shows what those systems can read when they reach <em>your</em> site.</p>
+    <section class="hero research-hero" aria-labelledby="home-title">
+      <div class="research-hero__inner">
+        <div class="research-hero__editorial">
+          <div class="hero__kicker">AI-visibility research · Practical tools</div>
+          <h1 class="hero__title" id="home-title">AI decides who gets <em>recommended.</em> We study <em>why</em> and give you <em>tools</em> to improve AI visibility.</h1>
+          <p class="hero__sub">Research-based insights into how AI systems retrieve, cite, and recommend information.</p>
+          <div class="research-hero__actions" role="group" aria-label="Explore BLURSOR">
+            <a class="research-hero__action research-hero__action--primary" href="/research">Browse the research</a>
+            <a class="research-hero__action research-hero__action--secondary" href="/ai-crawler-checker">Try the crawler checker</a>
+          </div>
+        </div>
+        <div class="research-process" data-research-process="homepage" role="region" aria-labelledby="home-research-process-title">
+          <h2 class="research-process__kicker" id="home-research-process-title">How BLURSOR works</h2>
+          <ol class="research-process__steps" role="list">
+            <li class="research-process__step">
+              <span class="research-process__ordinal" aria-hidden="true">01</span>
+              <p class="research-process__copy">We monitor new research papers on AI visibility, LLM ranking factors, and how AI finds and cites sources.</p>
+            </li>
+            <li class="research-process__step">
+              <span class="research-process__ordinal" aria-hidden="true">02</span>
+              <p class="research-process__copy">We filter for findings with practical implications and distill the useful parts into readable articles.</p>
+            </li>
+            <li class="research-process__step">
+              <span class="research-process__ordinal" aria-hidden="true">03</span>
+              <p class="research-process__copy">We <a class="research-process__link" href="/research">publish the findings</a>, supporting evidence, and what they could mean for your work.</p>
+            </li>
+            <li class="research-process__step">
+              <span class="research-process__ordinal" aria-hidden="true">04</span>
+              <p class="research-process__copy">We turn useful findings into <a class="research-process__link" href="/ai-crawler-checker">tools</a> that help you investigate problems and improve AI visibility.</p>
+            </li>
+          </ol>
+        </div>
+      </div>
     </section>
-
-    <div class="slot" aria-label="Check your website">
-      <form class="slot__row" action="/ai-crawler-checker" method="GET">
-        <span class="slot__prompt" aria-hidden="true">▸</span>
-        <input class="slot__input" name="url" inputmode="url" placeholder="yoursite.com - see what AI sees" autocomplete="off" spellcheck="false" aria-label="Your website URL">
-        <button class="slot__btn" type="submit">Develop</button>
-      </form>
-      <p class="slot__hint">Free, about 10 seconds, shows its work. <a href="#latest-digests">Or read the research first ↓</a></p>
-      <p class="slot__bots">Fetches as <i>·</i> GPTBot <i>·</i> ClaudeBot <i>·</i> PerplexityBot <i>·</i> OAI-SearchBot <i>·</i> Google-Extended <i>·</i> Applebot <i>·</i> + more</p>
-    </div>
 
     <section class="findings-band" aria-labelledby="findings-title">
       <div class="findings-band__head">
@@ -808,102 +655,61 @@
           <div class="section-kicker">From the papers we've distilled</div>
           <h2 class="findings-band__title" id="findings-title">What the research actually says</h2>
         </div>
-        <span class="findings-band__note">Every number links to its paper · updated as we publish</span>
+        <span class="findings-band__note">Numbers link to their papers · updated as we publish</span>
       </div>
 
       <!-- Future sessions: add one finding-card per new article only when the number and arXiv id appear in the published digest metadata or body. Keep duplicate cards aria-hidden. -->
       <div class="findings-ticker">
         <div class="findings-track">
-          <a class="finding-card" href="/research/cultural-reasoning-gap-llms">
-            <span class="finding-card__num">94% / 40%</span>
-            <span class="finding-card__line">LLMs ace multiple-choice cultural knowledge, then stumble when <b>answer choices disappear</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2606.01879</span>
+          <a class="finding-card" href="/research/llm-brand-reputation-citations-third-party">
+            <span class="finding-card__num">85.7%</span>
+            <span class="finding-card__line">Brand-reputation citations pointed to <b>third-party pages</b>. Find the domains AI cites in your category.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2606.25787</span>
           </a>
-          <a class="finding-card" href="/research/self-evolving-agent-health-community-notes">
-            <span class="finding-card__num">89%</span>
-            <span class="finding-card__line">A self-evolving LLM agent beat human fact-checkers on <b>health misinformation</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2606.02215</span>
-          </a>
-          <a class="finding-card" href="/research/generative-search-ai-cited-sources">
-            <span class="finding-card__num">~16%</span>
-            <span class="finding-card__line">Across major answer engines, cited sources were <b>AI-generated</b> surprisingly often.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.23684</span>
-          </a>
-          <a class="finding-card" href="/research/llm-citation-hallucination-agentic-retrieval">
-            <span class="finding-card__num">12-38%</span>
-            <span class="finding-card__line">Six frontier LLMs hallucinated <b>scientific citations</b> at double-digit rates.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.14306</span>
-          </a>
-          <a class="finding-card" href="/research/paraphrase-brittleness-brand-recommendation">
-            <span class="finding-card__num">21-32 pts</span>
-            <span class="finding-card__line">Cosmetic rewording changed AI brand recommendations more than <b>switching models</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.27440</span>
-          </a>
-          <a class="finding-card" href="/research/rag-brand-visibility-tier-failures">
-            <span class="finding-card__num">48-52%</span>
-            <span class="finding-card__line">Lower-stature specialists stayed invisible in RAG while leaders still surfaced.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.27439</span>
-          </a>
-          <a class="finding-card" href="/research/semantic-metadata-agent-retrieval-tradeoff">
-            <span class="finding-card__num">65.7%</span>
-            <span class="finding-card__line">Schema.org metadata raised FAIR-compliant precision, but <b>cut query coverage</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.28787</span>
-          </a>
-          <a class="finding-card" href="/research/rank-zero-honeypot-agent-collapse">
-            <span class="finding-card__num">65% → 18%</span>
-            <span class="finding-card__line">One false top search result collapsed frontier agent accuracy in a Microsoft study.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2603.00801</span>
+          <a class="finding-card" href="/research/citation-failures-generative-engine-agentgeo">
+            <span class="finding-card__num">1 in 10</span>
+            <span class="finding-card__line">citation failures came from <b>technical problems</b>. Check access, JavaScript rendering and extractability before rewriting.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2603.09296</span>
           </a>
           <a class="finding-card finding-card--cta" href="/ai-crawler-checker">
-            <span class="finding-card__num">And what does AI see on your site?</span>
-            <span class="finding-card__line">Run the free instrument. No signup, no score theater, no gate.</span>
-            <span class="finding-card__src">Develop your page →</span>
+            <span class="finding-card__num">AI Crawler Checker</span>
+            <span class="finding-card__line">See what AI crawlers can reach, read and extract from your page.</span>
+            <span class="finding-card__src">Check your page →</span>
           </a>
-
-          <a class="finding-card is-duplicate" href="/research/cultural-reasoning-gap-llms" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">94% / 40%</span>
-            <span class="finding-card__line">LLMs ace multiple-choice cultural knowledge, then stumble when <b>answer choices disappear</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2606.01879</span>
+          <a class="finding-card" href="/research/structured-data-rag-entity-pages">
+            <span class="finding-card__num">+29.6%</span>
+            <span class="finding-card__line">In one RAG setup, <b>entity-focused pages</b> improved answer accuracy; appended JSON-LD had little effect.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2603.10700</span>
           </a>
-          <a class="finding-card is-duplicate" href="/research/self-evolving-agent-health-community-notes" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">89%</span>
-            <span class="finding-card__line">A self-evolving LLM agent beat human fact-checkers on <b>health misinformation</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2606.02215</span>
-          </a>
-          <a class="finding-card is-duplicate" href="/research/generative-search-ai-cited-sources" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">~16%</span>
-            <span class="finding-card__line">Across major answer engines, cited sources were <b>AI-generated</b> surprisingly often.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.23684</span>
-          </a>
-          <a class="finding-card is-duplicate" href="/research/llm-citation-hallucination-agentic-retrieval" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">12-38%</span>
-            <span class="finding-card__line">Six frontier LLMs hallucinated <b>scientific citations</b> at double-digit rates.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.14306</span>
-          </a>
-          <a class="finding-card is-duplicate" href="/research/paraphrase-brittleness-brand-recommendation" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">21-32 pts</span>
-            <span class="finding-card__line">Cosmetic rewording changed AI brand recommendations more than <b>switching models</b>.</span>
+          <a class="finding-card" href="/research/paraphrase-brittleness-brand-recommendation">
+            <span class="finding-card__num">21–32 pts</span>
+            <span class="finding-card__line">Rewording the same question cut overlap between brand recommendations by 21–32 points. Test <b>several phrasings</b> for each intent.</span>
             <span class="finding-card__src">Source <span>·</span> arXiv:2605.27440</span>
           </a>
-          <a class="finding-card is-duplicate" href="/research/rag-brand-visibility-tier-failures" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">48-52%</span>
-            <span class="finding-card__line">Lower-stature specialists stayed invisible in RAG while leaders still surfaced.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.27439</span>
+          <a class="finding-card is-duplicate" href="/research/llm-brand-reputation-citations-third-party" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">85.7%</span>
+            <span class="finding-card__line">Brand-reputation citations pointed to <b>third-party pages</b>. Find the domains AI cites in your category.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2606.25787</span>
           </a>
-          <a class="finding-card is-duplicate" href="/research/semantic-metadata-agent-retrieval-tradeoff" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">65.7%</span>
-            <span class="finding-card__line">Schema.org metadata raised FAIR-compliant precision, but <b>cut query coverage</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.28787</span>
-          </a>
-          <a class="finding-card is-duplicate" href="/research/rank-zero-honeypot-agent-collapse" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">65% → 18%</span>
-            <span class="finding-card__line">One false top search result collapsed frontier agent accuracy in a Microsoft study.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2603.00801</span>
+          <a class="finding-card is-duplicate" href="/research/citation-failures-generative-engine-agentgeo" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">1 in 10</span>
+            <span class="finding-card__line">citation failures came from <b>technical problems</b>. Check access, JavaScript rendering and extractability before rewriting.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2603.09296</span>
           </a>
           <a class="finding-card finding-card--cta is-duplicate" href="/ai-crawler-checker" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">And what does AI see on your site?</span>
-            <span class="finding-card__line">Run the free instrument. No signup, no score theater, no gate.</span>
-            <span class="finding-card__src">Develop your page →</span>
+            <span class="finding-card__num">AI Crawler Checker</span>
+            <span class="finding-card__line">See what AI crawlers can reach, read and extract from your page.</span>
+            <span class="finding-card__src">Check your page →</span>
+          </a>
+          <a class="finding-card is-duplicate" href="/research/structured-data-rag-entity-pages" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">+29.6%</span>
+            <span class="finding-card__line">In one RAG setup, <b>entity-focused pages</b> improved answer accuracy; appended JSON-LD had little effect.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2603.10700</span>
+          </a>
+          <a class="finding-card is-duplicate" href="/research/paraphrase-brittleness-brand-recommendation" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">21–32 pts</span>
+            <span class="finding-card__line">Rewording the same question cut overlap between brand recommendations by 21–32 points. Test <b>several phrasings</b> for each intent.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2605.27440</span>
           </a>
         </div>
       </div>
@@ -918,53 +724,35 @@
         <a class="digests__all" href="/research">All articles →</a>
       </div>
 
-      <a class="digest-row" href="/research/llm-brand-reputation-citations-third-party">
+      <div class="digests__list">
+
+      <a class="digest-row" href="/research/drnoise-shows-one-false-document-can-knock-agents-off-course">
         <span class="digest-row__num">01</span>
         <span>
-          <span class="digest-row__meta"><span>Jun 25, 2026</span><span>9 min</span><span class="src">arXiv:2606.25787</span></span>
-          <span class="digest-row__title" role="heading" aria-level="3">LLMs mostly source "brand reputation" from other people's pages</span>
-          <span class="digest-row__summary">What LLMs treat as brand reputation is mostly other people's web pages, not the brands themselves.</span>
+          <span class="digest-row__meta"><span>Jul 21, 2026</span><span>10 min</span><span class="src">arXiv:2607.17291</span></span>
+          <span class="digest-row__title" role="heading" aria-level="3">DRNoise shows how one plausible false document can knock deep research agents off course</span>
+          <span class="digest-row__summary">One misleading “direct claim” can derail an agent that’s otherwise correct</span>
         </span>
       </a>
 
-      <a class="digest-row" href="/research/ai-brand-category-ownership-llms">
+      <a class="digest-row" href="/research/generative-search-citations-surface-predictors">
         <span class="digest-row__num">02</span>
         <span>
-          <span class="digest-row__meta"><span>Jun 23, 2026</span><span>10 min</span><span class="src">arXiv:2606.23057</span></span>
-          <span class="digest-row__title" role="heading" aria-level="3">AI brand "ownership" is moderately concentrated, but the winner changes by model</span>
-          <span class="digest-row__summary">Who gets the top pick in AI recommendations, and how consistent is it across models?</span>
+          <span class="digest-row__meta"><span>Jul 20, 2026</span><span>9 min</span><span class="src">arXiv:2607.15771</span></span>
+          <span class="digest-row__title" role="heading" aria-level="3">Chinese generative search cites only a small slice of available brand sources, and external quality scores do not predict what surfaces</span>
+          <span class="digest-row__summary">Why citation coverage is sparse—and what actually predicts which sources get surfaced</span>
         </span>
       </a>
 
-      <a class="digest-row" href="/research/english-blind-spot-local-champions">
+      <a class="digest-row" href="/research/generative-engine-optimization-doesnt-translate">
         <span class="digest-row__num">03</span>
         <span>
-          <span class="digest-row__meta"><span>Jun 23, 2026</span><span>10 min</span><span class="src">arXiv:2606.23165</span></span>
-          <span class="digest-row__title" role="heading" aria-level="3">English-only AI reputation monitoring misses local champions in multilingual markets</span>
-          <span class="digest-row__summary">English-language prompts create a measurable local-visibility blind spot across languages.</span>
+          <span class="digest-row__meta"><span>Jul 16, 2026</span><span>8 min</span><span class="src">arXiv:2607.14035</span></span>
+          <span class="digest-row__title" role="heading" aria-level="3">GEO can change citations inside a fixed context, but it doesn’t show durable organic visibility</span>
+          <span class="digest-row__summary">Why GEO gains don’t translate into durable visibility (and which levers actually hold).</span>
         </span>
       </a>
-    </section>
 
-    <section class="stance" aria-labelledby="stance-title">
-      <div class="stance__inner">
-        <div class="section-kicker">How we work</div>
-        <h2 class="digests__title" id="stance-title">Honesty is the product</h2>
-        <div class="stance__grid">
-          <div class="tenet">
-            <span class="tenet__label">SHOW THE WORK</span>
-            <p>Every digest links the paper it came from. Every checker result cites its source. If we cannot source a claim, we do not say it.</p>
-          </div>
-          <div class="tenet">
-            <span class="tenet__label">SAY WHAT DOESN'T WORK</span>
-            <p>The <a href="/ai-crawler-checker">checker</a> tells users llms.txt is hygiene, not a citation lever, citing <a href="https://seranking.com/blog/llms-txt/" target="_blank" rel="noopener">SE Ranking's 300k-domain study</a> instead of selling a generator.</p>
-          </div>
-          <div class="tenet">
-            <span class="tenet__label">NO GATES</span>
-            <p>No signup, no email wall, no book-a-demo trap. Read it, use it, act on it, leave.</p>
-          </div>
-        </div>
-        <p class="stance__close">Now you have no excuses not to act on it.</p>
       </div>
     </section>
   </main>

@@ -1220,26 +1220,25 @@
       }
     }
   </style>
-</head>
+<link rel="stylesheet" href="/assets/site-shell.css?v=20260725-canonical-shell"></head>
 <body>
 
   <!-- Header -->
   <header class="site-header">
     <div class="site-header__inner">
       <div class="site-header__left">
-        <a href="/" class="site-header__logo">
-          <svg width="15" height="20" viewBox="0 0 15 18" fill="var(--color-accent)" style="margin-bottom: -2px;" aria-hidden="true" focusable="false">
+        <a href="/" class="site-header__logo" aria-label="BLURSOR home">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="#b73524" aria-hidden="true" focusable="false">
             <rect x="0" y="0" width="7" height="18" rx="1"/>
             <circle cx="12" cy="5" r="2"/>
             <circle cx="12" cy="13" r="2"/>
           </svg>
           BLURSOR
         </a>
-        <span class="site-header__sep">|</span>
         <span class="site-header__tagline">Science-backed data on why AI says what it says</span>
       </div>
-      <nav class="site-header__nav">
-        <a href="/ai-crawler-checker" class="is-active">Tools</a>
+      <nav class="site-header__nav" aria-label="Primary navigation">
+        <a href="/ai-crawler-checker" aria-current="page">Tools</a>
         <a href="/research">Research</a>
       </nav>
     </div>
@@ -1307,7 +1306,7 @@
   <footer class="site-footer">
     <div class="site-footer__inner">
       <div class="site-footer__brand">
-        <a href="/" class="site-footer__logo">
+        <a href="/" class="site-footer__logo" aria-label="BLURSOR home">
           <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
             <rect x="0" y="0" width="7" height="18" rx="1"/>
             <circle cx="12" cy="5" r="2"/>
@@ -1315,21 +1314,34 @@
           </svg>
           BLURSOR
         </a>
-        <p class="site-footer__desc">AI research paper digest for non-academic audiences.</p>
+        <p class="site-footer__desc">Research on why AI says what it says, distilled for people who act on it.</p>
+        <span class="site-footer__tagline">Now you have no excuses not to act on it.</span>
       </div>
+
       <div class="site-footer__col">
-        <div class="site-footer__col-heading">Tools</div>
+        <div class="site-footer__col-heading">Instruments</div>
         <ul>
           <li><a href="/ai-crawler-checker">What AI Sees</a></li>
         </ul>
       </div>
+
       <div class="site-footer__col">
         <div class="site-footer__col-heading">Research</div>
         <ul>
           <li><a href="/research">All articles</a></li>
+          <li><a href="/author/alex-rostovtsev">Author</a></li>
+        </ul>
+      </div>
+
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Connect</div>
+        <ul>
+          <li><a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener">@blursor_ai</a></li>
+          <li><a href="mailto:contact@blursor.ai">contact@blursor.ai</a></li>
         </ul>
       </div>
     </div>
+
     <div class="site-footer__bottom">
       <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
       <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>

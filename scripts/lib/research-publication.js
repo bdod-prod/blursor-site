@@ -20,6 +20,12 @@ const STATIC_ROUTES = [
   { url: `${BASE_URL}/research`, file: 'research/index.html' },
   { url: AUTHOR_URL, file: 'author/alex-rostovtsev.html' },
 ];
+const CANONICAL_STATIC_PAGES = [
+  { file: 'index.html', currentPath: '/' },
+  { file: 'ai-crawler-checker.html', currentPath: '/ai-crawler-checker' },
+  { file: 'research/index.html', currentPath: '/research' },
+  { file: 'author/alex-rostovtsev.html', currentPath: '/author/alex-rostovtsev' },
+];
 const LEGACY_SOFT_404_PATHS = [
   '/research/rag-ranking-signal-amplification',
   '/research/brand-mention-llm-recommendation',
@@ -35,6 +41,132 @@ class PublicationValidationError extends Error {
     super(`Research publication validation failed:\n${issues.map(issue => `- ${issue}`).join('\n')}`);
     this.name = 'PublicationValidationError';
     this.issues = issues;
+  }
+}
+
+const CANONICAL_SITE_SHELL_STYLESHEET = '<link rel="stylesheet" href="/assets/site-shell.css?v=20260725-canonical-shell">';
+
+function renderCanonicalHeader(currentPath) {
+  const toolsCurrent = currentPath === '/ai-crawler-checker' ? ' aria-current="page"' : '';
+  const researchCurrent = currentPath === '/research' || currentPath.startsWith('/research/')
+    ? ' aria-current="page"'
+    : '';
+  return `  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="site-header__left">
+        <a href="/" class="site-header__logo" aria-label="BLURSOR home">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="#b73524" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <span class="site-header__tagline">Science-backed data on why AI says what it says</span>
+      </div>
+      <nav class="site-header__nav" aria-label="Primary navigation">
+        <a href="/ai-crawler-checker"${toolsCurrent}>Tools</a>
+        <a href="/research"${researchCurrent}>Research</a>
+      </nav>
+    </div>
+  </header>`;
+}
+
+function renderCanonicalFooter() {
+  return `  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="site-footer__brand">
+        <a href="/" class="site-footer__logo" aria-label="BLURSOR home">
+          <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="7" height="18" rx="1"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="13" r="2"/>
+          </svg>
+          BLURSOR
+        </a>
+        <p class="site-footer__desc">Research on why AI says what it says, distilled for people who act on it.</p>
+        <span class="site-footer__tagline">Now you have no excuses not to act on it.</span>
+      </div>
+
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Instruments</div>
+        <ul>
+          <li><a href="/ai-crawler-checker">What AI Sees</a></li>
+        </ul>
+      </div>
+
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Research</div>
+        <ul>
+          <li><a href="/research">All articles</a></li>
+          <li><a href="/author/alex-rostovtsev">Author</a></li>
+        </ul>
+      </div>
+
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Connect</div>
+        <ul>
+          <li><a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener">@blursor_ai</a></li>
+          <li><a href="mailto:contact@blursor.ai">contact@blursor.ai</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="site-footer__bottom">
+      <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
+      <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>
+    </div>
+  </footer>`;
+}
+
+function replaceSingleShellElement(html, { className, replacement, fileName }) {
+  const pattern = new RegExp(
+    `^[\\t ]*<(?:header|footer)\\b[^>]*class=(["'])[^"']*\\b${className}\\b[^"']*\\1[^>]*>[\\s\\S]*?<\\/(?:header|footer)>`,
+    'gm',
+  );
+  const matches = html.match(pattern) || [];
+  if (matches.length !== 1) {
+    throw new PublicationValidationError([
+      `${fileName}: expected exactly one ${className}, found ${matches.length}`,
+    ]);
+  }
+  return html.replace(pattern, replacement);
+}
+
+function normalizeSiteShellHtml(html, { fileName, currentPath }) {
+  const withoutStylesheet = html.replace(
+    /<link\b(?=[^>]*\bhref\s*=\s*(["'])\/assets\/site-shell\.css(?:[?#][^"']*)?\1)[^>]*>/gi,
+    '',
+  );
+  const headClosings = [...withoutStylesheet.matchAll(/<\/head>/gi)];
+  if (headClosings.length !== 1) {
+    throw new PublicationValidationError([
+      `${fileName}: expected exactly one head closing tag, found ${headClosings.length}`,
+    ]);
+  }
+  const withStylesheet = withoutStylesheet.replace(
+    /<\/head>/i,
+    `${CANONICAL_SITE_SHELL_STYLESHEET}</head>`,
+  );
+  const withHeader = replaceSingleShellElement(withStylesheet, {
+    className: 'site-header',
+    replacement: renderCanonicalHeader(currentPath),
+    fileName,
+  });
+  return replaceSingleShellElement(withHeader, {
+    className: 'site-footer',
+    replacement: renderCanonicalFooter(),
+    fileName,
+  });
+}
+
+function verifyCanonicalSiteShell(html, { fileName, currentPath, issues }) {
+  try {
+    const normalized = normalizeSiteShellHtml(html, { fileName, currentPath });
+    if (normalized !== html) issues.push(`${fileName}: site shell is not canonical`);
+  } catch (error) {
+    if (error instanceof PublicationValidationError) issues.push(...error.issues);
+    else throw error;
   }
 }
 
@@ -150,6 +282,18 @@ function renderArchiveCard(article, ordinal) {
         </a>`;
 }
 
+function renderHomepageDigestRow(article, ordinal) {
+  const meta = article.meta;
+  return `      <a class="digest-row" href="/research/${escapeHtml(meta.slug)}">
+        <span class="digest-row__num">${String(ordinal).padStart(2, '0')}</span>
+        <span>
+          <span class="digest-row__meta"><span>${escapeHtml(fmtDate(meta.published_date))}</span><span>${escapeHtml(meta.reading_time_min)} min</span><span class="src">arXiv:${escapeHtml(meta.arxiv_id)}</span></span>
+          <span class="digest-row__title" role="heading" aria-level="3">${escapeHtml(meta.title)}</span>
+          <span class="digest-row__summary">${escapeHtml(meta.summary_for_card)}</span>
+        </span>
+      </a>`;
+}
+
 function ensureRssDiscoveryHtml(html) {
   const hasDiscovery = findTags(html, 'link').some(tag => {
     const rel = (getAttribute(tag, 'rel') || '').split(/\s+/);
@@ -162,6 +306,31 @@ function ensureRssDiscoveryHtml(html) {
     return html.replace('\n  <!-- Fonts -->', `\n  ${RSS_FEED_LINK_TAG}\n  <!-- Fonts -->`);
   }
   return html.replace(/<\/head>/i, `  ${RSS_FEED_LINK_TAG}\n</head>`);
+}
+
+function generateHomepageHtml(indexHtml, articles) {
+  const indexWithDiscovery = ensureRssDiscoveryHtml(indexHtml);
+  const latestDigestSections = [
+    ...indexWithDiscovery.matchAll(/<section\b[^>]*\bid\s*=\s*(["'])latest-digests\1[^>]*>/gi),
+  ];
+  if (latestDigestSections.length === 0) return indexWithDiscovery;
+  if (latestDigestSections.length !== 1) {
+    throw new PublicationValidationError([
+      `index.html: expected exactly one latest-digests section, found ${latestDigestSections.length}`,
+    ]);
+  }
+
+  const listTag = findSingleClassTag(indexWithDiscovery, 'digests__list', 'index.html');
+  const rows = articles
+    .slice(0, 3)
+    .map((article, index) => renderHomepageDigestRow(article, index + 1))
+    .join('\n\n');
+  return replaceBalancedDivContents(
+    indexWithDiscovery,
+    listTag,
+    `\n\n${rows}\n\n      `,
+    'index.html',
+  );
 }
 
 function ensureMobileMetaWrapHtml(html, fileName) {
@@ -233,16 +402,19 @@ function buildSitemapEntries({
   fileMtimes = {},
 }) {
   return [
-    ...STATIC_ROUTES.map(route => ({
-      loc: route.url,
-      lastmod: route.file === 'research/index.html' && articles[0]
-        ? articles[0].meta.published_date
-        : allowMissingFiles && !fs.existsSync(path.join(rootDir, route.file))
-          ? null
-          : isoDate(Object.hasOwn(fileMtimes, route.file)
-            ? fileMtimes[route.file]
-            : fs.statSync(path.join(rootDir, route.file)).mtime),
-    })),
+    ...STATIC_ROUTES.map(route => {
+      const hasExplicitMtime = Object.hasOwn(fileMtimes, route.file);
+      return {
+        loc: route.url,
+        lastmod: hasExplicitMtime
+          ? isoDate(fileMtimes[route.file])
+          : route.file === 'research/index.html' && articles[0]
+            ? articles[0].meta.published_date
+            : allowMissingFiles && !fs.existsSync(path.join(rootDir, route.file))
+              ? null
+              : isoDate(fs.statSync(path.join(rootDir, route.file)).mtime),
+      };
+    }),
     ...articles.map(article => ({
       loc: `${BASE_URL}/research/${article.meta.slug}`,
       lastmod: article.meta.published_date,
@@ -535,10 +707,16 @@ function parseSitemapUrlEntries(sitemap, issues) {
 }
 
 function verifySitemapEntries({ rootDir, sitemap, expectedArticles, issues }) {
+  const fileMtimes = Object.fromEntries(
+    STATIC_ROUTES
+      .filter(route => fs.existsSync(path.join(rootDir, route.file)))
+      .map(route => [route.file, fs.statSync(path.join(rootDir, route.file)).mtime]),
+  );
   const expectedEntries = buildSitemapEntries({
     rootDir,
     articles: expectedArticles,
     allowMissingFiles: true,
+    fileMtimes,
   });
   const expectedLocs = new Set(expectedEntries.map(entry => entry.loc));
   const actualGroups = new Map();
@@ -598,13 +776,23 @@ function verifyPublishedState({ rootDir, expectedArticles }) {
   const issues = [];
   const expectedSlugs = expectedArticles.map(article => article.meta.slug);
   const expectedUrls = expectedSlugs.map(slug => `${BASE_URL}/research/${slug}`);
-  const archive = readPublishedFile(rootDir, 'research/index.html', issues);
+  const staticPages = new Map();
+  for (const page of CANONICAL_STATIC_PAGES) {
+    const html = readPublishedFile(rootDir, page.file, issues);
+    staticPages.set(page.file, html);
+    if (html) {
+      verifyCanonicalSiteShell(html, {
+        fileName: page.file,
+        currentPath: page.currentPath,
+        issues,
+      });
+    }
+  }
+  const archive = staticPages.get('research/index.html');
   const feed = readPublishedFile(rootDir, 'research/feed.xml', issues);
   const sitemap = readPublishedFile(rootDir, 'sitemap.xml', issues);
-  const home = readPublishedFile(rootDir, 'index.html', issues);
+  const home = staticPages.get('index.html');
   let relatedLinkCount = 0;
-
-  for (const route of STATIC_ROUTES) readPublishedFile(rootDir, route.file, issues);
 
   if (archive) {
     assertSameSet(
@@ -637,12 +825,35 @@ function verifyPublishedState({ rootDir, expectedArticles }) {
   if (sitemap) {
     verifySitemapEntries({ rootDir, sitemap, expectedArticles, issues });
   }
-  if (home && !hasRssDiscovery(home)) issues.push('index.html: missing RSS discovery');
+  if (home) {
+    if (!hasRssDiscovery(home)) issues.push('index.html: missing RSS discovery');
+    if (/<section\b[^>]*\bid\s*=\s*(["'])latest-digests\1/i.test(home)) {
+      const latestTargets = extractClassLinkTargets(home, 'digest-row')
+        .map(target => {
+          const match = target && /^\/research\/([^/?#]+)$/.exec(target);
+          return match ? match[1] : target;
+        });
+      const expectedLatestTargets = expectedArticles
+        .slice(0, 3)
+        .map(article => article.meta.slug);
+      if (latestTargets.length !== expectedLatestTargets.length
+        || latestTargets.some((target, index) => target !== expectedLatestTargets[index])) {
+        issues.push(
+          `index.html: latest digest targets must equal ${expectedLatestTargets.join(', ')}; found ${latestTargets.join(', ')}`,
+        );
+      }
+    }
+  }
 
   for (const article of expectedArticles) {
     const file = `research/${article.meta.slug}.html`;
     const html = readPublishedFile(rootDir, file, issues);
     if (!html) continue;
+    verifyCanonicalSiteShell(html, {
+      fileName: file,
+      currentPath: `/research/${article.meta.slug}`,
+      issues,
+    });
     const candidate = validateCandidate(path.join(rootDir, file));
     issues.push(...candidate.issues);
     if (!hasRssDiscovery(html)) issues.push(`${file}: missing RSS discovery`);
@@ -687,26 +898,65 @@ function compileResearch({ rootDir }) {
   const articles = discoverArticles({ rootDir });
   const renderedArticles = articles.map(article => ({
     filePath: article.filePath,
-    html: ensureMobileMetaWrapHtml(
-      removeBlockedDigestLinks(ensureRssDiscoveryHtml(normalizeArticleHtml(article, articles))),
-      article.fileName,
+    html: normalizeSiteShellHtml(
+      ensureMobileMetaWrapHtml(
+        removeBlockedDigestLinks(ensureRssDiscoveryHtml(normalizeArticleHtml(article, articles))),
+        article.fileName,
+      ),
+      {
+        fileName: `research/${article.fileName}`,
+        currentPath: `/research/${article.meta.slug}`,
+      },
     ),
   }));
   const archivePath = path.join(rootDir, 'research/index.html');
   const homePath = path.join(rootDir, 'index.html');
-  const homeHtml = ensureRssDiscoveryHtml(fs.readFileSync(homePath, 'utf8'));
-  const homeChanged = fs.readFileSync(homePath, 'utf8') !== homeHtml;
+  const currentHomeHtml = fs.readFileSync(homePath, 'utf8');
+  const homeHtml = normalizeSiteShellHtml(
+    generateHomepageHtml(currentHomeHtml, articles),
+    { fileName: 'index.html', currentPath: '/' },
+  );
+  const archiveHtml = normalizeSiteShellHtml(
+    generateArchiveHtml(fs.readFileSync(archivePath, 'utf8'), articles),
+    { fileName: 'research/index.html', currentPath: '/research' },
+  );
+  const staticOutputs = [
+    { filePath: homePath, html: homeHtml },
+    {
+      filePath: path.join(rootDir, 'ai-crawler-checker.html'),
+      html: normalizeSiteShellHtml(
+        fs.readFileSync(path.join(rootDir, 'ai-crawler-checker.html'), 'utf8'),
+        { fileName: 'ai-crawler-checker.html', currentPath: '/ai-crawler-checker' },
+      ),
+    },
+    { filePath: archivePath, html: archiveHtml },
+    {
+      filePath: path.join(rootDir, 'author/alex-rostovtsev.html'),
+      html: normalizeSiteShellHtml(
+        fs.readFileSync(path.join(rootDir, 'author/alex-rostovtsev.html'), 'utf8'),
+        { fileName: 'author/alex-rostovtsev.html', currentPath: '/author/alex-rostovtsev' },
+      ),
+    },
+  ];
+  const changedStaticFiles = new Set(staticOutputs
+    .filter(({ filePath, html }) => fs.readFileSync(filePath, 'utf8') !== html)
+    .map(({ filePath }) => path.relative(rootDir, filePath)));
+  const fileMtimes = Object.fromEntries(STATIC_ROUTES.map(route => [
+    route.file,
+    changedStaticFiles.has(route.file)
+      ? buildTimestamp
+      : fs.statSync(path.join(rootDir, route.file)).mtime,
+  ]));
   const generatedOutputs = [
     ...renderedArticles,
-    { filePath: archivePath, html: generateArchiveHtml(fs.readFileSync(archivePath, 'utf8'), articles) },
+    ...staticOutputs,
     { filePath: path.join(rootDir, 'research/feed.xml'), html: generateFeedXml(articles) },
-    { filePath: homePath, html: homeHtml },
     {
       filePath: path.join(rootDir, 'sitemap.xml'),
       html: generateSitemapXml({
         rootDir,
         articles,
-        fileMtimes: homeChanged ? { 'index.html': buildTimestamp } : {},
+        fileMtimes,
       }),
     },
   ];
@@ -721,8 +971,9 @@ function compileResearch({ rootDir }) {
 
   for (const output of changedOutputs) {
     fs.writeFileSync(output.filePath, output.html);
-    if (output.filePath === homePath) {
-      fs.utimesSync(homePath, buildTimestamp, buildTimestamp);
+    const relativePath = path.relative(rootDir, output.filePath);
+    if (changedStaticFiles.has(relativePath)) {
+      fs.utimesSync(output.filePath, buildTimestamp, buildTimestamp);
     }
   }
 
@@ -740,6 +991,7 @@ module.exports = {
   AUTHOR_NAME,
   AUTHOR_PATH,
   AUTHOR_URL,
+  CANONICAL_SITE_SHELL_STYLESHEET,
   PublicationValidationError,
   discoverArticles,
   compileResearch,
@@ -747,7 +999,9 @@ module.exports = {
   generateFeedXml,
   generateSitemapXml,
   normalizeArticleHtml,
+  normalizeSiteShellHtml,
   renderByline,
   selectRelatedArticles,
+  verifyCanonicalSiteShell,
   verifyPublishedState,
 };

@@ -225,12 +225,6 @@
       padding: var(--space-2xl) 0 var(--space-xl);
     }
 
-    .hero__inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 0 var(--space-md);
-    }
-
     .hero__title {
       font-family: var(--font-serif);
       font-size: 2.8rem;
@@ -499,36 +493,55 @@
     }
   </style>
   <link rel="alternate" type="application/rss+xml" title="BLURSOR Research RSS" href="https://blursor.ai/research/feed.xml">
-</head>
+  <link rel="stylesheet" href="/assets/research-method.css?v=20260725-four-step">
+<link rel="stylesheet" href="/assets/site-shell.css?v=20260725-canonical-shell"></head>
 <body>
 
   <!-- Header -->
   <header class="site-header">
     <div class="site-header__inner">
       <div class="site-header__left">
-        <a href="/" class="site-header__logo">
-          <svg width="15" height="20" viewBox="0 0 15 18" fill="var(--color-accent)" style="margin-bottom: -2px;" aria-hidden="true" focusable="false">
+        <a href="/" class="site-header__logo" aria-label="BLURSOR home">
+          <svg width="15" height="20" viewBox="0 0 15 18" fill="#b73524" aria-hidden="true" focusable="false">
             <rect x="0" y="0" width="7" height="18" rx="1"/>
             <circle cx="12" cy="5" r="2"/>
             <circle cx="12" cy="13" r="2"/>
           </svg>
           BLURSOR
         </a>
-        <span class="site-header__sep">|</span>
-        <span class="site-header__tagline">Science-backed data on <span class="why">why</span> AI says what it says</span>
+        <span class="site-header__tagline">Science-backed data on why AI says what it says</span>
       </div>
-      <nav class="site-header__nav">
+      <nav class="site-header__nav" aria-label="Primary navigation">
         <a href="/ai-crawler-checker">Tools</a>
-        <a href="/research">Archive</a>
+        <a href="/research" aria-current="page">Research</a>
       </nav>
     </div>
   </header>
 
   <!-- Hero -->
-  <section class="hero has-grid">
-    <div class="hero__inner">
-      <h1 class="hero__title">How AI decides what&nbsp;to&nbsp;cite, rank, and&nbsp;surface</h1>
-      <p class="hero__description">We read the papers so you can ship the&nbsp;changes. Each article distills a recent arXiv paper on LLM retrieval, citation behavior, or AI-driven search into something you can act&nbsp;on.</p>
+  <section class="hero research-hero has-grid" aria-labelledby="research-title">
+    <div class="research-hero__inner">
+      <div class="research-hero__editorial">
+        <h1 class="hero__title" id="research-title">How AI decides what&nbsp;to&nbsp;cite, rank, and&nbsp;surface</h1>
+        <p class="hero__description">Catch up with the papers shaping AI visibility. Each distill explains the findings, supporting evidence, and practical implications in plain English.</p>
+      </div>
+      <div class="research-process" data-research-process="archive" role="region" aria-labelledby="archive-research-process-title">
+        <h2 class="research-process__kicker" id="archive-research-process-title">How a distill is made</h2>
+        <ol class="research-process__steps" role="list">
+          <li class="research-process__step">
+            <span class="research-process__ordinal" aria-hidden="true">01</span>
+            <p class="research-process__copy">We find papers that address AI visibility, ranking, retrieval, and citation behavior.</p>
+          </li>
+          <li class="research-process__step">
+            <span class="research-process__ordinal" aria-hidden="true">02</span>
+            <p class="research-process__copy">We examine the methods, results, and limitations, then isolate findings with practical implications.</p>
+          </li>
+          <li class="research-process__step">
+            <span class="research-process__ordinal" aria-hidden="true">03</span>
+            <p class="research-process__copy">We publish the distill in plain English, with the supporting evidence and a direct link to the paper.</p>
+          </li>
+        </ol>
+      </div>
     </div>
   </section>
 
@@ -1061,7 +1074,7 @@
   <footer class="site-footer">
     <div class="site-footer__inner">
       <div class="site-footer__brand">
-        <a href="/" class="site-footer__logo">
+        <a href="/" class="site-footer__logo" aria-label="BLURSOR home">
           <svg width="13" height="17" viewBox="0 0 15 18" fill="currentColor" aria-hidden="true" focusable="false">
             <rect x="0" y="0" width="7" height="18" rx="1"/>
             <circle cx="12" cy="5" r="2"/>
@@ -1069,29 +1082,34 @@
           </svg>
           BLURSOR
         </a>
-        <p class="site-footer__desc">AI research paper digest for non-academic audiences.</p>
+        <p class="site-footer__desc">Research on why AI says what it says, distilled for people who act on it.</p>
         <span class="site-footer__tagline">Now you have no excuses not to act on it.</span>
       </div>
+
+      <div class="site-footer__col">
+        <div class="site-footer__col-heading">Instruments</div>
+        <ul>
+          <li><a href="/ai-crawler-checker">What AI Sees</a></li>
+        </ul>
+      </div>
+
       <div class="site-footer__col">
         <div class="site-footer__col-heading">Research</div>
         <ul>
           <li><a href="/research">All articles</a></li>
-          <li><a href="/research/feed.xml">RSS Feed</a></li>
+          <li><a href="/author/alex-rostovtsev">Author</a></li>
         </ul>
       </div>
+
       <div class="site-footer__col">
         <div class="site-footer__col-heading">Connect</div>
         <ul>
-          <li>
-            <a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener" class="site-footer__x-link">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-            </a>
-            <span class="site-footer__col-sep">|</span>
-            <a href="mailto:contact@blursor.ai">contact@blursor.ai</a>
-          </li>
+          <li><a href="https://twitter.com/blursor_ai" target="_blank" rel="noopener">@blursor_ai</a></li>
+          <li><a href="mailto:contact@blursor.ai">contact@blursor.ai</a></li>
         </ul>
       </div>
     </div>
+
     <div class="site-footer__bottom">
       <span class="site-footer__copy">&copy; 2026 BLURSOR.ai</span>
       <span class="site-footer__copy">Built by <a href="https://3am.energy" target="_blank" rel="noopener">3AM Energy</a></span>
