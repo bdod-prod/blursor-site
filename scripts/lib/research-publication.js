@@ -20,6 +20,12 @@ const STATIC_ROUTES = [
   { url: `${BASE_URL}/research`, file: 'research/index.html' },
   { url: AUTHOR_URL, file: 'author/alex-rostovtsev.html' },
 ];
+const CANONICAL_STATIC_PAGES = [
+  { file: 'index.html', currentPath: '/' },
+  { file: 'ai-crawler-checker.html', currentPath: '/ai-crawler-checker' },
+  { file: 'research/index.html', currentPath: '/research' },
+  { file: 'author/alex-rostovtsev.html', currentPath: '/author/alex-rostovtsev' },
+];
 const LEGACY_SOFT_404_PATHS = [
   '/research/rag-ranking-signal-amplification',
   '/research/brand-mention-llm-recommendation',
@@ -152,6 +158,16 @@ function normalizeSiteShellHtml(html, { fileName, currentPath }) {
     replacement: renderCanonicalFooter(),
     fileName,
   });
+}
+
+function verifyCanonicalSiteShell(html, { fileName, currentPath, issues }) {
+  try {
+    const normalized = normalizeSiteShellHtml(html, { fileName, currentPath });
+    if (normalized !== html) issues.push(`${fileName}: site shell is not canonical`);
+  } catch (error) {
+    if (error instanceof PublicationValidationError) issues.push(...error.issues);
+    else throw error;
+  }
 }
 
 function getAttribute(tag, name) {
@@ -751,13 +767,23 @@ function verifyPublishedState({ rootDir, expectedArticles }) {
   const issues = [];
   const expectedSlugs = expectedArticles.map(article => article.meta.slug);
   const expectedUrls = expectedSlugs.map(slug => `${BASE_URL}/research/${slug}`);
-  const archive = readPublishedFile(rootDir, 'research/index.html', issues);
+  const staticPages = new Map();
+  for (const page of CANONICAL_STATIC_PAGES) {
+    const html = readPublishedFile(rootDir, page.file, issues);
+    staticPages.set(page.file, html);
+    if (html) {
+      verifyCanonicalSiteShell(html, {
+        fileName: page.file,
+        currentPath: page.currentPath,
+        issues,
+      });
+    }
+  }
+  const archive = staticPages.get('research/index.html');
   const feed = readPublishedFile(rootDir, 'research/feed.xml', issues);
   const sitemap = readPublishedFile(rootDir, 'sitemap.xml', issues);
-  const home = readPublishedFile(rootDir, 'index.html', issues);
+  const home = staticPages.get('index.html');
   let relatedLinkCount = 0;
-
-  for (const route of STATIC_ROUTES) readPublishedFile(rootDir, route.file, issues);
 
   if (archive) {
     assertSameSet(
@@ -814,6 +840,11 @@ function verifyPublishedState({ rootDir, expectedArticles }) {
     const file = `research/${article.meta.slug}.html`;
     const html = readPublishedFile(rootDir, file, issues);
     if (!html) continue;
+    verifyCanonicalSiteShell(html, {
+      fileName: file,
+      currentPath: `/research/${article.meta.slug}`,
+      issues,
+    });
     const candidate = validateCandidate(path.join(rootDir, file));
     issues.push(...candidate.issues);
     if (!hasRssDiscovery(html)) issues.push(`${file}: missing RSS discovery`);
@@ -858,27 +889,64 @@ function compileResearch({ rootDir }) {
   const articles = discoverArticles({ rootDir });
   const renderedArticles = articles.map(article => ({
     filePath: article.filePath,
-    html: ensureMobileMetaWrapHtml(
-      removeBlockedDigestLinks(ensureRssDiscoveryHtml(normalizeArticleHtml(article, articles))),
-      article.fileName,
+    html: normalizeSiteShellHtml(
+      ensureMobileMetaWrapHtml(
+        removeBlockedDigestLinks(ensureRssDiscoveryHtml(normalizeArticleHtml(article, articles))),
+        article.fileName,
+      ),
+      {
+        fileName: `research/${article.fileName}`,
+        currentPath: `/research/${article.meta.slug}`,
+      },
     ),
   }));
   const archivePath = path.join(rootDir, 'research/index.html');
   const homePath = path.join(rootDir, 'index.html');
   const currentHomeHtml = fs.readFileSync(homePath, 'utf8');
-  const homeHtml = generateHomepageHtml(currentHomeHtml, articles);
-  const homeChanged = currentHomeHtml !== homeHtml;
+  const homeHtml = normalizeSiteShellHtml(
+    generateHomepageHtml(currentHomeHtml, articles),
+    { fileName: 'index.html', currentPath: '/' },
+  );
+  const archiveHtml = normalizeSiteShellHtml(
+    generateArchiveHtml(fs.readFileSync(archivePath, 'utf8'), articles),
+    { fileName: 'research/index.html', currentPath: '/research' },
+  );
+  const staticOutputs = [
+    { filePath: homePath, html: homeHtml },
+    {
+      filePath: path.join(rootDir, 'ai-crawler-checker.html'),
+      html: normalizeSiteShellHtml(
+        fs.readFileSync(path.join(rootDir, 'ai-crawler-checker.html'), 'utf8'),
+        { fileName: 'ai-crawler-checker.html', currentPath: '/ai-crawler-checker' },
+      ),
+    },
+    { filePath: archivePath, html: archiveHtml },
+    {
+      filePath: path.join(rootDir, 'author/alex-rostovtsev.html'),
+      html: normalizeSiteShellHtml(
+        fs.readFileSync(path.join(rootDir, 'author/alex-rostovtsev.html'), 'utf8'),
+        { fileName: 'author/alex-rostovtsev.html', currentPath: '/author/alex-rostovtsev' },
+      ),
+    },
+  ];
+  const changedStaticFiles = new Set(staticOutputs
+    .filter(({ filePath, html }) => fs.readFileSync(filePath, 'utf8') !== html)
+    .map(({ filePath }) => path.relative(rootDir, filePath)));
+  const fileMtimes = Object.fromEntries(
+    STATIC_ROUTES
+      .filter(route => changedStaticFiles.has(route.file))
+      .map(route => [route.file, buildTimestamp]),
+  );
   const generatedOutputs = [
     ...renderedArticles,
-    { filePath: archivePath, html: generateArchiveHtml(fs.readFileSync(archivePath, 'utf8'), articles) },
+    ...staticOutputs,
     { filePath: path.join(rootDir, 'research/feed.xml'), html: generateFeedXml(articles) },
-    { filePath: homePath, html: homeHtml },
     {
       filePath: path.join(rootDir, 'sitemap.xml'),
       html: generateSitemapXml({
         rootDir,
         articles,
-        fileMtimes: homeChanged ? { 'index.html': buildTimestamp } : {},
+        fileMtimes,
       }),
     },
   ];
@@ -893,8 +961,9 @@ function compileResearch({ rootDir }) {
 
   for (const output of changedOutputs) {
     fs.writeFileSync(output.filePath, output.html);
-    if (output.filePath === homePath) {
-      fs.utimesSync(homePath, buildTimestamp, buildTimestamp);
+    const relativePath = path.relative(rootDir, output.filePath);
+    if (changedStaticFiles.has(relativePath)) {
+      fs.utimesSync(output.filePath, buildTimestamp, buildTimestamp);
     }
   }
 
@@ -923,5 +992,6 @@ module.exports = {
   normalizeSiteShellHtml,
   renderByline,
   selectRelatedArticles,
+  verifyCanonicalSiteShell,
   verifyPublishedState,
 };
