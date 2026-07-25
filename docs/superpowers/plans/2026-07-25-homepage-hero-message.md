@@ -10,16 +10,16 @@
 
 ## Global Constraints
 
-- Use the exact headline: `AI decides who gets recommended. We study why and build tools to help you improve your AI visibility.`
+- Use the exact headline: `AI decides who gets recommended. We study why and give you tools to improve AI visibility.`
 - Use the exact supporting line: `Research-based insights into how AI systems retrieve, cite, and recommend information.`
-- Emphasize `recommended.`, `why`, `tools`, and `AI visibility.` with the existing `<em class="focus-word">` treatment.
+- Emphasize `recommended.`, `why`, and `tools` with the existing `<em class="focus-word">` treatment. Keep `AI visibility.` in the standard headline style.
 - Preserve sequential focus-word animation indices beginning at `0`.
 - Preserve the split hero, process copy, trust line, CTA labels, CTA destinations, accessibility semantics, and responsive structure.
 - Remove the retired headline and supporting sentence from the homepage.
 - Keep the complete process above the fold at 1440 × 900 and 1280 × 800.
 - Preserve zero horizontal overflow at 1440 × 900, 1280 × 800, and 390 × 844.
 - Preserve all Research articles, archive/compiler behavior, sitemap/feed inventory, checker implementation, and generated metadata.
-- Work only on `codex/research-method-explainer`; do not merge or deploy.
+- Work only on `codex/research-method-explainer`; do not merge or deploy to production.
 
 ---
 
@@ -32,7 +32,7 @@
 
 **Interfaces:**
 - Consumes: `extractHero(html, 'home-title', 'homepage')` and the existing homepage hero contract in `tests/research-method-explainer.test.js`.
-- Produces: one exact visible H1 sentence, one exact supporting sentence, sequential `focus-word` indices `0` through `16`, and refreshed responsive evidence.
+- Produces: one exact visible H1 sentence, one exact supporting sentence, sequential `focus-word` indices `0` through `14`, and refreshed responsive evidence.
 
 - [ ] **Step 1: Add the failing visible-copy and emphasis contract**
 
@@ -50,14 +50,14 @@ Add these assertions before the CTA assertions:
 ```js
   assert.match(
     visibleHeroText,
-    /AI decides who gets recommended\. We study why and build tools to help you improve your AI visibility\./,
+    /AI decides who gets recommended\. We study why and give you tools to improve AI visibility\./,
   );
   assert.match(
     visibleHeroText,
     /Research-based insights into how AI systems retrieve, cite, and recommend information\./,
   );
-  assert.match(hero, /<em class="focus-word" style="--i:10">tools<\/em>/);
-  assert.match(hero, /<em class="focus-word" style="--i:16">AI visibility\.<\/em>/);
+  assert.match(hero, /<em class="focus-word" style="--i:11">tools<\/em>/);
+  assert.match(hero, /<span class="focus-word" style="--i:14">AI visibility\.<\/span>/);
   assert.doesNotMatch(visibleHeroText, /show you what it sees on your site/);
   assert.doesNotMatch(
     visibleHeroText,
@@ -73,21 +73,21 @@ Run:
 node --test tests/research-method-explainer.test.js
 ```
 
-Expected: one homepage failure because the visible hero text still contains `show you what it sees on your site` and does not contain the approved replacement.
+Expected: one homepage failure because the visible hero text still contains the
+previous `build tools to help you improve your AI visibility` wording and does
+not contain the approved replacement.
 
 - [ ] **Step 3: Replace the animated closing thought**
 
 Keep focus-word indices `0` through `8` unchanged. Replace the spans beginning at index `9` with:
 
 ```html
-            <span class="focus-word" style="--i:9">build</span>
-            <em class="focus-word" style="--i:10">tools</em>
-            <span class="focus-word" style="--i:11">to</span>
-            <span class="focus-word" style="--i:12">help</span>
-            <span class="focus-word" style="--i:13">you</span>
-            <span class="focus-word" style="--i:14">improve</span>
-            <span class="focus-word" style="--i:15">your</span>
-            <em class="focus-word" style="--i:16">AI visibility.</em>
+            <span class="focus-word" style="--i:9">give</span>
+            <span class="focus-word" style="--i:10">you</span>
+            <em class="focus-word" style="--i:11">tools</em>
+            <span class="focus-word" style="--i:12">to</span>
+            <span class="focus-word" style="--i:13">improve</span>
+            <span class="focus-word" style="--i:14">AI visibility.</span>
 ```
 
 Replace the supporting paragraph with:

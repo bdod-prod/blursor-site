@@ -126,7 +126,7 @@ test('homepage hero leads with Research and explains the paper-to-distill proces
   assert.match(hero, new RegExp(POSITIONING_LINE.replace(/[.]/g, '\\.')));
   assert.equal(
     normalizeVisibleText(heading),
-    'AI decides who gets recommended. We study why and build tools to help you improve your AI visibility.',
+    'AI decides who gets recommended. We study why and give you tools to improve AI visibility.',
     'homepage heading must retain the approved focus message',
   );
   assert.equal(
@@ -137,8 +137,7 @@ test('homepage hero leads with Research and explains the paper-to-distill proces
   for (const [phrase, index] of [
     ['recommended.', 4],
     ['why', 7],
-    ['tools', 10],
-    ['AI visibility.', 16],
+    ['tools', 11],
   ]) {
     assert.match(
       heading,
@@ -148,8 +147,13 @@ test('homepage hero leads with Research and explains the paper-to-distill proces
   }
   assert.deepEqual(
     focusIndices,
-    Array.from({ length: 17 }, (_, index) => index),
-    'homepage focus indices must run sequentially from 0 through 16',
+    Array.from({ length: 15 }, (_, index) => index),
+    'homepage focus indices must run sequentially from 0 through 14',
+  );
+  assert.match(
+    heading,
+    /<span class="focus-word" style="--i:14">AI visibility\.<\/span>/,
+    'homepage heading must render AI visibility without the italic emphasis treatment',
   );
   assert.match(
     actions,

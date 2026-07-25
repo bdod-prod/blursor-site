@@ -90,16 +90,16 @@ Do not promise freedom from bias. Research and inspectable evidence can improve 
 
 **Headline**
 
-> AI decides who gets recommended. We study why and build tools to help you improve your AI visibility.
+> AI decides who gets recommended. We study why and give you tools to improve AI visibility.
 
 **Supporting copy**
 
 > Research-based insights into how AI systems retrieve, cite, and recommend information.
 
-The headline uses `build` to make BLURSOR's maker role explicit. `Help you
-improve` keeps the outcome directional without promising that a tool alone
-will produce higher visibility. The supporting line explains the research
-lane without repeating the headline's tool-and-improvement language.
+The headline uses `give you tools` to make BLURSOR's practical role explicit.
+`To improve AI visibility` names the intended use without promising that a
+tool alone will produce higher visibility. The supporting line explains the
+research lane without repeating the headline's tool-and-improvement language.
 
 **Primary link**
 

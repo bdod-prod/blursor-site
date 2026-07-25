@@ -83,7 +83,7 @@ No push, merge, deployment, or n8n change was performed during verification.
 
 **READY FOR REVIEW.** The implementation criteria were proven by fresh automated, compiler, responsive, accessibility, interaction, and visual evidence. The sole 404/error observation is limited to Python's non-rewriting local server after following the checker link; the href/path were verified and the corresponding `.html` source returned HTTP 200 locally. Production clean-URL behavior remains unverified pending integration QA.
 
-## Homepage message amendment
+## Previous homepage message amendment (superseded)
 
 **Headline:** `AI decides who gets recommended. We study why and build tools to help you improve your AI visibility.`
 
@@ -105,3 +105,21 @@ The in-app Browser had no available local binding, so the already installed Play
 | 390x844 | `/Users/alex/.codex/tmp/blursor-homepage-message-2026-07-25/home-390x844.png` | 1249.12 / 844 | false | Editorial copy appears before the stacked actions, which appear before the process; no clipping or horizontal overflow observed. |
 
 The headline’s `focus-word` indices are sequential from `0` through `16`, with `tools` at `10` and `AI visibility.` at `16`. This observed evidence belongs to the headline-amendment commit, which contains this verification update.
+
+## Follow-up homepage wording
+
+The approved follow-up headline is:
+
+`AI decides who gets recommended. We study why and give you tools to improve AI visibility.`
+
+The regression contract was changed before the homepage markup. Its focused
+run failed against the previous `build tools to help you` wording, then passed
+after the headline was updated. The complete suite passed 49 tests, the
+compiler verified 30 articles, and the focused post-compiler suite passed all
+4 tests. This refinement changes only headline words, emphasis positions, and
+animation indices; the supporting line, actions, research process, and layout
+structure are unchanged.
+
+The new headline uses sequential focus indices `0` through `14`. `recommended.`
+is emphasized at `4`, `why` at `7`, and `tools` at `11`; `AI visibility.` uses
+the standard headline treatment at `14`.
