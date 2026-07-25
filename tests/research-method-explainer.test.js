@@ -15,15 +15,11 @@ const ARCHIVE_PATH = path.join(ROOT_DIR, 'research/index.html');
 const RESEARCH_METHOD_CSS_PATH = path.join(ROOT_DIR, 'assets/research-method.css');
 const POSITIONING_LINE = 'Research-based insights into how AI systems retrieve, cite, and recommend information.';
 const PROCESS_COPY = [
-  'We monitor new research papers on AI visibility, LLM ranking factors, and how generative engines find and cite sources.',
-  'We filter for findings with practical implications, examine the evidence and limitations, and distill the useful parts into readable articles.',
-  'We publish the findings, the evidence behind them, and what they could mean for your work.',
+  'We monitor new research papers on AI visibility, LLM ranking factors, and how AI finds and cites sources.',
+  'We filter for findings with practical implications and distill the useful parts into readable articles.',
+  'We publish the findings, supporting evidence, and what they could mean for your work.',
+  'We turn useful findings into tools that help you investigate problems and improve AI visibility.',
 ];
-const TRUST_LINE = [
-  'The pipeline helps with discovery and drafting.',
-  'Publication requires editorial review.',
-  'The original paper stays one click away.',
-].join(' ');
 const EXPECTED_FINDING_CARDS = [
   {
     href: '/research/llm-brand-reputation-citations-third-party',
@@ -139,16 +135,17 @@ function extractProcess(hero, surface) {
 }
 
 function assertProcessCopyInOrder(process, surface) {
+  const visibleProcess = normalizeVisibleText(process);
   let cursor = -1;
   for (const paragraph of PROCESS_COPY) {
-    const next = process.indexOf(paragraph);
+    const next = visibleProcess.indexOf(paragraph);
     assert.ok(next > cursor, `${surface} must place the approved process copy in order`);
     cursor = next;
   }
   assert.equal(
     (process.match(/class="research-process__step"/g) || []).length,
-    3,
-    `${surface} must contain three process steps`,
+    4,
+    `${surface} must contain four process steps`,
   );
 }
 
@@ -162,6 +159,44 @@ function assertResearchProcessListSemantics(process, surface) {
     process,
     /<ol\b(?=[^>]*class="research-process__steps")(?=[^>]*role="list")[^>]*>/,
     `${surface} process list must explicitly retain list semantics`,
+  );
+}
+
+function assertProcessLinks(process, surface) {
+  assert.match(
+    process,
+    /<h2\b[^>]*>\s*How BLURSOR works\s*<\/h2>/,
+    `${surface} must use the approved process heading`,
+  );
+  assert.match(
+    process,
+    /<a\b(?=[^>]*class="research-process__link")(?=[^>]*href="\/ai-crawler-checker")[^>]*>\s*tools\s*<\/a>/,
+    `${surface} must link tools to the crawler checker`,
+  );
+
+  if (surface === 'homepage') {
+    assert.match(
+      process,
+      /<a\b(?=[^>]*class="research-process__link")(?=[^>]*href="\/research")[^>]*>\s*publish the findings\s*<\/a>/,
+      'homepage must link published findings to Research',
+    );
+  } else {
+    assert.doesNotMatch(
+      process,
+      /<a\b[^>]*href="\/research"[^>]*>/,
+      'Research process must not link to its current page',
+    );
+    assert.match(
+      process,
+      /<span\b[^>]*class="research-process__emphasis"[^>]*>\s*publish the findings\s*<\/span>/,
+      'Research process must retain non-interactive red emphasis',
+    );
+  }
+
+  assert.doesNotMatch(
+    process,
+    /pipeline helps with discovery|publication requires editorial review|original paper stays one click away/i,
+    `${surface} must omit the retired trust line`,
   );
 }
 
@@ -193,6 +228,7 @@ test('homepage hero leads with Research and explains the paper-to-distill proces
 
   assertProcessCopyInOrder(process, 'homepage');
   assertResearchProcessListSemantics(process, 'homepage');
+  assertProcessLinks(process, 'homepage');
   assertCopyDiscipline(process, 'homepage');
   assert.match(hero, new RegExp(POSITIONING_LINE.replace(/[.]/g, '\\.')));
   assert.equal(
@@ -238,7 +274,6 @@ test('homepage hero leads with Research and explains the paper-to-distill proces
     hero,
     /<a\b(?=[^>]*href="\/ai-crawler-checker")(?=[^>]*research-hero__action--secondary)[^>]*>\s*Try the crawler checker\s*<\/a>/,
   );
-  assert.match(process, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
   assert.doesNotMatch(process, /Follow the field|Interrogate the paper|Make it usable/);
   assert.doesNotMatch(hero, /<form\b|slot__|>\s*Develop\s*</);
   assert.doesNotMatch(html, /data-research-method="homepage"|Fetches as/);
@@ -253,8 +288,8 @@ test('Research hero explains the paper-to-distill process before the inventory',
 
   assertProcessCopyInOrder(process, 'archive');
   assertResearchProcessListSemantics(process, 'archive');
+  assertProcessLinks(process, 'archive');
   assertCopyDiscipline(process, 'archive');
-  assert.match(process, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
   assert.doesNotMatch(process, /Follow the field|Interrogate the paper|Make it usable/);
   assert.doesNotMatch(html, /data-research-method="archive"/);
   assert.ok(heroPosition < articlesPosition, 'Research hero must precede the article inventory');
@@ -269,10 +304,25 @@ test('research compiler preserves the integrated Research hero', () => {
 
   assertProcessCopyInOrder(process, 'archive');
   assertResearchProcessListSemantics(process, 'archive');
-  assert.match(process, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
+  assertProcessLinks(process, 'archive');
   assert.ok(
     rebuilt.indexOf(hero) < rebuilt.indexOf('<section class="articles">'),
     'rebuilt Research hero must precede the article inventory',
+  );
+});
+
+test('both process surfaces load the same versioned shared stylesheet', () => {
+  const home = fs.readFileSync(HOME_PATH, 'utf8');
+  const archive = fs.readFileSync(ARCHIVE_PATH, 'utf8');
+  const stylesheetPattern = /<link\b[^>]*rel="stylesheet"[^>]*href="(\/assets\/research-method\.css\?v=[^"]+)"[^>]*>/;
+  const homeStylesheet = home.match(stylesheetPattern)?.[1];
+  const archiveStylesheet = archive.match(stylesheetPattern)?.[1];
+
+  assert.ok(homeStylesheet, 'homepage must cache-bust the shared process stylesheet');
+  assert.equal(
+    archiveStylesheet,
+    homeStylesheet,
+    'homepage and Research must load the same shared process stylesheet revision',
   );
 });
 
@@ -281,16 +331,26 @@ test('research process muted text meets contrast requirements on the archive sur
   const color = css.match(/--research-process-muted:\s*(#[0-9a-f]{6})/i)?.[1];
 
   assert.ok(color, 'research process must define a shared muted color');
-  for (const selector of [
-    '.research-process__copy',
-    '.research-process__trust',
-  ]) {
-    assert.match(
-      css,
-      new RegExp(`${selector.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\s*\\{[^}]*color:\\s*var\\(--research-process-muted\\)`, 's'),
-      `${selector} must use the shared muted color`,
-    );
-  }
+  assert.match(
+    css,
+    /\.research-process__copy\s*\{[^}]*color:\s*var\(--research-process-muted\)/s,
+    'research process copy must use the shared muted color',
+  );
+  assert.doesNotMatch(
+    css,
+    /\.research-process__trust\b/,
+    'retired trust-line styling must be removed',
+  );
+  assert.match(
+    css,
+    /\.research-process__link\s*\{[^}]*text-decoration:\s*underline/s,
+    'process links must remain identifiable without relying on red alone',
+  );
+  assert.match(
+    css,
+    /\.research-process__link:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--color-accent\)/s,
+    'process links must expose a visible keyboard-focus state',
+  );
 
   const relativeLuminance = (hex) => {
     const channels = hex.slice(1).match(/../g).map((channel) => parseInt(channel, 16) / 255);
