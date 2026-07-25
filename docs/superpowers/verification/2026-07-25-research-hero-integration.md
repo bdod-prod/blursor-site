@@ -82,3 +82,26 @@ No push, merge, deployment, or n8n change was performed during verification.
 ## Verdict
 
 **READY FOR REVIEW.** The implementation criteria were proven by fresh automated, compiler, responsive, accessibility, interaction, and visual evidence. The sole 404/error observation is limited to Python's non-rewriting local server after following the checker link; the href/path were verified and the corresponding `.html` source returned HTTP 200 locally. Production clean-URL behavior remains unverified pending integration QA.
+
+## Homepage message amendment
+
+**Headline:** `AI decides who gets recommended. We study why and build tools to help you improve your AI visibility.`
+
+**Supporting line:** `Research-based insights into how AI systems retrieve, cite, and recommend information.`
+
+| Check | Observed result | Exit result |
+| --- | --- | --- |
+| `node --test tests/research-method-explainer.test.js` | 4 tests passed; 0 failed, cancelled, or skipped | 0 |
+| `node --test tests/*.test.js` | 49 tests passed; 0 failed, cancelled, or skipped | 0 |
+| `node scripts/build-research-index.js` | `Compiled and verified 30 research article(s)` | 0 |
+| Post-compiler `node --test tests/research-method-explainer.test.js` | 4 tests passed; 0 failed, cancelled, or skipped | 0 |
+
+The in-app Browser had no available local binding, so the already installed Playwright 1.58.0 Python runtime was used without changing dependencies. At rest, each measured page had empty console-error and page-error collections.
+
+| Viewport | Screenshot | Process bottom / viewport height | Overflow | Visual inspection |
+| --- | --- | --- | --- | --- |
+| 1440x900 | `/Users/alex/.codex/tmp/blursor-homepage-message-2026-07-25/home-1440x900.png` | 576.73 / 900 | false | Headline and supporting line wrap without overlap or clipping; process remains above the fold; both desktop CTAs are visible and distinct. |
+| 1280x800 | `/Users/alex/.codex/tmp/blursor-homepage-message-2026-07-25/home-1280x800.png` | 576.73 / 800 | false | Headline and supporting line wrap without overlap or clipping; process remains above the fold; both desktop CTAs are visible and distinct. |
+| 390x844 | `/Users/alex/.codex/tmp/blursor-homepage-message-2026-07-25/home-390x844.png` | 1249.12 / 844 | false | Editorial copy appears before the stacked actions, which appear before the process; no clipping or horizontal overflow observed. |
+
+The headline’s `focus-word` indices are sequential from `0` through `16`, with `tools` at `10` and `AI visibility.` at `16`. This observed evidence belongs to the headline-amendment commit, which contains this verification update.

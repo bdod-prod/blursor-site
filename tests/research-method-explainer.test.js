@@ -13,7 +13,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const HOME_PATH = path.join(ROOT_DIR, 'index.html');
 const ARCHIVE_PATH = path.join(ROOT_DIR, 'research/index.html');
 const RESEARCH_METHOD_CSS_PATH = path.join(ROOT_DIR, 'assets/research-method.css');
-const POSITIONING_LINE = 'Research-based insights and practical tools to improve your AI visibility.';
+const POSITIONING_LINE = 'Research-based insights into how AI systems retrieve, cite, and recommend information.';
 const PROCESS_COPY = [
   'We monitor new research papers on AI visibility, LLM ranking factors, and how generative engines find and cite sources.',
   'We filter for findings with practical implications, examine the evidence and limitations, and distill the useful parts into readable articles.',
@@ -89,11 +89,30 @@ test('homepage hero leads with Research and explains the paper-to-distill proces
   const html = fs.readFileSync(HOME_PATH, 'utf8');
   const hero = extractHero(html, 'home-title', 'homepage');
   const process = extractProcess(hero, 'homepage');
+  const visibleHeroText = hero
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   assertProcessCopyInOrder(process, 'homepage');
   assertResearchProcessListSemantics(process, 'homepage');
   assertCopyDiscipline(process, 'homepage');
   assert.match(hero, new RegExp(POSITIONING_LINE.replace(/[.]/g, '\\.')));
+  assert.match(
+    visibleHeroText,
+    /AI decides who gets recommended\. We study why and build tools to help you improve your AI visibility\./,
+  );
+  assert.match(
+    visibleHeroText,
+    /Research-based insights into how AI systems retrieve, cite, and recommend information\./,
+  );
+  assert.match(hero, /<em class="focus-word" style="--i:10">tools<\/em>/);
+  assert.match(hero, /<em class="focus-word" style="--i:16">AI visibility\.<\/em>/);
+  assert.doesNotMatch(visibleHeroText, /show you what it sees on your site/);
+  assert.doesNotMatch(
+    visibleHeroText,
+    /Research-based insights and practical tools to improve your AI visibility\./,
+  );
   assert.match(
     hero,
     /<a\b(?=[^>]*href="\/research")(?=[^>]*research-hero__action--primary)[^>]*>\s*Browse the research\s*<\/a>/,
