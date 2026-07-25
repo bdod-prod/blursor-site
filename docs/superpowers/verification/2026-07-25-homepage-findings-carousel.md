@@ -1,7 +1,7 @@
 # Homepage Findings Carousel Verification
 
-Date: 2026-07-25  
-Branch: `codex/research-method-explainer`  
+Date: 2026-07-25
+Branch: `codex/research-method-explainer`
 Implementation commit: `ef44271`
 
 ## Result

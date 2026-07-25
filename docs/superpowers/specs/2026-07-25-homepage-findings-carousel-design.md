@@ -1,7 +1,7 @@
 # Homepage Findings Carousel Design
 
-Date: 2026-07-25  
-Status: approved by Alex in conversation  
+Date: 2026-07-25
+Status: approved by Alex in conversation
 Surface: BLURSOR homepage
 
 ## Decision
