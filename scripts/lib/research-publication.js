@@ -402,16 +402,19 @@ function buildSitemapEntries({
   fileMtimes = {},
 }) {
   return [
-    ...STATIC_ROUTES.map(route => ({
-      loc: route.url,
-      lastmod: route.file === 'research/index.html' && articles[0]
-        ? articles[0].meta.published_date
-        : allowMissingFiles && !fs.existsSync(path.join(rootDir, route.file))
-          ? null
-          : isoDate(Object.hasOwn(fileMtimes, route.file)
-            ? fileMtimes[route.file]
-            : fs.statSync(path.join(rootDir, route.file)).mtime),
-    })),
+    ...STATIC_ROUTES.map(route => {
+      const hasExplicitMtime = Object.hasOwn(fileMtimes, route.file);
+      return {
+        loc: route.url,
+        lastmod: hasExplicitMtime
+          ? isoDate(fileMtimes[route.file])
+          : route.file === 'research/index.html' && articles[0]
+            ? articles[0].meta.published_date
+            : allowMissingFiles && !fs.existsSync(path.join(rootDir, route.file))
+              ? null
+              : isoDate(fs.statSync(path.join(rootDir, route.file)).mtime),
+      };
+    }),
     ...articles.map(article => ({
       loc: `${BASE_URL}/research/${article.meta.slug}`,
       lastmod: article.meta.published_date,
@@ -704,10 +707,16 @@ function parseSitemapUrlEntries(sitemap, issues) {
 }
 
 function verifySitemapEntries({ rootDir, sitemap, expectedArticles, issues }) {
+  const fileMtimes = Object.fromEntries(
+    STATIC_ROUTES
+      .filter(route => fs.existsSync(path.join(rootDir, route.file)))
+      .map(route => [route.file, fs.statSync(path.join(rootDir, route.file)).mtime]),
+  );
   const expectedEntries = buildSitemapEntries({
     rootDir,
     articles: expectedArticles,
     allowMissingFiles: true,
+    fileMtimes,
   });
   const expectedLocs = new Set(expectedEntries.map(entry => entry.loc));
   const actualGroups = new Map();
@@ -932,11 +941,12 @@ function compileResearch({ rootDir }) {
   const changedStaticFiles = new Set(staticOutputs
     .filter(({ filePath, html }) => fs.readFileSync(filePath, 'utf8') !== html)
     .map(({ filePath }) => path.relative(rootDir, filePath)));
-  const fileMtimes = Object.fromEntries(
-    STATIC_ROUTES
-      .filter(route => changedStaticFiles.has(route.file))
-      .map(route => [route.file, buildTimestamp]),
-  );
+  const fileMtimes = Object.fromEntries(STATIC_ROUTES.map(route => [
+    route.file,
+    changedStaticFiles.has(route.file)
+      ? buildTimestamp
+      : fs.statSync(path.join(rootDir, route.file)).mtime,
+  ]));
   const generatedOutputs = [
     ...renderedArticles,
     ...staticOutputs,

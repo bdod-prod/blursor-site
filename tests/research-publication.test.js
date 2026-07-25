@@ -480,11 +480,14 @@ function tamperSitemapLastmod(rootDir, loc, replacement = '2000-01-01') {
 
 test('verification rejects the wrong generated research lastmod', t => {
   const { rootDir, expectedArticles } = compileThreeArticleFixture(t);
+  const expectedDate = fs.statSync(path.join(rootDir, 'research/index.html')).mtime
+    .toISOString()
+    .slice(0, 10);
   tamperSitemapLastmod(rootDir, 'https://blursor.ai/research');
 
   assert.throws(
     () => verifyPublishedState({ rootDir, expectedArticles }),
-    /sitemap\.xml: https:\/\/blursor\.ai\/research lastmod must equal 2026-07-23, found 2000-01-01/,
+    new RegExp(`sitemap\\.xml: https://blursor\\.ai/research lastmod must equal ${expectedDate}, found 2000-01-01`),
   );
 });
 
@@ -776,6 +779,31 @@ test('a backdated archive mtime does not change second-run output', t => {
   const before = snapshotGeneratedTree(rootDir);
   compileResearch({ rootDir });
   assert.deepEqual(snapshotGeneratedTree(rootDir), before);
+});
+
+test('compiler gives a shell-only archive change a truthful sitemap lastmod', t => {
+  const { rootDir } = compileThreeArticleFixture(t);
+  const archivePath = path.join(rootDir, 'research/index.html');
+  const archiveBefore = fs.readFileSync(archivePath, 'utf8');
+  const staleArchive = archiveBefore.replace(
+    /  <header class="site-header">[\s\S]*?<\/header>/,
+    '  <header class="site-header"><span>Stale archive header</span></header>',
+  );
+  assert.notEqual(staleArchive, archiveBefore);
+  fs.writeFileSync(archivePath, staleArchive);
+  fs.utimesSync(
+    archivePath,
+    new Date('2001-01-01T00:00:00Z'),
+    new Date('2001-01-01T00:00:00Z'),
+  );
+
+  compileResearch({ rootDir });
+
+  const archiveDate = fs.statSync(archivePath).mtime.toISOString().slice(0, 10);
+  const sitemap = fs.readFileSync(path.join(rootDir, 'sitemap.xml'), 'utf8');
+  const archiveEntry = /<loc>https:\/\/blursor\.ai\/research<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/.exec(sitemap);
+  assert.ok(archiveEntry);
+  assert.equal(archiveEntry[1], archiveDate);
 });
 
 test('compiler repairs a backdated homepage RSS omission in one idempotent run', t => {
