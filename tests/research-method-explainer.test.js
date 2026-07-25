@@ -24,6 +24,43 @@ const TRUST_LINE = [
   'Publication requires editorial review.',
   'The original paper stays one click away.',
 ].join(' ');
+const EXPECTED_FINDING_CARDS = [
+  {
+    href: '/research/llm-brand-reputation-citations-third-party',
+    number: '85.7%',
+    line: 'Brand-reputation citations pointed to third-party pages. Find the domains AI cites in your category.',
+    source: 'Source · arXiv:2606.25787',
+    tool: false,
+  },
+  {
+    href: '/research/citation-failures-generative-engine-agentgeo',
+    number: '1 in 10',
+    line: 'citation failures came from technical problems. Check access, JavaScript rendering and extractability before rewriting.',
+    source: 'Source · arXiv:2603.09296',
+    tool: false,
+  },
+  {
+    href: '/ai-crawler-checker',
+    number: 'AI Crawler Checker',
+    line: 'See what AI crawlers can reach, read and extract from your page.',
+    source: 'Check your page →',
+    tool: true,
+  },
+  {
+    href: '/research/structured-data-rag-entity-pages',
+    number: '+29.6%',
+    line: 'In one RAG setup, entity-focused pages improved answer accuracy; appended JSON-LD had little effect.',
+    source: 'Source · arXiv:2603.10700',
+    tool: false,
+  },
+  {
+    href: '/research/paraphrase-brittleness-brand-recommendation',
+    number: '21–32 pts',
+    line: 'Rewording the same question cut overlap between brand recommendations by 21–32 points. Test several phrasings for each intent.',
+    source: 'Source · arXiv:2605.27440',
+    tool: false,
+  },
+];
 
 function extractHero(html, headingId, surface) {
   const pattern = new RegExp(
@@ -52,7 +89,43 @@ function normalizeVisibleText(html) {
   return html
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
+    .replace(/\s+([.,;:!?])/g, '$1')
     .trim();
+}
+
+function extractFindingCards(html) {
+  const track = extractElement(html, 'div', '.findings-track', 'homepage');
+  const cards = [
+    ...track.matchAll(/<a\b(?=[^>]*class="[^"]*\bfinding-card\b[^"]*")[^>]*>[\s\S]*?<\/a>/g),
+  ];
+
+  return cards.map(([card]) => {
+    const openingTag = card.match(/^<a\b[^>]*>/)?.[0] || '';
+    const textFor = (className) => {
+      const trailingMarkup = className === 'finding-card__src'
+        ? '\\s*<\\/a>'
+        : '\\s*<span\\b[^>]*class="finding-card__';
+      const match = card.match(new RegExp(
+        `<span\\b[^>]*class="${className}"[^>]*>([\\s\\S]*?)<\\/span>${trailingMarkup}`,
+      ));
+      assert.ok(match, `finding card must contain .${className}`);
+      return normalizeVisibleText(match[1]);
+    };
+    const attribute = (name) => openingTag.match(
+      new RegExp(`\\b${name}="([^"]*)"`),
+    )?.[1] || null;
+
+    return {
+      href: attribute('href'),
+      number: textFor('finding-card__num'),
+      line: textFor('finding-card__line'),
+      source: textFor('finding-card__src'),
+      tool: /\bfinding-card--cta\b/.test(openingTag),
+      duplicate: /\bis-duplicate\b/.test(openingTag),
+      ariaHidden: attribute('aria-hidden'),
+      tabindex: attribute('tabindex'),
+    };
+  });
 }
 
 function extractProcess(hero, surface) {
@@ -242,4 +315,72 @@ test('research process muted text meets contrast requirements on the archive sur
   const ratio = contrast(Math.max(foreground, background), Math.min(foreground, background));
 
   assert.ok(ratio >= 4.5, `muted text contrast must be at least 4.5:1; received ${ratio.toFixed(2)}:1`);
+});
+
+test('homepage carousel keeps five actionable cards with the crawler checker centered', () => {
+  const html = fs.readFileSync(HOME_PATH, 'utf8');
+  const cards = extractFindingCards(html);
+  const primaryCards = cards.filter((card) => !card.duplicate);
+  const duplicateCards = cards.filter((card) => card.duplicate);
+  const comparableCard = ({ href, number, line, source, tool }) => ({
+    href,
+    number,
+    line,
+    source,
+    tool,
+  });
+
+  assert.deepEqual(
+    primaryCards.map(comparableCard),
+    EXPECTED_FINDING_CARDS,
+    'homepage must retain the approved five-card order and visible copy',
+  );
+  assert.deepEqual(
+    duplicateCards.map(comparableCard),
+    EXPECTED_FINDING_CARDS,
+    'the seamless loop must repeat the approved five-card order exactly once',
+  );
+  assert.equal(
+    primaryCards.findIndex((card) => card.tool),
+    2,
+    'the crawler checker must remain the third primary card',
+  );
+  for (const card of duplicateCards) {
+    assert.equal(card.ariaHidden, 'true', 'duplicate cards must be hidden from assistive technology');
+    assert.equal(card.tabindex, '-1', 'duplicate cards must stay out of keyboard order');
+  }
+
+  for (const card of EXPECTED_FINDING_CARDS) {
+    const routePath = card.href === '/ai-crawler-checker'
+      ? path.join(ROOT_DIR, 'ai-crawler-checker.html')
+      : path.join(ROOT_DIR, `${card.href.slice(1)}.html`);
+    assert.ok(fs.existsSync(routePath), `${card.href} must resolve to a local page`);
+  }
+
+  assert.match(
+    html,
+    /\.findings-track\s*\{[^}]*animation:\s*slideFindings 42s linear infinite;/s,
+    'the shorter card sequence must keep approximately the established travel speed',
+  );
+  assert.match(
+    html,
+    /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.finding-card\.is-duplicate\s*\{\s*display:\s*none;/,
+    'reduced motion must hide the duplicate loop',
+  );
+
+  for (const retiredRoute of [
+    '/research/cultural-reasoning-gap-llms',
+    '/research/self-evolving-agent-health-community-notes',
+    '/research/generative-search-ai-cited-sources',
+    '/research/llm-citation-hallucination-agentic-retrieval',
+    '/research/rag-brand-visibility-tier-failures',
+    '/research/semantic-metadata-agent-retrieval-tradeoff',
+    '/research/rank-zero-honeypot-agent-collapse',
+  ]) {
+    assert.equal(
+      cards.some((card) => card.href === retiredRoute),
+      false,
+      `${retiredRoute} must not remain in the focused carousel`,
+    );
+  }
 });
