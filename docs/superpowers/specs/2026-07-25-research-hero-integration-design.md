@@ -71,11 +71,14 @@ The ordered list remains intact so the reading sequence does not depend on the v
 
 ### Shared positioning
 
-Use Alex's approved positioning sentence exactly:
+Alex's approved category positioning remains:
 
 > Research-based insights and practical tools to improve your AI visibility.
 
-This is a category statement. Immediate calls to action still name the two currently available surfaces: the Research archive and the crawler checker.
+The homepage now expresses this positioning across its headline and supporting
+line instead of repeating the category sentence verbatim. Immediate calls to
+action still name the two currently available surfaces: the Research archive
+and the crawler checker.
 
 Do not promise freedom from bias. Research and inspectable evidence can improve judgment, but they cannot eliminate bias.
 
@@ -87,13 +90,16 @@ Do not promise freedom from bias. Research and inspectable evidence can improve 
 
 **Headline**
 
-Keep the existing headline:
-
-> AI decides who gets recommended. We study why and show you what it sees on your site.
+> AI decides who gets recommended. We study why and build tools to help you improve your AI visibility.
 
 **Supporting copy**
 
-> Research-based insights and practical tools to improve your AI visibility.
+> Research-based insights into how AI systems retrieve, cite, and recommend information.
+
+The headline uses `build` to make BLURSOR's maker role explicit. `Help you
+improve` keeps the outcome directional without promising that a tool alone
+will produce higher visibility. The supporting line explains the research
+lane without repeating the headline's tool-and-improvement language.
 
 **Primary link**
 
