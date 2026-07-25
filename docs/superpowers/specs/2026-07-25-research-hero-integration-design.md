@@ -6,6 +6,10 @@
 **Branch:** `codex/research-method-explainer`
 **Supersedes:** `2026-07-24-research-method-explainer-design.md`
 
+**Later amendment:** `2026-07-25-homepage-findings-carousel-design.md`
+supersedes this document's findings-ticker decisions. The typography amendment
+below does not change that five-card carousel contract.
+
 ## Goal
 
 Make BLURSOR's paper-to-distill process visible as soon as a desktop visitor lands on the homepage or Research archive. The revised pages should also distinguish the site's two product lanes:
@@ -156,6 +160,17 @@ The change should feel native to BLURSOR's existing editorial system:
 
 The homepage hero should use the site's full content width rather than the current narrow text column. Its type scale may be reduced modestly so the complete message and process are visible together without crowding.
 
+The approved homepage headline scale is:
+
+- a `3.05rem` maximum at desktop widths, reduced from `3.35rem`;
+- `2.35rem` below the existing `820px` breakpoint, reduced from `2.55rem`; and
+- the existing `2.15rem` size below `560px`.
+
+This reduction applies only to the homepage H1. It preserves the naturally
+wrapping sentence and its three red italic phrases while giving 13-inch laptop
+screens more breathing room. It does not change the headline wording, column
+split, line height, or Research archive typography.
+
 At 1440 × 900 and 1280 × 800, a desktop visitor should see the complete three-step process without scrolling. This above-the-fold requirement applies to the process, not to the following findings or article inventory.
 
 ## Information Hierarchy
@@ -223,9 +238,10 @@ Implementation verification must include:
 4. one Research compiler run followed by a second idempotence run;
 5. HTML and diff checks;
 6. desktop screenshots of both pages at 1440 × 900 and 1280 × 800;
-7. mobile screenshots of both pages at 390 × 844;
-8. checks for wrapping, overlap, horizontal overflow, focus visibility, list semantics, and contrast; and
-9. confirmation that the branch is still unmerged and undeployed.
+7. a homepage screenshot at `712 × 800` to exercise the narrow-laptop breakpoint;
+8. mobile screenshots of both pages at 390 × 844;
+9. checks for wrapping, overlap, horizontal overflow, focus visibility, list semantics, and contrast; and
+10. confirmation that the branch is still unmerged and undeployed.
 
 ## Boundaries
 
