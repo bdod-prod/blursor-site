@@ -13,11 +13,6 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const HOME_PATH = path.join(ROOT_DIR, 'index.html');
 const ARCHIVE_PATH = path.join(ROOT_DIR, 'research/index.html');
 const RESEARCH_METHOD_CSS_PATH = path.join(ROOT_DIR, 'assets/research-method.css');
-const STEP_LABELS = [
-  'Follow the field',
-  'Interrogate the paper',
-  'Make it usable',
-];
 const POSITIONING_LINE = 'Research-based insights and practical tools to improve your AI visibility.';
 const PROCESS_COPY = [
   'We monitor new research papers on AI visibility, LLM ranking factors, and how generative engines find and cite sources.',
@@ -72,38 +67,6 @@ function assertResearchProcessListSemantics(process, surface) {
   );
 }
 
-function extractMethodSection(html, surface) {
-  const pattern = new RegExp(
-    `<section\\b[^>]*data-research-method="${surface}"[^>]*>[\\s\\S]*?<\\/section>`,
-    'g',
-  );
-  const matches = [...html.matchAll(pattern)];
-  assert.equal(matches.length, 1, `${surface} must contain one research-method section`);
-  return matches[0][0];
-}
-
-function assertStepsInOrder(section, surface) {
-  let cursor = -1;
-  for (const label of STEP_LABELS) {
-    const next = section.indexOf(label);
-    assert.ok(next > cursor, `${surface} must place "${label}" in order`);
-    cursor = next;
-  }
-  assert.equal(
-    (section.match(/class="research-method__step"/g) || []).length,
-    3,
-    `${surface} must contain three process steps`,
-  );
-}
-
-function assertProcessListSemantics(section, surface) {
-  assert.match(
-    section,
-    /<ol\b(?=[^>]*class="research-method__steps")(?=[^>]*role="list")[^>]*>/,
-    `${surface} process list must explicitly retain list semantics when CSS removes list styling`,
-  );
-}
-
 function assertCopyDiscipline(section, surface) {
   const forbidden = [
     [/\bevery\b/i, 'every'],
@@ -145,49 +108,50 @@ test('homepage hero leads with Research and explains the paper-to-distill proces
   assert.doesNotMatch(html, /data-research-method="homepage"|finding-card--cta|Fetches as/);
 });
 
-test('Research archive explains the same method before the article inventory', () => {
+test('Research hero explains the paper-to-distill process before the inventory', () => {
   const html = fs.readFileSync(ARCHIVE_PATH, 'utf8');
-  const section = extractMethodSection(html, 'archive');
-  const sectionPosition = html.indexOf(section);
+  const hero = extractHero(html, 'research-title', 'archive');
+  const process = extractProcess(hero, 'archive');
+  const heroPosition = html.indexOf(hero);
   const articlesPosition = html.indexOf('<section class="articles">');
 
-  assertStepsInOrder(section, 'archive');
-  assertProcessListSemantics(section, 'archive');
-  assertCopyDiscipline(section, 'archive');
-  assert.match(section, /From paper to practical briefing/);
-  assert.match(section, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
-  assert.ok(sectionPosition < articlesPosition, 'archive method must precede the article inventory');
+  assertProcessCopyInOrder(process, 'archive');
+  assertResearchProcessListSemantics(process, 'archive');
+  assertCopyDiscipline(process, 'archive');
+  assert.match(process, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
+  assert.doesNotMatch(process, /Follow the field|Interrogate the paper|Make it usable/);
+  assert.doesNotMatch(html, /data-research-method="archive"/);
+  assert.ok(heroPosition < articlesPosition, 'Research hero must precede the article inventory');
 });
 
-test('research compiler preserves the archive method explainer', () => {
+test('research compiler preserves the integrated Research hero', () => {
   const html = fs.readFileSync(ARCHIVE_PATH, 'utf8');
   const articles = discoverArticles({ rootDir: ROOT_DIR });
   const rebuilt = generateArchiveHtml(html, articles);
-  const section = extractMethodSection(rebuilt, 'archive');
-  const sectionPosition = rebuilt.indexOf(section);
-  const articlesPosition = rebuilt.indexOf('<section class="articles">');
+  const hero = extractHero(rebuilt, 'research-title', 'archive');
+  const process = extractProcess(hero, 'archive');
 
-  assertStepsInOrder(section, 'archive');
-  assertProcessListSemantics(section, 'archive');
-  assertCopyDiscipline(section, 'archive');
-  assert.match(section, /From paper to practical briefing/);
-  assert.match(section, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
-  assert.ok(sectionPosition < articlesPosition, 'rebuilt archive method must precede the article inventory');
+  assertProcessCopyInOrder(process, 'archive');
+  assertResearchProcessListSemantics(process, 'archive');
+  assert.match(process, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
+  assert.ok(
+    rebuilt.indexOf(hero) < rebuilt.indexOf('<section class="articles">'),
+    'rebuilt Research hero must precede the article inventory',
+  );
 });
 
-test('research method muted text meets contrast requirements on the archive surface', () => {
+test('research process muted text meets contrast requirements on the archive surface', () => {
   const css = fs.readFileSync(RESEARCH_METHOD_CSS_PATH, 'utf8');
-  const color = css.match(/--research-method-muted:\s*(#[0-9a-f]{6})/i)?.[1];
+  const color = css.match(/--research-process-muted:\s*(#[0-9a-f]{6})/i)?.[1];
 
-  assert.ok(color, 'research method must define a shared muted color');
+  assert.ok(color, 'research process must define a shared muted color');
   for (const selector of [
-    '.research-method__lead',
-    '.research-method__step-copy',
-    '.research-method__trust p',
+    '.research-process__copy',
+    '.research-process__trust',
   ]) {
     assert.match(
       css,
-      new RegExp(`${selector.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\s*\\{[^}]*color:\\s*var\\(--research-method-muted\\)`, 's'),
+      new RegExp(`${selector.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\s*\\{[^}]*color:\\s*var\\(--research-process-muted\\)`, 's'),
       `${selector} must use the shared muted color`,
     );
   }

@@ -225,12 +225,6 @@
       padding: var(--space-2xl) 0 var(--space-xl);
     }
 
-    .hero__inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 0 var(--space-md);
-    }
-
     .hero__title {
       font-family: var(--font-serif);
       font-size: 2.8rem;
@@ -526,41 +520,29 @@
   </header>
 
   <!-- Hero -->
-  <section class="hero has-grid">
-    <div class="hero__inner">
-      <h1 class="hero__title">How AI decides what&nbsp;to&nbsp;cite, rank, and&nbsp;surface</h1>
-      <p class="hero__description">We read the papers so you can ship the&nbsp;changes. Each article distills a recent arXiv paper on LLM retrieval, citation behavior, or AI-driven search into something you can act&nbsp;on.</p>
-    </div>
-  </section>
-
-  <section class="research-method" data-research-method="archive" aria-labelledby="archive-research-method-title">
-    <div class="research-method__inner">
-      <div class="research-method__intro">
-        <div>
-          <div class="research-method__kicker">How a distill is made</div>
-          <h2 class="research-method__title" id="archive-research-method-title">From paper to practical briefing</h2>
-        </div>
-        <p class="research-method__lead">The archive is built for catching up. It follows research on AI visibility and turns the useful papers into readable briefings.</p>
+  <section class="hero research-hero has-grid" aria-labelledby="research-title">
+    <div class="research-hero__inner">
+      <div class="research-hero__editorial">
+        <h1 class="hero__title" id="research-title">How AI decides what&nbsp;to&nbsp;cite, rank, and&nbsp;surface</h1>
+        <p class="hero__description">Catch up with the papers shaping AI visibility. Each distill explains the findings, supporting evidence, and practical implications in plain English.</p>
       </div>
-      <ol class="research-method__steps" role="list">
-        <li class="research-method__step">
-          <span class="research-method__ordinal" aria-hidden="true">01</span>
-          <h3 class="research-method__step-title">Follow the field</h3>
-          <p class="research-method__step-copy">A research pipeline watches arXiv for new work on how AI systems find, trust and surface information.</p>
-        </li>
-        <li class="research-method__step">
-          <span class="research-method__ordinal" aria-hidden="true">02</span>
-          <h3 class="research-method__step-title">Interrogate the paper</h3>
-          <p class="research-method__step-copy">Promising studies are checked for their method, evidence, useful findings and limits. The headline opens the investigation.</p>
-        </li>
-        <li class="research-method__step">
-          <span class="research-method__ordinal" aria-hidden="true">03</span>
-          <h3 class="research-method__step-title">Make it usable</h3>
-          <p class="research-method__step-copy">We publish a plain-English distill: what the study found, where the finding applies and what it could change in your work.</p>
-        </li>
-      </ol>
-      <div class="research-method__trust">
-        <p>The pipeline helps with discovery and drafting. Publication requires editorial review. The original paper stays one click away.</p>
+      <div class="research-process" data-research-process="archive" aria-labelledby="archive-research-process-title">
+        <h2 class="research-process__kicker" id="archive-research-process-title">How a distill is made</h2>
+        <ol class="research-process__steps" role="list">
+          <li class="research-process__step">
+            <span class="research-process__ordinal" aria-hidden="true">01</span>
+            <p class="research-process__copy">We monitor new research papers on AI visibility, LLM ranking factors, and how generative engines find and cite sources.</p>
+          </li>
+          <li class="research-process__step">
+            <span class="research-process__ordinal" aria-hidden="true">02</span>
+            <p class="research-process__copy">We filter for findings with practical implications, examine the evidence and limitations, and distill the useful parts into readable articles.</p>
+          </li>
+          <li class="research-process__step">
+            <span class="research-process__ordinal" aria-hidden="true">03</span>
+            <p class="research-process__copy">We publish the findings, the evidence behind them, and what they could mean for your work.</p>
+          </li>
+        </ol>
+        <p class="research-process__trust">The pipeline helps with discovery and drafting. Publication requires editorial review. The original paper stays one click away.</p>
       </div>
     </div>
   </section>
