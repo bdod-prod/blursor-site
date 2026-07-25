@@ -198,6 +198,7 @@ test('canonical shell owns geometry independently of page root styles', () => {
       'margin-top': '8px',
     },
     '.site-footer .site-footer__col a': {
+      display: 'block',
       'font-size': '11px',
       'line-height': '18px',
     },

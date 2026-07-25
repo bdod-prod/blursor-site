@@ -195,6 +195,7 @@
 }
 
 .site-footer .site-footer__col a {
+  display: block;
   color: #a09d95;
   font-family: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
   font-size: 11px;
