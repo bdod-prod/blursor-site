@@ -301,7 +301,7 @@
       gap: 1rem;
       width: max-content;
       padding: 0 var(--space-md);
-      animation: slideFindings 70s linear infinite;
+      animation: slideFindings 42s linear infinite;
     }
 
     .findings-ticker:hover .findings-track,
@@ -364,6 +364,33 @@
     }
 
     .finding-card__src span { color: var(--dk-faint); }
+
+    .finding-card--cta {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+    }
+
+    .finding-card--cta .finding-card__num {
+      color: #fff;
+      font-family: var(--font-serif);
+      font-size: 1.9rem;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .finding-card--cta .finding-card__line {
+      color: rgba(255, 255, 255, .86);
+    }
+
+    .finding-card--cta .finding-card__src {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .finding-card--cta:hover,
+    .finding-card--cta:focus-visible {
+      border-color: #fff;
+    }
 
     .digests {
       max-width: var(--max-width);
@@ -722,85 +749,55 @@
       <!-- Future sessions: add one finding-card per new article only when the number and arXiv id appear in the published digest metadata or body. Keep duplicate cards aria-hidden. -->
       <div class="findings-ticker">
         <div class="findings-track">
-          <a class="finding-card" href="/research/cultural-reasoning-gap-llms">
-            <span class="finding-card__num">94% / 40%</span>
-            <span class="finding-card__line">LLMs ace multiple-choice cultural knowledge, then stumble when <b>answer choices disappear</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2606.01879</span>
+          <a class="finding-card" href="/research/llm-brand-reputation-citations-third-party">
+            <span class="finding-card__num">85.7%</span>
+            <span class="finding-card__line">Brand-reputation citations pointed to <b>third-party pages</b>. Find the domains AI cites in your category.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2606.25787</span>
           </a>
-          <a class="finding-card" href="/research/self-evolving-agent-health-community-notes">
-            <span class="finding-card__num">89%</span>
-            <span class="finding-card__line">A self-evolving LLM agent beat human fact-checkers on <b>health misinformation</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2606.02215</span>
+          <a class="finding-card" href="/research/citation-failures-generative-engine-agentgeo">
+            <span class="finding-card__num">1 in 10</span>
+            <span class="finding-card__line">citation failures came from <b>technical problems</b>. Check access, JavaScript rendering and extractability before rewriting.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2603.09296</span>
           </a>
-          <a class="finding-card" href="/research/generative-search-ai-cited-sources">
-            <span class="finding-card__num">~16%</span>
-            <span class="finding-card__line">Across major answer engines, cited sources were <b>AI-generated</b> surprisingly often.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.23684</span>
+          <a class="finding-card finding-card--cta" href="/ai-crawler-checker">
+            <span class="finding-card__num">AI Crawler Checker</span>
+            <span class="finding-card__line">See what AI crawlers can reach, read and extract from your page.</span>
+            <span class="finding-card__src">Check your page →</span>
           </a>
-          <a class="finding-card" href="/research/llm-citation-hallucination-agentic-retrieval">
-            <span class="finding-card__num">12-38%</span>
-            <span class="finding-card__line">Six frontier LLMs hallucinated <b>scientific citations</b> at double-digit rates.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.14306</span>
+          <a class="finding-card" href="/research/structured-data-rag-entity-pages">
+            <span class="finding-card__num">+29.6%</span>
+            <span class="finding-card__line">In one RAG setup, <b>entity-focused pages</b> improved answer accuracy; appended JSON-LD had little effect.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2603.10700</span>
           </a>
           <a class="finding-card" href="/research/paraphrase-brittleness-brand-recommendation">
-            <span class="finding-card__num">21-32 pts</span>
-            <span class="finding-card__line">Cosmetic rewording changed AI brand recommendations more than <b>switching models</b>.</span>
+            <span class="finding-card__num">21–32 pts</span>
+            <span class="finding-card__line">Rewording the same question cut overlap between brand recommendations by 21–32 points. Test <b>several phrasings</b> for each intent.</span>
             <span class="finding-card__src">Source <span>·</span> arXiv:2605.27440</span>
           </a>
-          <a class="finding-card" href="/research/rag-brand-visibility-tier-failures">
-            <span class="finding-card__num">48-52%</span>
-            <span class="finding-card__line">Lower-stature specialists stayed invisible in RAG while leaders still surfaced.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.27439</span>
+          <a class="finding-card is-duplicate" href="/research/llm-brand-reputation-citations-third-party" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">85.7%</span>
+            <span class="finding-card__line">Brand-reputation citations pointed to <b>third-party pages</b>. Find the domains AI cites in your category.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2606.25787</span>
           </a>
-          <a class="finding-card" href="/research/semantic-metadata-agent-retrieval-tradeoff">
-            <span class="finding-card__num">65.7%</span>
-            <span class="finding-card__line">Schema.org metadata raised FAIR-compliant precision, but <b>cut query coverage</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.28787</span>
+          <a class="finding-card is-duplicate" href="/research/citation-failures-generative-engine-agentgeo" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">1 in 10</span>
+            <span class="finding-card__line">citation failures came from <b>technical problems</b>. Check access, JavaScript rendering and extractability before rewriting.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2603.09296</span>
           </a>
-          <a class="finding-card" href="/research/rank-zero-honeypot-agent-collapse">
-            <span class="finding-card__num">65% → 18%</span>
-            <span class="finding-card__line">One false top search result collapsed frontier agent accuracy in a Microsoft study.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2603.00801</span>
+          <a class="finding-card finding-card--cta is-duplicate" href="/ai-crawler-checker" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">AI Crawler Checker</span>
+            <span class="finding-card__line">See what AI crawlers can reach, read and extract from your page.</span>
+            <span class="finding-card__src">Check your page →</span>
           </a>
-          <a class="finding-card is-duplicate" href="/research/cultural-reasoning-gap-llms" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">94% / 40%</span>
-            <span class="finding-card__line">LLMs ace multiple-choice cultural knowledge, then stumble when <b>answer choices disappear</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2606.01879</span>
-          </a>
-          <a class="finding-card is-duplicate" href="/research/self-evolving-agent-health-community-notes" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">89%</span>
-            <span class="finding-card__line">A self-evolving LLM agent beat human fact-checkers on <b>health misinformation</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2606.02215</span>
-          </a>
-          <a class="finding-card is-duplicate" href="/research/generative-search-ai-cited-sources" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">~16%</span>
-            <span class="finding-card__line">Across major answer engines, cited sources were <b>AI-generated</b> surprisingly often.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.23684</span>
-          </a>
-          <a class="finding-card is-duplicate" href="/research/llm-citation-hallucination-agentic-retrieval" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">12-38%</span>
-            <span class="finding-card__line">Six frontier LLMs hallucinated <b>scientific citations</b> at double-digit rates.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.14306</span>
+          <a class="finding-card is-duplicate" href="/research/structured-data-rag-entity-pages" aria-hidden="true" tabindex="-1">
+            <span class="finding-card__num">+29.6%</span>
+            <span class="finding-card__line">In one RAG setup, <b>entity-focused pages</b> improved answer accuracy; appended JSON-LD had little effect.</span>
+            <span class="finding-card__src">Source <span>·</span> arXiv:2603.10700</span>
           </a>
           <a class="finding-card is-duplicate" href="/research/paraphrase-brittleness-brand-recommendation" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">21-32 pts</span>
-            <span class="finding-card__line">Cosmetic rewording changed AI brand recommendations more than <b>switching models</b>.</span>
+            <span class="finding-card__num">21–32 pts</span>
+            <span class="finding-card__line">Rewording the same question cut overlap between brand recommendations by 21–32 points. Test <b>several phrasings</b> for each intent.</span>
             <span class="finding-card__src">Source <span>·</span> arXiv:2605.27440</span>
-          </a>
-          <a class="finding-card is-duplicate" href="/research/rag-brand-visibility-tier-failures" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">48-52%</span>
-            <span class="finding-card__line">Lower-stature specialists stayed invisible in RAG while leaders still surfaced.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.27439</span>
-          </a>
-          <a class="finding-card is-duplicate" href="/research/semantic-metadata-agent-retrieval-tradeoff" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">65.7%</span>
-            <span class="finding-card__line">Schema.org metadata raised FAIR-compliant precision, but <b>cut query coverage</b>.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2605.28787</span>
-          </a>
-          <a class="finding-card is-duplicate" href="/research/rank-zero-honeypot-agent-collapse" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">65% → 18%</span>
-            <span class="finding-card__line">One false top search result collapsed frontier agent accuracy in a Microsoft study.</span>
-            <span class="finding-card__src">Source <span>·</span> arXiv:2603.00801</span>
           </a>
         </div>
       </div>

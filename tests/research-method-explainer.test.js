@@ -249,7 +249,7 @@ test('homepage hero leads with Research and explains the paper-to-distill proces
   assert.match(process, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
   assert.doesNotMatch(process, /Follow the field|Interrogate the paper|Make it usable/);
   assert.doesNotMatch(hero, /<form\b|slot__|>\s*Develop\s*</);
-  assert.doesNotMatch(html, /data-research-method="homepage"|finding-card--cta|Fetches as/);
+  assert.doesNotMatch(html, /data-research-method="homepage"|Fetches as/);
 });
 
 test('Research hero explains the paper-to-distill process before the inventory', () => {
