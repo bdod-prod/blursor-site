@@ -18,11 +18,59 @@ const STEP_LABELS = [
   'Interrogate the paper',
   'Make it usable',
 ];
+const POSITIONING_LINE = 'Research-based insights and practical tools to improve your AI visibility.';
+const PROCESS_COPY = [
+  'We monitor new research papers on AI visibility, LLM ranking factors, and how generative engines find and cite sources.',
+  'We filter for findings with practical implications, examine the evidence and limitations, and distill the useful parts into readable articles.',
+  'We publish the findings, the evidence behind them, and what they could mean for your work.',
+];
 const TRUST_LINE = [
   'The pipeline helps with discovery and drafting.',
   'Publication requires editorial review.',
   'The original paper stays one click away.',
 ].join(' ');
+
+function extractHero(html, headingId, surface) {
+  const pattern = new RegExp(
+    `<section\\b(?=[^>]*class="[^"]*\\bhero\\b[^"]*")(?=[^>]*aria-labelledby="${headingId}")[^>]*>[\\s\\S]*?<\\/section>`,
+    'g',
+  );
+  const matches = [...html.matchAll(pattern)];
+  assert.equal(matches.length, 1, `${surface} must contain one labelled hero`);
+  return matches[0][0];
+}
+
+function extractProcess(hero, surface) {
+  const pattern = new RegExp(
+    `<div\\b[^>]*data-research-process="${surface}"[^>]*>[\\s\\S]*?<\\/div>`,
+    'g',
+  );
+  const matches = [...hero.matchAll(pattern)];
+  assert.equal(matches.length, 1, `${surface} hero must contain one research process`);
+  return matches[0][0];
+}
+
+function assertProcessCopyInOrder(process, surface) {
+  let cursor = -1;
+  for (const paragraph of PROCESS_COPY) {
+    const next = process.indexOf(paragraph);
+    assert.ok(next > cursor, `${surface} must place the approved process copy in order`);
+    cursor = next;
+  }
+  assert.equal(
+    (process.match(/class="research-process__step"/g) || []).length,
+    3,
+    `${surface} must contain three process steps`,
+  );
+}
+
+function assertResearchProcessListSemantics(process, surface) {
+  assert.match(
+    process,
+    /<ol\b(?=[^>]*class="research-process__steps")(?=[^>]*role="list")[^>]*>/,
+    `${surface} process list must explicitly retain list semantics`,
+  );
+}
 
 function extractMethodSection(html, surface) {
   const pattern = new RegExp(
@@ -74,21 +122,27 @@ function assertCopyDiscipline(section, surface) {
   }
 }
 
-test('homepage explains the paper-to-distill method and links to Research', () => {
+test('homepage hero leads with Research and explains the paper-to-distill process', () => {
   const html = fs.readFileSync(HOME_PATH, 'utf8');
-  const section = extractMethodSection(html, 'homepage');
+  const hero = extractHero(html, 'home-title', 'homepage');
+  const process = extractProcess(hero, 'homepage');
 
-  assertStepsInOrder(section, 'homepage');
-  assertProcessListSemantics(section, 'homepage');
-  assertCopyDiscipline(section, 'homepage');
-  assert.match(section, /Catch up with the papers shaping AI visibility/);
-  assert.match(section, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
-  assert.match(section, /href="\/research"[^>]*>Browse the research/);
-  assert.doesNotMatch(html, /Every number links to its paper/);
-  assert.doesNotMatch(html, /Every digest links the paper it came from/);
-  assert.doesNotMatch(html, /2,800/);
-  assert.doesNotMatch(html, /70,000/);
-  assert.doesNotMatch(html, /March 2026/);
+  assertProcessCopyInOrder(process, 'homepage');
+  assertResearchProcessListSemantics(process, 'homepage');
+  assertCopyDiscipline(process, 'homepage');
+  assert.match(hero, new RegExp(POSITIONING_LINE.replace(/[.]/g, '\\.')));
+  assert.match(
+    hero,
+    /<a\b(?=[^>]*href="\/research")(?=[^>]*research-hero__action--primary)[^>]*>\s*Browse the research\s*<\/a>/,
+  );
+  assert.match(
+    hero,
+    /<a\b(?=[^>]*href="\/ai-crawler-checker")(?=[^>]*research-hero__action--secondary)[^>]*>\s*Try the crawler checker\s*<\/a>/,
+  );
+  assert.match(process, new RegExp(TRUST_LINE.replace(/[.]/g, '\\.')));
+  assert.doesNotMatch(process, /Follow the field|Interrogate the paper|Make it usable/);
+  assert.doesNotMatch(hero, /<form\b|slot__|>\s*Develop\s*</);
+  assert.doesNotMatch(html, /data-research-method="homepage"|finding-card--cta|Fetches as/);
 });
 
 test('Research archive explains the same method before the article inventory', () => {

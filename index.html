@@ -187,9 +187,7 @@
     .site-header__nav a:hover { color: var(--color-text); }
 
     .hero {
-      max-width: var(--text-width);
-      margin: 0 auto;
-      padding: 4.8rem var(--space-md) 0;
+      padding: 4.6rem 0 4rem;
     }
 
     .hero__kicker {
@@ -203,8 +201,8 @@
     }
 
     .hero__title {
-      max-width: 720px;
-      font-size: 3.35rem;
+      max-width: 680px;
+      font-size: clamp(2.65rem, 4.6vw, 3.35rem);
       font-weight: 700;
       line-height: 1.08;
       letter-spacing: 0;
@@ -229,94 +227,11 @@
     }
 
     .hero__sub {
-      max-width: 590px;
+      max-width: 560px;
       margin-top: 1.3rem;
       color: var(--color-text-secondary);
       font-size: 1.06rem;
       line-height: 1.7;
-    }
-
-    .slot {
-      max-width: var(--text-width);
-      margin: 2.4rem auto 0;
-      padding: 0 var(--space-md);
-    }
-
-    .slot__row {
-      display: flex;
-      background: var(--dk);
-      border: 1px solid var(--dk);
-      box-shadow: 0 18px 40px -18px rgba(26, 20, 12, .45);
-    }
-
-    .slot__prompt {
-      padding: 1.05rem 0 1.05rem 1.1rem;
-      color: var(--dk-red);
-      font-family: var(--font-mono);
-      font-size: .95rem;
-      user-select: none;
-    }
-
-    .slot__input {
-      flex: 1;
-      min-width: 0;
-      padding: 1.05rem .9rem;
-      background: transparent;
-      border: 0;
-      outline: none;
-      color: var(--dk-text);
-      caret-color: var(--dk-red);
-      font-family: var(--font-mono);
-      font-size: .95rem;
-    }
-
-    .slot__input::placeholder { color: var(--dk-faint); }
-
-    .slot__btn {
-      padding: 0 1.7rem;
-      background: var(--color-accent);
-      border: 0;
-      color: #fff;
-      cursor: pointer;
-      font-family: var(--font-mono);
-      font-size: .78rem;
-      font-weight: 600;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .slot__btn:hover { background: #b23425; }
-
-    .slot__hint {
-      margin-top: .65rem;
-      color: var(--color-text-secondary);
-      font-family: var(--font-mono);
-      font-size: .68rem;
-    }
-
-    .slot__hint a {
-      color: var(--color-accent);
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-      text-underline-offset: 2px;
-    }
-
-    .slot__hint a:hover { text-decoration-color: rgba(183, 53, 36, .65); }
-
-    .slot__bots {
-      margin-top: 1.4rem;
-      color: var(--color-text-secondary);
-      font-family: var(--font-mono);
-      font-size: .62rem;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      word-spacing: .2em;
-    }
-
-    .slot__bots i {
-      color: var(--color-border);
-      font-style: normal;
     }
 
     .findings-band {
@@ -449,24 +364,6 @@
     }
 
     .finding-card__src span { color: var(--dk-faint); }
-
-    .finding-card--cta {
-      background: var(--color-accent);
-      border-color: var(--color-accent);
-    }
-
-    .finding-card--cta .finding-card__num {
-      color: #fff;
-      font-family: var(--font-serif);
-      font-size: 1.9rem;
-      line-height: 1.15;
-      letter-spacing: 0;
-    }
-
-    .finding-card--cta .finding-card__line { color: rgba(255, 255, 255, .86); }
-    .finding-card--cta .finding-card__src { color: #fff; font-weight: 600; }
-    .finding-card--cta:hover,
-    .finding-card--cta:focus-visible { border-color: #fff; }
 
     .digests {
       max-width: var(--max-width);
@@ -713,12 +610,6 @@
       }
 
       .hero__title { font-size: 2.15rem; }
-      .slot__row { flex-wrap: wrap; }
-      .slot__input { width: calc(100% - 2rem); }
-      .slot__btn {
-        width: 100%;
-        padding: .9rem;
-      }
 
       .finding-card { width: 285px; }
       .digest-row { grid-template-columns: 2.5rem 1fr; gap: .9rem; }
@@ -771,37 +662,53 @@
   </header>
 
   <main>
-    <section class="hero" aria-labelledby="home-title">
-      <div class="hero__kicker">AI-visibility research · Free instruments · No signup</div>
-      <h1 class="hero__title" id="home-title">
-        <span class="focus-word" style="--i:0">AI</span>
-        <span class="focus-word" style="--i:1">decides</span>
-        <span class="focus-word" style="--i:2">who</span>
-        <span class="focus-word" style="--i:3">gets</span>
-        <em class="focus-word" style="--i:4">recommended.</em>
-        <span class="focus-word" style="--i:5">We</span>
-        <span class="focus-word" style="--i:6">study</span>
-        <em class="focus-word" style="--i:7">why</em>
-        <span class="focus-word" style="--i:8">and</span>
-        <span class="focus-word" style="--i:9">show</span>
-        <span class="focus-word" style="--i:10">you</span>
-        <em class="focus-word" style="--i:11">what it sees</em>
-        <span class="focus-word" style="--i:12">on</span>
-        <span class="focus-word" style="--i:13">your</span>
-        <span class="focus-word" style="--i:14">site.</span>
-      </h1>
-      <p class="hero__sub">We distill the research on why AI says what it says, how generative engines choose their sources, and where brands disappear. Then we built the instrument that shows what those systems can read when they reach <em>your</em> site.</p>
+    <section class="hero research-hero" aria-labelledby="home-title">
+      <div class="research-hero__inner">
+        <div class="research-hero__editorial">
+          <div class="hero__kicker">AI-visibility research · Practical tools</div>
+          <h1 class="hero__title" id="home-title">
+            <span class="focus-word" style="--i:0">AI</span>
+            <span class="focus-word" style="--i:1">decides</span>
+            <span class="focus-word" style="--i:2">who</span>
+            <span class="focus-word" style="--i:3">gets</span>
+            <em class="focus-word" style="--i:4">recommended.</em>
+            <span class="focus-word" style="--i:5">We</span>
+            <span class="focus-word" style="--i:6">study</span>
+            <em class="focus-word" style="--i:7">why</em>
+            <span class="focus-word" style="--i:8">and</span>
+            <span class="focus-word" style="--i:9">show</span>
+            <span class="focus-word" style="--i:10">you</span>
+            <em class="focus-word" style="--i:11">what it sees</em>
+            <span class="focus-word" style="--i:12">on</span>
+            <span class="focus-word" style="--i:13">your</span>
+            <span class="focus-word" style="--i:14">site.</span>
+          </h1>
+          <p class="hero__sub">Research-based insights and practical tools to improve your AI visibility.</p>
+          <div class="research-hero__actions" aria-label="Explore BLURSOR">
+            <a class="research-hero__action research-hero__action--primary" href="/research">Browse the research</a>
+            <a class="research-hero__action research-hero__action--secondary" href="/ai-crawler-checker">Try the crawler checker</a>
+          </div>
+        </div>
+        <div class="research-process" data-research-process="homepage" aria-labelledby="home-research-process-title">
+          <h2 class="research-process__kicker" id="home-research-process-title">How the research gets useful</h2>
+          <ol class="research-process__steps" role="list">
+            <li class="research-process__step">
+              <span class="research-process__ordinal" aria-hidden="true">01</span>
+              <p class="research-process__copy">We monitor new research papers on AI visibility, LLM ranking factors, and how generative engines find and cite sources.</p>
+            </li>
+            <li class="research-process__step">
+              <span class="research-process__ordinal" aria-hidden="true">02</span>
+              <p class="research-process__copy">We filter for findings with practical implications, examine the evidence and limitations, and distill the useful parts into readable articles.</p>
+            </li>
+            <li class="research-process__step">
+              <span class="research-process__ordinal" aria-hidden="true">03</span>
+              <p class="research-process__copy">We publish the findings, the evidence behind them, and what they could mean for your work.</p>
+            </li>
+          </ol>
+          <p class="research-process__trust">The pipeline helps with discovery and drafting. Publication requires editorial review. The original paper stays one click away.</p>
+        </div>
+      </div>
     </section>
-
-    <div class="slot" aria-label="Check your website">
-      <form class="slot__row" action="/ai-crawler-checker" method="GET">
-        <span class="slot__prompt" aria-hidden="true">▸</span>
-        <input class="slot__input" name="url" inputmode="url" placeholder="yoursite.com - see what AI sees" autocomplete="off" spellcheck="false" aria-label="Your website URL">
-        <button class="slot__btn" type="submit">Develop</button>
-      </form>
-      <p class="slot__hint">Free, about 10 seconds, shows its work. <a href="#latest-digests">Or read the research first ↓</a></p>
-      <p class="slot__bots">Fetches as <i>·</i> GPTBot <i>·</i> ClaudeBot <i>·</i> PerplexityBot <i>·</i> OAI-SearchBot <i>·</i> Google-Extended <i>·</i> Applebot <i>·</i> + more</p>
-    </div>
 
     <section class="findings-band" aria-labelledby="findings-title">
       <div class="findings-band__head">
@@ -855,12 +762,6 @@
             <span class="finding-card__line">One false top search result collapsed frontier agent accuracy in a Microsoft study.</span>
             <span class="finding-card__src">Source <span>·</span> arXiv:2603.00801</span>
           </a>
-          <a class="finding-card finding-card--cta" href="/ai-crawler-checker">
-            <span class="finding-card__num">And what does AI see on your site?</span>
-            <span class="finding-card__line">Run the free instrument. No signup, no score theater, no gate.</span>
-            <span class="finding-card__src">Develop your page →</span>
-          </a>
-
           <a class="finding-card is-duplicate" href="/research/cultural-reasoning-gap-llms" aria-hidden="true" tabindex="-1">
             <span class="finding-card__num">94% / 40%</span>
             <span class="finding-card__line">LLMs ace multiple-choice cultural knowledge, then stumble when <b>answer choices disappear</b>.</span>
@@ -901,44 +802,6 @@
             <span class="finding-card__line">One false top search result collapsed frontier agent accuracy in a Microsoft study.</span>
             <span class="finding-card__src">Source <span>·</span> arXiv:2603.00801</span>
           </a>
-          <a class="finding-card finding-card--cta is-duplicate" href="/ai-crawler-checker" aria-hidden="true" tabindex="-1">
-            <span class="finding-card__num">And what does AI see on your site?</span>
-            <span class="finding-card__line">Run the free instrument. No signup, no score theater, no gate.</span>
-            <span class="finding-card__src">Develop your page →</span>
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <section class="research-method" data-research-method="homepage" aria-labelledby="home-research-method-title">
-      <div class="research-method__inner">
-        <div class="research-method__intro">
-          <div>
-            <div class="research-method__kicker">How the research gets useful</div>
-            <h2 class="research-method__title" id="home-research-method-title">Catch up with the papers shaping AI visibility</h2>
-          </div>
-          <p class="research-method__lead">AI research moves faster than most practitioners can follow. BLURSOR follows the work on retrieval, citations, recommendations and generative search, then turns the useful papers into briefings people can act on.</p>
-        </div>
-        <ol class="research-method__steps" role="list">
-          <li class="research-method__step">
-            <span class="research-method__ordinal" aria-hidden="true">01</span>
-            <h3 class="research-method__step-title">Follow the field</h3>
-            <p class="research-method__step-copy">A research pipeline watches arXiv for new work on how AI systems find, trust and surface information.</p>
-          </li>
-          <li class="research-method__step">
-            <span class="research-method__ordinal" aria-hidden="true">02</span>
-            <h3 class="research-method__step-title">Interrogate the paper</h3>
-            <p class="research-method__step-copy">Promising studies are checked for their method, evidence, useful findings and limits. The headline opens the investigation.</p>
-          </li>
-          <li class="research-method__step">
-            <span class="research-method__ordinal" aria-hidden="true">03</span>
-            <h3 class="research-method__step-title">Make it usable</h3>
-            <p class="research-method__step-copy">We publish a plain-English distill: what the study found, where the finding applies and what it could change in your work.</p>
-          </li>
-        </ol>
-        <div class="research-method__trust">
-          <p>The pipeline helps with discovery and drafting. Publication requires editorial review. The original paper stays one click away.</p>
-          <a class="research-method__link" href="/research">Browse the research →</a>
         </div>
       </div>
     </section>
