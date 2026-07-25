@@ -150,6 +150,18 @@ function renderArchiveCard(article, ordinal) {
         </a>`;
 }
 
+function renderHomepageDigestRow(article, ordinal) {
+  const meta = article.meta;
+  return `      <a class="digest-row" href="/research/${escapeHtml(meta.slug)}">
+        <span class="digest-row__num">${String(ordinal).padStart(2, '0')}</span>
+        <span>
+          <span class="digest-row__meta"><span>${escapeHtml(fmtDate(meta.published_date))}</span><span>${escapeHtml(meta.reading_time_min)} min</span><span class="src">arXiv:${escapeHtml(meta.arxiv_id)}</span></span>
+          <span class="digest-row__title" role="heading" aria-level="3">${escapeHtml(meta.title)}</span>
+          <span class="digest-row__summary">${escapeHtml(meta.summary_for_card)}</span>
+        </span>
+      </a>`;
+}
+
 function ensureRssDiscoveryHtml(html) {
   const hasDiscovery = findTags(html, 'link').some(tag => {
     const rel = (getAttribute(tag, 'rel') || '').split(/\s+/);
@@ -162,6 +174,31 @@ function ensureRssDiscoveryHtml(html) {
     return html.replace('\n  <!-- Fonts -->', `\n  ${RSS_FEED_LINK_TAG}\n  <!-- Fonts -->`);
   }
   return html.replace(/<\/head>/i, `  ${RSS_FEED_LINK_TAG}\n</head>`);
+}
+
+function generateHomepageHtml(indexHtml, articles) {
+  const indexWithDiscovery = ensureRssDiscoveryHtml(indexHtml);
+  const latestDigestSections = [
+    ...indexWithDiscovery.matchAll(/<section\b[^>]*\bid\s*=\s*(["'])latest-digests\1[^>]*>/gi),
+  ];
+  if (latestDigestSections.length === 0) return indexWithDiscovery;
+  if (latestDigestSections.length !== 1) {
+    throw new PublicationValidationError([
+      `index.html: expected exactly one latest-digests section, found ${latestDigestSections.length}`,
+    ]);
+  }
+
+  const listTag = findSingleClassTag(indexWithDiscovery, 'digests__list', 'index.html');
+  const rows = articles
+    .slice(0, 3)
+    .map((article, index) => renderHomepageDigestRow(article, index + 1))
+    .join('\n\n');
+  return replaceBalancedDivContents(
+    indexWithDiscovery,
+    listTag,
+    `\n\n${rows}\n\n      `,
+    'index.html',
+  );
 }
 
 function ensureMobileMetaWrapHtml(html, fileName) {
@@ -637,7 +674,25 @@ function verifyPublishedState({ rootDir, expectedArticles }) {
   if (sitemap) {
     verifySitemapEntries({ rootDir, sitemap, expectedArticles, issues });
   }
-  if (home && !hasRssDiscovery(home)) issues.push('index.html: missing RSS discovery');
+  if (home) {
+    if (!hasRssDiscovery(home)) issues.push('index.html: missing RSS discovery');
+    if (/<section\b[^>]*\bid\s*=\s*(["'])latest-digests\1/i.test(home)) {
+      const latestTargets = extractClassLinkTargets(home, 'digest-row')
+        .map(target => {
+          const match = target && /^\/research\/([^/?#]+)$/.exec(target);
+          return match ? match[1] : target;
+        });
+      const expectedLatestTargets = expectedArticles
+        .slice(0, 3)
+        .map(article => article.meta.slug);
+      if (latestTargets.length !== expectedLatestTargets.length
+        || latestTargets.some((target, index) => target !== expectedLatestTargets[index])) {
+        issues.push(
+          `index.html: latest digest targets must equal ${expectedLatestTargets.join(', ')}; found ${latestTargets.join(', ')}`,
+        );
+      }
+    }
+  }
 
   for (const article of expectedArticles) {
     const file = `research/${article.meta.slug}.html`;
@@ -694,8 +749,9 @@ function compileResearch({ rootDir }) {
   }));
   const archivePath = path.join(rootDir, 'research/index.html');
   const homePath = path.join(rootDir, 'index.html');
-  const homeHtml = ensureRssDiscoveryHtml(fs.readFileSync(homePath, 'utf8'));
-  const homeChanged = fs.readFileSync(homePath, 'utf8') !== homeHtml;
+  const currentHomeHtml = fs.readFileSync(homePath, 'utf8');
+  const homeHtml = generateHomepageHtml(currentHomeHtml, articles);
+  const homeChanged = currentHomeHtml !== homeHtml;
   const generatedOutputs = [
     ...renderedArticles,
     { filePath: archivePath, html: generateArchiveHtml(fs.readFileSync(archivePath, 'utf8'), articles) },

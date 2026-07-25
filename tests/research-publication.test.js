@@ -316,6 +316,70 @@ test('compileResearch writes normalized articles and reports the validated count
   );
 });
 
+test('compiler refreshes homepage latest digests from the newest canonical articles', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  fs.writeFileSync(
+    path.join(rootDir, 'index.html'),
+    '<html><head></head><body><section id="latest-digests"><div class="digests__list"><a class="digest-row" href="/research/stale">Stale</a></div></section></body></html>',
+  );
+  writeArticle(rootDir, 'newest.html', {
+    title: 'Newest & proven',
+    published_date: '2026-07-24',
+    reading_time_min: 7,
+    summary_for_card: 'Newest <evidence> summary.',
+    arxiv_id: '2607.24001',
+  });
+  writeArticle(rootDir, 'second.html', {
+    published_date: '2026-07-23',
+    arxiv_id: '2607.23001',
+  });
+  writeArticle(rootDir, 'third.html', {
+    published_date: '2026-07-22',
+    arxiv_id: '2607.22001',
+  });
+  writeArticle(rootDir, 'fourth.html', {
+    published_date: '2026-07-21',
+    arxiv_id: '2607.21001',
+  });
+
+  compileResearch({ rootDir });
+
+  const home = fs.readFileSync(path.join(rootDir, 'index.html'), 'utf8');
+  assert.deepEqual(
+    [...home.matchAll(/<a class="digest-row" href="\/research\/([^"]+)">/g)]
+      .map(match => match[1]),
+    ['newest', 'second', 'third'],
+  );
+  assert.match(home, /<span>Jul 24, 2026<\/span><span>7 min<\/span><span class="src">arXiv:2607\.24001<\/span>/);
+  assert.match(home, /Newest &amp; proven/);
+  assert.match(home, /Newest &lt;evidence&gt; summary\./);
+  assert.doesNotMatch(home, /\/research\/fourth|\/research\/stale/);
+});
+
+test('verification rejects homepage latest digests that drift from the newest articles', t => {
+  const rootDir = makeFixture();
+  t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));
+  fs.writeFileSync(
+    path.join(rootDir, 'index.html'),
+    '<html><head></head><body><section id="latest-digests"><div class="digests__list"></div></section></body></html>',
+  );
+  writeArticle(rootDir, 'new-a.html', { published_date: '2026-07-23' });
+  writeArticle(rootDir, 'new-b.html', { published_date: '2026-07-22' });
+  writeArticle(rootDir, 'old.html', { published_date: '2026-07-21' });
+  compileResearch({ rootDir });
+  const homePath = path.join(rootDir, 'index.html');
+  fs.writeFileSync(
+    homePath,
+    fs.readFileSync(homePath, 'utf8').replace('/research/new-a', '/research/stale'),
+  );
+
+  assert.throws(
+    () => verifyPublishedState({ rootDir, expectedArticles: discoverArticles({ rootDir }) }),
+    /index\.html: latest digest targets must equal new-a, new-b, old; found stale, new-b, old/,
+  );
+});
+
 test('compileResearch restores missing RSS discovery before post-write verification', t => {
   const rootDir = makeFixture();
   t.after(() => fs.rmSync(rootDir, { recursive: true, force: true }));

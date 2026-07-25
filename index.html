@@ -383,7 +383,7 @@
     .digests {
       max-width: var(--max-width);
       margin: 0 auto;
-      padding: 4.2rem var(--space-md) 0;
+      padding: 4.2rem var(--space-md);
     }
 
     .digests__head {
@@ -465,63 +465,6 @@
       color: var(--color-text-secondary);
       font-size: .95rem;
       line-height: 1.65;
-    }
-
-    .stance {
-      margin-top: 4.2rem;
-      padding: 4rem 0;
-      background: var(--color-bg-warm);
-      border-top: 1px solid var(--color-border);
-    }
-
-    .stance__inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 0 var(--space-md);
-    }
-
-    .stance__grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 2.4rem;
-      margin-top: 1.6rem;
-    }
-
-    .tenet__label {
-      display: inline-block;
-      margin-bottom: .8rem;
-      padding-bottom: .35rem;
-      border-bottom: 2px solid var(--color-accent);
-      color: var(--color-text);
-      font-family: var(--font-mono);
-      font-size: .66rem;
-      font-weight: 600;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-    }
-
-    .tenet p {
-      color: var(--color-text-secondary);
-      font-size: .95rem;
-      line-height: 1.7;
-    }
-
-    .tenet a {
-      color: var(--color-accent);
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-      text-underline-offset: 2px;
-    }
-
-    .tenet a:hover { text-decoration-color: rgba(183, 53, 36, .65); }
-
-    .stance__close {
-      margin-top: 2.6rem;
-      padding-top: 1.6rem;
-      border-top: 1px solid var(--color-border);
-      color: var(--color-text);
-      font-size: 1.15rem;
-      font-style: italic;
     }
 
     .site-footer {
@@ -610,7 +553,6 @@
       .site-header__tagline { display: none; }
       .hero { padding-top: 3.6rem; }
       .hero__title { font-size: 2.35rem; }
-      .stance__grid { grid-template-columns: 1fr; }
       .site-footer__inner { grid-template-columns: 1fr; }
     }
 
@@ -782,53 +724,35 @@
         <a class="digests__all" href="/research">All articles →</a>
       </div>
 
-      <a class="digest-row" href="/research/llm-brand-reputation-citations-third-party">
+      <div class="digests__list">
+
+      <a class="digest-row" href="/research/drnoise-shows-one-false-document-can-knock-agents-off-course">
         <span class="digest-row__num">01</span>
         <span>
-          <span class="digest-row__meta"><span>Jun 25, 2026</span><span>9 min</span><span class="src">arXiv:2606.25787</span></span>
-          <span class="digest-row__title" role="heading" aria-level="3">LLMs mostly source "brand reputation" from other people's pages</span>
-          <span class="digest-row__summary">What LLMs treat as brand reputation is mostly other people's web pages, not the brands themselves.</span>
+          <span class="digest-row__meta"><span>Jul 21, 2026</span><span>10 min</span><span class="src">arXiv:2607.17291</span></span>
+          <span class="digest-row__title" role="heading" aria-level="3">DRNoise shows how one plausible false document can knock deep research agents off course</span>
+          <span class="digest-row__summary">One misleading “direct claim” can derail an agent that’s otherwise correct</span>
         </span>
       </a>
 
-      <a class="digest-row" href="/research/ai-brand-category-ownership-llms">
+      <a class="digest-row" href="/research/generative-search-citations-surface-predictors">
         <span class="digest-row__num">02</span>
         <span>
-          <span class="digest-row__meta"><span>Jun 23, 2026</span><span>10 min</span><span class="src">arXiv:2606.23057</span></span>
-          <span class="digest-row__title" role="heading" aria-level="3">AI brand "ownership" is moderately concentrated, but the winner changes by model</span>
-          <span class="digest-row__summary">Who gets the top pick in AI recommendations, and how consistent is it across models?</span>
+          <span class="digest-row__meta"><span>Jul 20, 2026</span><span>9 min</span><span class="src">arXiv:2607.15771</span></span>
+          <span class="digest-row__title" role="heading" aria-level="3">Chinese generative search cites only a small slice of available brand sources, and external quality scores do not predict what surfaces</span>
+          <span class="digest-row__summary">Why citation coverage is sparse—and what actually predicts which sources get surfaced</span>
         </span>
       </a>
 
-      <a class="digest-row" href="/research/english-blind-spot-local-champions">
+      <a class="digest-row" href="/research/generative-engine-optimization-doesnt-translate">
         <span class="digest-row__num">03</span>
         <span>
-          <span class="digest-row__meta"><span>Jun 23, 2026</span><span>10 min</span><span class="src">arXiv:2606.23165</span></span>
-          <span class="digest-row__title" role="heading" aria-level="3">English-only AI reputation monitoring misses local champions in multilingual markets</span>
-          <span class="digest-row__summary">English-language prompts create a measurable local-visibility blind spot across languages.</span>
+          <span class="digest-row__meta"><span>Jul 16, 2026</span><span>8 min</span><span class="src">arXiv:2607.14035</span></span>
+          <span class="digest-row__title" role="heading" aria-level="3">GEO can change citations inside a fixed context, but it doesn’t show durable organic visibility</span>
+          <span class="digest-row__summary">Why GEO gains don’t translate into durable visibility (and which levers actually hold).</span>
         </span>
       </a>
-    </section>
 
-    <section class="stance" aria-labelledby="stance-title">
-      <div class="stance__inner">
-        <div class="section-kicker">How we work</div>
-        <h2 class="digests__title" id="stance-title">Honesty is the product</h2>
-        <div class="stance__grid">
-          <div class="tenet">
-            <span class="tenet__label">SHOW THE WORK</span>
-            <p>Digests link the papers they came from, and checker results cite their sources. If we cannot source a claim, we leave it out.</p>
-          </div>
-          <div class="tenet">
-            <span class="tenet__label">SAY WHAT DOESN'T WORK</span>
-            <p>The <a href="/ai-crawler-checker">checker</a> tells users llms.txt is hygiene, not a citation lever, citing <a href="https://seranking.com/blog/llms-txt/" target="_blank" rel="noopener">SE Ranking's 300k-domain study</a> instead of selling a generator.</p>
-          </div>
-          <div class="tenet">
-            <span class="tenet__label">NO GATES</span>
-            <p>No signup, no email wall, no book-a-demo trap. Read it, use it, act on it, leave.</p>
-          </div>
-        </div>
-        <p class="stance__close">Now you have no excuses not to act on it.</p>
       </div>
     </section>
   </main>
